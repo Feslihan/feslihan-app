@@ -654,13 +654,8 @@ struct RecipeListView: View {
     }
 
     private func syncFromBackend() async {
-        guard let userId = Clerk.shared.user?.id else {
-            print("[Sync] No Clerk user ID — skipping sync")
-            return
-        }
-        print("[Sync] Fetching recipes for user: \(userId)")
+        guard let userId = Clerk.shared.user?.id else { return }
         let remoteRecipes = await APIService.fetchUserRecipes(userId: userId)
-        print("[Sync] Got \(remoteRecipes.count) recipes from backend")
         guard !remoteRecipes.isEmpty else { return }
 
         let remoteURLs = Set(remoteRecipes.map { $0.url })
@@ -726,7 +721,6 @@ struct RecipeListView: View {
 
     private func loadIngredientPriceTiers() async {
         let allIngredients = await APIService.fetchIngredients()
-        print("[Filter] Loaded \(allIngredients.count) ingredients from API")
         var tiers: [String: String] = [:]
         for dto in allIngredients {
             if let tier = dto.price_tier {

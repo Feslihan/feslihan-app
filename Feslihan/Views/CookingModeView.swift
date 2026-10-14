@@ -343,7 +343,6 @@ struct RecipeReviewSheet: View {
             if recipeId == nil, let url = sourceURL {
                 if let dto = await APIService.lookup(url: url) {
                     resolvedRecipeId = dto.id
-                    print("[Review] Resolved recipeId: \(dto.id ?? "nil") from URL")
                 }
             }
         }
@@ -359,15 +358,12 @@ struct RecipeReviewSheet: View {
         Task {
             if let rid = effectiveRecipeId,
                let userId = Clerk.shared.user?.id {
-                let success = await APIService.submitReview(
+                _ = await APIService.submitReview(
                     recipeId: rid,
                     userId: userId,
                     rating: rating,
                     comment: comment.isEmpty ? nil : comment
                 )
-                print("[Review] Submit \(success ? "OK" : "FAILED") for recipe \(rid)")
-            } else {
-                print("[Review] No recipeId or userId, skipping save")
             }
             onDone()
         }
@@ -378,8 +374,7 @@ struct RecipeReviewSheet: View {
               let userId = Clerk.shared.user?.id else { return }
         isSaving = true
         Task {
-            let success = await APIService.deleteReview(reviewId: review.id, userId: userId)
-            print("[Review] Delete \(success ? "OK" : "FAILED") for review \(review.id)")
+            _ = await APIService.deleteReview(reviewId: review.id, userId: userId)
             onDone()
         }
     }
