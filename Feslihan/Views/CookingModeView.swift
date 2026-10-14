@@ -18,6 +18,77 @@ struct CookingModeView: View {
         ZStack {
             DS.emberDark.ignoresSafeArea()
 
+            if steps.isEmpty {
+                emptyStateView
+            } else {
+                cookingContent
+            }
+        }
+        .preferredColorScheme(.light)
+        .persistentSystemOverlays(.hidden)
+        .onChange(of: currentIndex) {
+            stopTimer()
+        }
+        .onReceive(
+            Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+        ) { _ in
+            guard timerActive, timerRemaining > 0 else { return }
+            timerRemaining -= 1
+            if timerRemaining == 0 {
+                timerActive = false
+            }
+        }
+        .sheet(isPresented: $showReview, onDismiss: { dismiss() }) {
+            RecipeReviewSheet(recipeTitle: title, recipeId: recipeId, sourceURL: sourceURL, onDone: {
+                showReview = false
+            })
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+        }
+    }
+
+    // MARK: - Empty State
+
+    @ViewBuilder
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+
+            Image(systemName: "text.badge.xmark")
+                .font(.system(size: 44, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.5))
+
+            Text("Bu tarifte adım bulunamadı")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+
+            Text("Tarif talimatları okunamadı. Lütfen tarifi kontrol edin.")
+                .font(.system(size: 15))
+                .foregroundStyle(.white.opacity(0.6))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+
+            Spacer()
+
+            Button { dismiss() } label: {
+                Text("Kapat")
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .foregroundStyle(DS.emberDark)
+                    .background(DS.emberLight)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 40)
+        }
+    }
+
+    // MARK: - Cooking Content
+
+    @ViewBuilder
+    private var cookingContent: some View {
             VStack(spacing: 0) {
                 // Top bar
                 HStack {
@@ -159,28 +230,6 @@ struct CookingModeView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 40)
             }
-        }
-        .preferredColorScheme(.light)
-        .persistentSystemOverlays(.hidden)
-        .onChange(of: currentIndex) {
-            stopTimer()
-        }
-        .onReceive(
-            Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-        ) { _ in
-            guard timerActive, timerRemaining > 0 else { return }
-            timerRemaining -= 1
-            if timerRemaining == 0 {
-                timerActive = false
-            }
-        }
-        .sheet(isPresented: $showReview, onDismiss: { dismiss() }) {
-            RecipeReviewSheet(recipeTitle: title, recipeId: recipeId, sourceURL: sourceURL, onDone: {
-                showReview = false
-            })
-            .presentationDetents([.medium])
-            .presentationDragIndicator(.visible)
-        }
     }
 
     // MARK: - Timer
