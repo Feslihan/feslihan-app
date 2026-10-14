@@ -589,6 +589,78 @@ async function buildShoppingListFromRecipes(recipeIds: string[]): Promise<Shoppi
   }).filter((item) => item.ingredient_id);
 }
 
+// Common non-perishable staples that virtually every kitchen keeps. Used to give
+// users a starting pantry instead of a blank screen; anything they don't keep is
+// one tap to remove.
+const STARTER_PANTRY_STAPLES = [
+  "Tuz",
+  "Karabiber",
+  "Un",
+  "Şeker",
+  "Zeytinyağı",
+  "Ayçiçek Yağı",
+  "Pirinç",
+  "Makarna",
+  "Çay",
+];
+
+// Give a user a starting pantry + shopping list if they have none. Idempotent:
+// only ever seeds a list that is currently empty, so it never overwrites items
+// the user added (or deleted) themselves. The pantry gets common staples; the
+// shopping list is derived from the ingredients of the user's saved meal plans.
+async function seedUserLists(userId: string): Promise<void> {
+  // ── Pantry ──
+  const existingPantry = await db
+    .select({ id: userPantry.id })
+    .from(userPantry)
+    .where(eq(userPantry.userId, userId))
+    .limit(1);
+  if (existingPantry.length === 0) {
+    const nameToId = await resolveIngredientMap(STARTER_PANTRY_STAPLES);
+    const ids = [...new Set(nameToId.values())];
+    if (ids.length > 0) {
+      await db.insert(userPantry).values(ids.map((id) => ({ userId, ingredientId: id })));
+      console.log(`[Seed] Seeded ${ids.length} pantry staples for ${userId}`);
+    }
+  }
+
+  // ── Shopping list ──
+  const existingShopping = await db
+    .select({ id: userShoppingList.id })
+    .from(userShoppingList)
+    .where(eq(userShoppingList.userId, userId))
+    .limit(1);
+  if (existingShopping.length === 0) {
+    const plans = await db
+      .select({ shoppingList: mealPlans.shoppingList })
+      .from(mealPlans)
+      .where(eq(mealPlans.userId, userId));
+
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const candidateIds = new Set<string>();
+    for (const plan of plans) {
+      for (const item of (plan.shoppingList as ShoppingListItem[]) ?? []) {
+        const id = item?.ingredient_id;
+        if (id && uuidPattern.test(id)) candidateIds.add(id);
+      }
+    }
+
+    if (candidateIds.size > 0) {
+      // Keep only ids that still exist (userShoppingList.ingredientId has an FK).
+      const valid = await db
+        .select({ id: ingredients.id })
+        .from(ingredients)
+        .where(inArray(ingredients.id, [...candidateIds]));
+      if (valid.length > 0) {
+        await db
+          .insert(userShoppingList)
+          .values(valid.map((r) => ({ userId, ingredientId: r.id })));
+        console.log(`[Seed] Seeded ${valid.length} shopping-list items for ${userId}`);
+      }
+    }
+  }
+}
+
 async function resolveIngredientNames(ids: string[]): Promise<string[]> {
   if (!ids || ids.length === 0) return [];
   // Filter out any non-UUID values (legacy string names)
@@ -1030,6 +1102,10 @@ app.post("/users/sync", async (req, res) => {
     if (mapped > 0) {
       console.log(`[Sync] Mapped ${mapped} platform recipes to new user ${clerk_id}`);
     }
+    // Give them a starter pantry so they don't open to an empty kitchen.
+    await seedUserLists(clerk_id).catch((err) =>
+      console.error("[Sync] Failed to seed user lists:", err?.message || err)
+    );
   }
 
   res.json({ ok: true });
@@ -2853,6 +2929,16 @@ app.post("/admin/map-platform-recipes", requireAdmin, async (_req, res) => {
   res.status(202).json({ enqueued: true, job_id: jobId, users_count: usersCount });
 });
 
+// Seed a starter pantry + shopping list for all existing users who have none
+// (retroactive — new users are seeded on first sync).
+app.post("/admin/seed-user-lists", requireAdmin, async (_req, res) => {
+  const [{ count: usersCount }] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
+
+  // The per-user seeding loop runs as a durable background job.
+  const jobId = await enqueueJob("seed-user-lists", {});
+  res.status(202).json({ enqueued: true, job_id: jobId, users_count: usersCount });
+});
+
 // Get Instagram creators missing profile pictures (for client-side backfill)
 app.get("/creators/missing-pictures", async (_req, res) => {
   const creators = await db
@@ -3071,6 +3157,20 @@ function registerJobHandlers() {
       totalMapped += await mapPlatformRecipesToUser(user.clerkId);
     }
     console.log(`[Admin] Mapped platform recipes to ${allUsers.length} users (${totalMapped} new mappings)`);
+  });
+
+  registerJobHandler("seed-user-lists", async () => {
+    const allUsers = await db.select({ clerkId: users.clerkId }).from(users);
+    let seeded = 0;
+    for (const user of allUsers) {
+      try {
+        await seedUserLists(user.clerkId);
+        seeded++;
+      } catch (err) {
+        console.error(`[Seed] Error seeding lists for ${user.clerkId}:`, err);
+      }
+    }
+    console.log(`[Admin] Ran pantry/shopping-list seeding for ${seeded}/${allUsers.length} users`);
   });
 
   registerJobHandler("meal-plan-backfill", async (payload) => {
