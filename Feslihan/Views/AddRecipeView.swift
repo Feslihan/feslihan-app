@@ -89,11 +89,12 @@ struct AddRecipeView: View {
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
                             .font(.bodyText())
-                            .padding(14)
-                            .background(DS.sand)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .padding(.horizontal, 14)
+                            .frame(height: 46)
+                            .background(DS.cream)
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
+                                RoundedRectangle(cornerRadius: DS.radius)
                                     .stroke(DS.stone, lineWidth: 1)
                             )
 
@@ -108,11 +109,15 @@ struct AddRecipeView: View {
                                 Text("Yapıştır")
                                     .font(.system(size: 14, weight: .semibold))
                             }
-                            .foregroundStyle(DS.ember)
+                            .foregroundStyle(DS.ink)
                             .padding(.horizontal, 16)
                             .frame(height: 46)
-                            .background(DS.emberLight)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .background(DS.cream)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: DS.radius)
+                                    .stroke(DS.ink, lineWidth: 1)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                         }
                     }
                     .padding(.horizontal, 20)
@@ -129,7 +134,7 @@ struct AddRecipeView: View {
                                 .foregroundStyle(DS.smoke)
                                 .frame(width: 36, height: 36)
                                 .background(DS.sand)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
 
                         Image(systemName: "fork.knife")
@@ -137,7 +142,7 @@ struct AddRecipeView: View {
                             .foregroundStyle(DS.smoke)
                             .frame(width: 36, height: 36)
                             .background(DS.sand)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .padding(.horizontal, 20)
 
@@ -146,10 +151,9 @@ struct AddRecipeView: View {
                             .font(.buttonFont())
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .background(canProcess ? DS.ember : DS.stone)
+                            .background(canProcess ? DS.ember : DS.sand)
                             .foregroundStyle(canProcess ? DS.flour : DS.dust)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .shadow(color: canProcess ? DS.shadowButton : .clear, radius: 8, y: 4)
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     }
                     .disabled(!canProcess)
                     .padding(.horizontal, 20)
@@ -190,9 +194,12 @@ struct AddRecipeView: View {
                         checklistRow("Tarif analizi", state: checkState(for: .analyzingRecipe))
                     }
                 }
-                .background(DS.flour)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .shadow(color: DS.shadowCard, radius: 4, y: 2)
+                .background(DS.cream)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.radius)
+                        .stroke(DS.stone, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: DS.radius))
 
                 Text("Bir dakika sürmez, ocağı yakmaya hazırlan…")
                     .font(.handwritten())
@@ -206,9 +213,9 @@ struct AddRecipeView: View {
                         .font(.buttonFont())
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
-                        .background(DS.stone)
+                        .background(DS.sand)
                         .foregroundStyle(DS.dust)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                 }
                 .disabled(true)
             }
@@ -249,7 +256,7 @@ struct AddRecipeView: View {
             Text(label)
                 .font(.bodyText())
                 .foregroundStyle(state == .waiting ? DS.dust : DS.ink)
-                .fontWeight(state == .active ? .bold : .regular)
+                .fontWeight(state == .active ? .semibold : .regular)
 
             Spacer()
 
@@ -304,7 +311,7 @@ struct AddRecipeView: View {
                             .frame(height: 50)
                             .background(DS.ember)
                             .foregroundStyle(DS.cream)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .padding(.top, 8)
                 }
@@ -458,7 +465,7 @@ struct AddRecipeView: View {
             thumbnailBase64 = thumbData?.base64EncodedString()
         }
 
-        var dto = RecipeDTO(
+        let dto = RecipeDTO(
             platform: "nefisyemektarifleri",
             platform_user: scraped.platform_user,
             url: trimmedURL,

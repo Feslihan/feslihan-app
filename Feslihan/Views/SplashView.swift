@@ -30,37 +30,32 @@ struct SplashView: View {
                 VStack(spacing: 0) {
                     Spacer()
 
-                    VStack(spacing: 22) {
-                        // Leaf icon in circle
-                        ZStack {
-                            Circle()
-                                .fill(DS.emberLight)
-                                .frame(width: 96, height: 96)
-
-                            Image(systemName: "leaf.fill")
-                                .font(.system(size: 48, weight: .medium))
-                                .foregroundStyle(DS.ember)
-                        }
-                        .scaleEffect(iconScale)
+                    VStack(spacing: 0) {
+                        Image(systemName: "leaf.fill")
+                            .font(.system(size: 34, weight: .medium))
+                            .foregroundStyle(DS.ember)
+                            .scaleEffect(iconScale)
 
                         Text("Feslihan")
-                            .font(.system(size: 40, weight: .semibold, design: .serif))
+                            .font(.system(size: 46, weight: .semibold, design: .serif))
                             .foregroundStyle(DS.ink)
                             .opacity(titleOpacity)
+                            .padding(.top, 18)
 
                         Text("Anne, ne yesek?")
                             .font(.system(size: 17, weight: .regular, design: .serif))
                             .italic()
                             .foregroundStyle(DS.smoke)
                             .opacity(subtitleOpacity)
+                            .padding(.top, 10)
                     }
+                    .padding(.top, -30)
 
                     Spacer()
 
-                    // Loading spinner
-                    ProgressView()
-                        .tint(DS.ember)
-                        .padding(.bottom, 60)
+                    // Minimal line loader
+                    SplashLineLoader()
+                        .padding(.bottom, 64)
                 }
             }
             .onAppear {
@@ -93,6 +88,29 @@ struct SplashView: View {
                 withAnimation(.easeOut(duration: 0.2)) {
                     finished = true
                 }
+            }
+        }
+    }
+}
+
+/// Thin editorial progress line: a short ink segment sweeping a hairline track.
+struct SplashLineLoader: View {
+    @State private var sweep = false
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            Rectangle()
+                .fill(DS.stone)
+            Rectangle()
+                .fill(DS.ink)
+                .frame(width: 16, height: 2)
+                .offset(x: sweep ? 24 : 0)
+        }
+        .frame(width: 40, height: 2)
+        .clipped()
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                sweep = true
             }
         }
     }

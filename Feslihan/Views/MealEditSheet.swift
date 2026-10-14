@@ -50,7 +50,7 @@ struct MealEditSheet: View {
                         // Header
                         VStack(alignment: .leading, spacing: 4) {
                             Text(isNewMeal ? "Öğün Ekle" : "Öğün Düzenle")
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .font(.system(size: 22, weight: .semibold, design: .serif))
                                 .foregroundStyle(DS.ink)
                             if !isNewMeal {
                                 let currentName = meal.recipeIds.compactMap { recipeById[$0]?.title }.joined(separator: " + ")
@@ -87,7 +87,7 @@ struct MealEditSheet: View {
                                 }
                                 .padding(14)
                                 .background(DS.sand)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                         }
 
@@ -130,7 +130,7 @@ struct MealEditSheet: View {
                                     }
                                     .padding(14)
                                     .background(DS.sand)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
                                 }
                             }
                         }
@@ -156,7 +156,7 @@ struct MealEditSheet: View {
                                         .padding(12)
                                         .foregroundStyle(mealType == type.label ? .white : DS.ink)
                                         .background(mealType == type.label ? DS.ink : DS.sand)
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
                                     }
                                 }
                             }
@@ -170,7 +170,7 @@ struct MealEditSheet: View {
                                 .frame(height: 50)
                                 .foregroundStyle(.white)
                                 .background(canSave ? DS.ember : DS.stone)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                         .disabled(!canSave)
 
@@ -190,7 +190,7 @@ struct MealEditSheet: View {
                                 .frame(height: 50)
                                 .foregroundStyle(DS.tomato)
                                 .background(DS.sand)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                         }
                     }

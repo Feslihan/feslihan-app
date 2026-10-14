@@ -51,13 +51,13 @@ struct IngredientsView: View {
             // Legend
             if isLoaded {
                 HStack(spacing: 16) {
-                    HStack(spacing: 5) {
+                    HStack(spacing: 6) {
                         Circle().fill(DS.ember).frame(width: 8, height: 8)
-                        Text("Var").font(.captionText()).foregroundStyle(DS.smoke)
+                        Text("Var").font(.captionText()).foregroundStyle(DS.dust)
                     }
-                    HStack(spacing: 5) {
+                    HStack(spacing: 6) {
                         Circle().fill(DS.tomato).frame(width: 8, height: 8)
-                        Text("Eksik").font(.captionText()).foregroundStyle(DS.smoke)
+                        Text("Almalı").font(.captionText()).foregroundStyle(DS.dust)
                     }
                     Spacer()
                 }
@@ -83,16 +83,14 @@ struct IngredientsView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     if let section = group.section {
                         Text(section)
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                            .foregroundStyle(DS.ember)
+                            .font(.eyebrow())
+                            .tracking(1.2)
+                            .foregroundStyle(DS.dust)
                             .textCase(.uppercase)
                             .padding(.bottom, 8)
                     }
                     flatListView(group.items)
                 }
-                .padding(12)
-                .background(DS.sand.opacity(0.5))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
             }
         }
     }
@@ -107,26 +105,25 @@ struct IngredientsView: View {
                 let inPantry = pantryNames.contains(key)
                 let inCart = shoppingListNames.contains(key)
 
-                HStack(spacing: 10) {
+                HStack(spacing: 12) {
                     // Pantry status dot
                     if isLoaded {
                         Circle()
                             .fill(inPantry ? DS.ember : DS.tomato)
-                            .frame(width: 9, height: 9)
+                            .frame(width: 8, height: 8)
                     }
 
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(ingredient.name)
-                            .font(.system(size: 15))
-                            .foregroundStyle(DS.ink)
-                        if !ingredient.amount.isEmpty {
-                            Text(ingredient.amount)
-                                .font(.system(size: 13))
-                                .foregroundStyle(DS.smoke)
-                        }
-                    }
+                    Text(ingredient.name)
+                        .font(.system(size: 15))
+                        .foregroundStyle(DS.ink)
 
                     Spacer()
+
+                    if !ingredient.amount.isEmpty {
+                        Text(ingredient.amount)
+                            .font(.system(size: 14))
+                            .foregroundStyle(DS.smoke)
+                    }
 
                     // Shopping list status
                     if isLoaded && !inPantry {
@@ -146,11 +143,10 @@ struct IngredientsView: View {
                         }
                     }
                 }
-                .padding(.vertical, 10)
-                .padding(.horizontal, 4)
+                .padding(.vertical, 12)
 
                 if index < items.count - 1 {
-                    Divider().padding(.leading, isLoaded ? 23 : 0)
+                    Rectangle().fill(DS.stone).frame(height: 1)
                 }
             }
         }

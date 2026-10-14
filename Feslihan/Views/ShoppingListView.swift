@@ -91,7 +91,7 @@ struct ShoppingListView: View {
                                 .foregroundStyle(DS.cream)
                                 .frame(width: 180, height: 48)
                                 .background(DS.ember)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                         .padding(.top, 8)
                     }
@@ -104,7 +104,7 @@ struct ShoppingListView: View {
                             if !uncheckedItems.isEmpty {
                                 HStack {
                                     Text("Alınacaklar")
-                                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                        .font(.system(size: 15, weight: .semibold))
                                         .foregroundStyle(DS.smoke)
                                     Spacer()
                                     Text("\(uncheckedItems.count) ürün")
@@ -127,16 +127,19 @@ struct ShoppingListView: View {
                                         }
                                     }
                                 }
-                                .background(DS.flour)
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
-                                .shadow(color: DS.shadowCard, radius: 4, y: 2)
+                                .background(DS.cream)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: DS.radius)
+                                        .stroke(DS.stone, lineWidth: 1)
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                             }
 
                             // Checked items
                             if !checkedItems.isEmpty {
                                 HStack {
                                     Text("Alınanlar")
-                                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                        .font(.system(size: 15, weight: .semibold))
                                         .foregroundStyle(DS.smoke)
                                     Spacer()
                                     Text("\(checkedItems.count) ürün")
@@ -160,9 +163,12 @@ struct ShoppingListView: View {
                                         }
                                     }
                                 }
-                                .background(DS.flour)
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
-                                .shadow(color: DS.shadowCard, radius: 4, y: 2)
+                                .background(DS.cream)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: DS.radius)
+                                        .stroke(DS.stone, lineWidth: 1)
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: DS.radius))
 
                                 Button {
                                     Task { await saveToPantry() }
@@ -183,7 +189,7 @@ struct ShoppingListView: View {
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 46)
                                     .background(DS.ember)
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
                                 }
                                 .disabled(isSavingToPantry)
                                 .padding(.top, 12)
@@ -314,7 +320,7 @@ private struct ShoppingItemRow: View {
                         Image(systemName: "leaf.fill")
                             .font(.system(size: 9))
                         Text("Kilerde: \(alt)")
-                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .font(.system(size: 11, weight: .medium))
                     }
                     .foregroundStyle(DS.ember)
                 }

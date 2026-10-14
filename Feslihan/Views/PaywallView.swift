@@ -23,7 +23,7 @@ struct PaywallView: View {
                                 .foregroundStyle(DS.ember)
 
                             Text("Feslihan'ı Yükselt")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+                                .font(.system(size: 28, weight: .semibold, design: .serif))
                                 .foregroundStyle(DS.ink)
 
                             Text("Daha fazla tarif, haftalık yemek planı ve daha fazlası")
@@ -94,7 +94,7 @@ struct PaywallView: View {
                                 .frame(height: 52)
                                 .foregroundStyle(.white)
                                 .background(DS.ember)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                             .disabled(isPurchasing)
                             .padding(.horizontal, 20)
@@ -165,9 +165,9 @@ struct PaywallView: View {
         .padding(16)
         .foregroundStyle(highlighted ? .white : DS.ink)
         .background(highlighted ? DS.ember : DS.sand)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: 8)
                 .stroke(isSelected ? DS.ember : .clear, lineWidth: 2)
         )
         .onTapGesture {

@@ -78,7 +78,7 @@ struct SettingsView: View {
                     ProgressView()
                         .padding(20)
                         .background(DS.flour)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
         }
@@ -184,7 +184,7 @@ private struct SettingsRowContent: View {
                 .foregroundStyle(destructive ? DS.tomato : DS.ember)
                 .frame(width: 40, height: 40)
                 .background(destructive ? DS.tomato.opacity(0.12) : DS.emberLight)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -206,6 +206,6 @@ private struct SettingsRowContent: View {
         }
         .padding(14)
         .background(DS.sand)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }

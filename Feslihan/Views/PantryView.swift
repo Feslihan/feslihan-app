@@ -33,35 +33,15 @@ struct PantryView: View {
                     if !items.isEmpty {
                         Text("\(items.count) malzeme")
                             .font(.label())
-                            .foregroundStyle(DS.ember)
+                            .foregroundStyle(DS.smoke)
                             .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(DS.emberLight)
+                            .padding(.vertical, 5)
+                            .background(DS.sand)
                             .clipShape(Capsule())
                     }
 
                     Spacer()
 
-                    Menu {
-                        Button {
-                            showBubbleGame = true
-                        } label: {
-                            Label("Baloncuklardan Seç", systemImage: "circle.grid.3x3.fill")
-                        }
-
-                        Button {
-                            showIngredientPicker = true
-                        } label: {
-                            Label("Listeden Seç", systemImage: "list.bullet")
-                        }
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(DS.flour)
-                            .frame(width: 36, height: 36)
-                            .background(DS.ember)
-                            .clipShape(Circle())
-                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
@@ -96,7 +76,7 @@ struct PantryView: View {
                                 .foregroundStyle(DS.cream)
                                 .frame(width: 180, height: 48)
                                 .background(DS.ember)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                         .padding(.top, 8)
                     }
@@ -112,27 +92,64 @@ struct PantryView: View {
                         TextField("Malzeme ara...", text: $searchText)
                             .font(.bodyText())
                     }
-                    .padding(12)
-                    .background(DS.sand)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .padding(.horizontal, 14)
+                    .frame(height: 46)
+                    .background(DS.cream)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.radius)
+                            .stroke(DS.stone, lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, 12)
 
-                    // List
+                    // Bubble cloud — filled basil pills; long-press for actions
                     ScrollView {
-                        LazyVStack(spacing: 8) {
+                        FlowLayout(spacing: 9) {
                             ForEach(filteredItems) { item in
-                                PantryItemRow(
-                                    item: item,
+                                PantryBubblePill(
+                                    name: item.ingredient_name,
                                     onDelete: { Task { await removeItem(item) } },
                                     onMoveToShoppingList: { Task { await moveToShoppingList(item) } }
                                 )
                             }
                         }
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 24)
+                        .padding(.top, 8)
+                        .padding(.bottom, 110)
                     }
                 }
+            }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if !isLoading && !items.isEmpty {
+                Menu {
+                    Button {
+                        showBubbleGame = true
+                    } label: {
+                        Label("Baloncuklardan Seç", systemImage: "circle.grid.3x3.fill")
+                    }
+
+                    Button {
+                        showIngredientPicker = true
+                    } label: {
+                        Label("Listeden Seç", systemImage: "list.bullet")
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("Ekle")
+                            .font(.buttonFont())
+                    }
+                    .foregroundStyle(DS.flour)
+                    .padding(.horizontal, 22)
+                    .frame(height: 52)
+                    .background(DS.ember)
+                    .clipShape(Capsule())
+                }
+                .padding(.trailing, 20)
+                .padding(.bottom, 30)
             }
         }
         .sheet(isPresented: $showIngredientPicker) {
@@ -186,43 +203,29 @@ struct PantryView: View {
     }
 }
 
-// MARK: - Pantry Item Row
+// MARK: - Pantry Bubble Pill
 
-private struct PantryItemRow: View {
-    let item: PantryItemDTO
+private struct PantryBubblePill: View {
+    let name: String
     let onDelete: () -> Void
     let onMoveToShoppingList: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "leaf.fill")
-                .font(.system(size: 14))
-                .foregroundStyle(DS.ember)
-                .frame(width: 36, height: 36)
-                .background(DS.emberLight)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-
-            Text(item.ingredient_name)
-                .font(.sectionHeader())
-                .foregroundStyle(DS.ink)
-
-            Spacer()
-
-            Button(action: onMoveToShoppingList) {
-                Image(systemName: "cart.badge.plus")
-                    .font(.system(size: 15))
-                    .foregroundStyle(DS.ember)
+        Text(name)
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 9)
+            .background(DS.ember)
+            .clipShape(Capsule())
+            .contextMenu {
+                Button(action: onMoveToShoppingList) {
+                    Label("Alışveriş Listesine Taşı", systemImage: "cart.badge.plus")
+                }
+                Button(role: .destructive, action: onDelete) {
+                    Label("Sil", systemImage: "trash")
+                }
             }
-
-            Button(action: onDelete) {
-                Image(systemName: "trash")
-                    .font(.system(size: 14))
-                    .foregroundStyle(DS.smoke)
-            }
-        }
-        .padding(12)
-        .background(DS.sand)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -268,7 +271,7 @@ struct PantryGateView: View {
                         .frame(height: 50)
                         .background(DS.ember)
                         .foregroundStyle(DS.cream)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .padding(.horizontal, 20)
 
@@ -340,9 +343,14 @@ struct IngredientPickerSheet: View {
                             .font(.bodyText())
                             .focused($isSearchFocused)
                     }
-                    .padding(12)
-                    .background(DS.sand)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .padding(.horizontal, 14)
+                    .frame(height: 46)
+                    .background(DS.cream)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.radius)
+                            .stroke(DS.stone, lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
 
@@ -384,7 +392,7 @@ struct IngredientPickerSheet: View {
                                         }
                                         .padding(12)
                                         .background(isSelected ? DS.emberLight : DS.sand)
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
                                     }
                                 }
                             }
@@ -404,7 +412,7 @@ struct IngredientPickerSheet: View {
                             .frame(height: 50)
                             .background(selected.isEmpty ? DS.dust : DS.ember)
                             .foregroundStyle(DS.cream)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .disabled(selected.isEmpty)
                     .padding(.horizontal, 20)

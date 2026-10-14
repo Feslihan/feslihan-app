@@ -210,11 +210,11 @@ struct IngredientFlexView: View {
                                 .foregroundStyle(DS.ember)
                                 .frame(width: 42, height: 42)
                                 .background(selectedFlex == flex ? DS.flour : DS.sand)
-                                .clipShape(RoundedRectangle(cornerRadius: 11))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(flex.rawValue)
-                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    .font(.system(size: 16, weight: .semibold))
                                     .foregroundStyle(DS.ink)
 
                                 Text(flex.subtitle)
@@ -239,9 +239,9 @@ struct IngredientFlexView: View {
                         }
                         .padding(16)
                         .background(selectedFlex == flex ? DS.emberLight : DS.flour)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 8)
                                 .stroke(selectedFlex == flex ? DS.ember : DS.stone, lineWidth: 1.5)
                         )
                     }
@@ -264,7 +264,7 @@ struct IngredientFlexView: View {
                     .frame(height: 50)
                     .background(DS.ember)
                     .foregroundStyle(DS.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -317,7 +317,7 @@ struct CategorySelectionView: View {
                         .padding(.vertical, 16)
                         .foregroundStyle(selectedCategory == category ? DS.cream : DS.ink)
                         .background(selectedCategory == category ? DS.ember : DS.sand)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .scaleEffect(appeared ? 1 : 0.97)
                     .opacity(appeared ? 1 : 0)
@@ -338,7 +338,7 @@ struct CategorySelectionView: View {
                     .frame(height: 50)
                     .background(DS.ember)
                     .foregroundStyle(DS.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -521,7 +521,7 @@ struct BubbleGameView: View {
                 // Header
                 VStack(spacing: 6) {
                     Text("Evinde ne var?")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(.system(size: 27, weight: .semibold, design: .serif))
                         .foregroundStyle(DS.ink)
 
                     Text("Malzemelere dokunarak seç")
@@ -666,7 +666,7 @@ struct BubbleGameView: View {
                     .frame(height: 54)
                     .background(selected.isEmpty ? Color(hex: 0xE0E0E0) : Color(hex: 0x1A1A1A))
                     .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .disabled(selected.isEmpty)
                 .padding(.horizontal, 20)
@@ -832,10 +832,10 @@ struct TimeSelectionView: View {
                                 .foregroundStyle(DS.ember)
                                 .frame(width: 42, height: 42)
                                 .background(selectedTime == time ? DS.flour : DS.sand)
-                                .clipShape(RoundedRectangle(cornerRadius: 11))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
 
                             Text(time.rawValue)
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundStyle(DS.ink)
 
                             Spacer()
@@ -855,9 +855,9 @@ struct TimeSelectionView: View {
                         }
                         .padding(16)
                         .background(selectedTime == time ? DS.emberLight : DS.flour)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 8)
                                 .stroke(selectedTime == time ? DS.ember : DS.stone, lineWidth: 1.5)
                         )
                     }
@@ -880,7 +880,7 @@ struct TimeSelectionView: View {
                     .frame(height: 50)
                     .background(DS.ember)
                     .foregroundStyle(DS.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -932,7 +932,7 @@ struct CuisineSelectionView: View {
                         .padding(.vertical, 20)
                         .foregroundStyle(selectedCuisine == cuisine ? DS.cream : DS.ink)
                         .background(selectedCuisine == cuisine ? DS.ember : DS.sand)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .scaleEffect(appeared ? 1 : 0.97)
                     .opacity(appeared ? 1 : 0)
@@ -953,7 +953,7 @@ struct CuisineSelectionView: View {
                     .frame(height: 50)
                     .background(DS.ember)
                     .foregroundStyle(DS.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -996,9 +996,18 @@ struct SwipeResultsView: View {
                     Button {
                         showSaved = true
                     } label: {
-                        Image(systemName: "heart.fill")
-                            .foregroundStyle(DS.ember)
-                            .font(.system(size: 20, weight: .medium))
+                        HStack(spacing: 5) {
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 13))
+                                .foregroundStyle(DS.ember)
+                            Text("\(savedRecipes.count)")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(DS.ink)
+                        }
+                        .padding(.horizontal, 12)
+                        .frame(height: 30)
+                        .background(DS.sand)
+                        .clipShape(Capsule())
                     }
                 }
             }
@@ -1084,24 +1093,27 @@ struct SwipeResultsView: View {
                 }
                 .padding(.horizontal, 20)
 
-                HStack(spacing: 40) {
-                    VStack(spacing: 4) {
-                        Image(systemName: "xmark.circle")
-                            .font(.system(size: 22, weight: .medium))
-                            .foregroundStyle(DS.dust)
-                        Text("Geç")
-                            .font(.captionText())
-                            .foregroundStyle(DS.smoke)
+                HStack(spacing: 28) {
+                    Button(action: skipCurrent) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(DS.tomato)
+                            .frame(width: 58, height: 58)
+                            .background(DS.cream)
+                            .overlay(Circle().stroke(DS.stone, lineWidth: 1))
+                            .clipShape(Circle())
                     }
+                    .accessibilityLabel("Geç")
 
-                    VStack(spacing: 4) {
-                        Image(systemName: "heart.circle")
-                            .font(.system(size: 22, weight: .medium))
-                            .foregroundStyle(DS.ember.opacity(0.5))
-                        Text("Kaydet")
-                            .font(.captionText())
-                            .foregroundStyle(DS.smoke)
+                    Button(action: likeCurrent) {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 26, weight: .medium))
+                            .foregroundStyle(.white)
+                            .frame(width: 64, height: 64)
+                            .background(DS.ember)
+                            .clipShape(Circle())
                     }
+                    .accessibilityLabel("Kaydet")
                 }
                 .padding(.bottom, 24)
             }
@@ -1117,6 +1129,14 @@ struct SwipeResultsView: View {
     @ViewBuilder
     private var swipeIndicator: some View {
         EmptyView()
+    }
+
+    private func likeCurrent() {
+        handleSwipe(CGSize(width: 200, height: 0))
+    }
+
+    private func skipCurrent() {
+        handleSwipe(CGSize(width: -200, height: 0))
     }
 
     private func handleSwipe(_ translation: CGSize) {
@@ -1306,7 +1326,7 @@ private struct RecipeSuggestionCard: View {
             // Info section
             VStack(alignment: .leading, spacing: 8) {
                 Text(recipe.title)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.system(size: 23, weight: .semibold, design: .serif))
                     .foregroundStyle(DS.ink)
 
                 if !recipe.description.isEmpty {
@@ -1332,7 +1352,7 @@ private struct RecipeSuggestionCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(DS.cream)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
         .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
     }
 }

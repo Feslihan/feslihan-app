@@ -107,18 +107,16 @@ struct ModeSelectionView: View {
 
                 ScrollView {
                     VStack(spacing: 0) {
-                        // Greeting + avatar
+                        // Wordmark + avatar
                         HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(greeting)
-                                    .font(.handwritten())
-                                    .foregroundStyle(DS.dust)
-
-                                Text(Clerk.shared.user?.firstName.map { "Merhaba, \($0)" } ?? "Merhaba")
-                                    .font(.displayLarge())
+                            HStack(spacing: 7) {
+                                Image(systemName: "leaf.fill")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(DS.ember)
+                                Text("Feslihan")
+                                    .font(.system(size: 17, weight: .semibold, design: .serif))
                                     .foregroundStyle(DS.ink)
                             }
-                            .accessibilityElement(children: .combine)
 
                             Spacer()
 
@@ -130,7 +128,7 @@ struct ModeSelectionView: View {
                                     } placeholder: {
                                         avatarPlaceholder
                                     }
-                                    .frame(width: 46, height: 46)
+                                    .frame(width: 34, height: 34)
                                     .clipShape(Circle())
                                 } else {
                                     avatarPlaceholder
@@ -138,21 +136,63 @@ struct ModeSelectionView: View {
                             }
                             .accessibilityLabel("Hesabım")
                         }
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, 22)
                         .padding(.top, 8)
-                        .padding(.bottom, 18)
+
+                        // Greeting
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(greeting)
+                                .font(.handwritten())
+                                .foregroundStyle(DS.smoke)
+
+                            Text(Clerk.shared.user?.firstName.map { "Merhaba,\n\($0)" } ?? "Merhaba")
+                                .font(.system(size: 38, weight: .semibold, design: .serif))
+                                .foregroundStyle(DS.ink)
+                                .lineSpacing(2)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 22)
+                        .padding(.top, 30)
+                        .padding(.bottom, 22)
 
                         // First-run prompt leading the user to add recipes
                         if recipeCount == 0 {
                             AddRecipePrompt { showAddRecipe = true }
-                                .padding(.horizontal, 20)
+                                .padding(.horizontal, 22)
                                 .padding(.bottom, 16)
                         }
 
-                        // Mode cards
-                        VStack(spacing: 12) {
-                            ModeCard(
-                                icon: "book.closed.fill",
+                        // Editorial mode list
+                        VStack(spacing: 0) {
+                            FeaturedModeCard()
+                                .opacity(cardsVisible ? 1 : 0)
+                                .offset(y: cardsVisible ? 0 : 20)
+                                .onTapGesture {
+                                    if subscription.currentPlan.canMealPrep {
+                                        navigateOrGate(.mealPrep)
+                                    } else {
+                                        showPaywall = true
+                                    }
+                                }
+
+                            ModeRow(
+                                number: "02",
+                                icon: "wand.and.stars",
+                                tint: DS.tomato,
+                                title: "Ne Yesem?",
+                                subtitle: "Sana özel tarif önerileri keşfet"
+                            )
+                            .opacity(cardsVisible ? 1 : 0)
+                            .offset(y: cardsVisible ? 0 : 20)
+                            .onTapGesture {
+                                navigateOrGate(.whatToEat)
+                            }
+
+                            ModeRow(
+                                number: "03",
+                                icon: "book.closed",
+                                tint: DS.honeyInk,
                                 title: "Tariflerim",
                                 subtitle: "Kaydettiğin tüm tarifler"
                             )
@@ -163,49 +203,23 @@ struct ModeSelectionView: View {
                                     selectedMode = .browse
                                 }
                             }
-                                                        ModeCard(
-                                icon: "calendar",
-                                title: "Haftalık Plan",
-                                subtitle: "Bir haftalık yemek planı hazırla",
-                                premium: true
-                            )
-                            .opacity(cardsVisible ? 1 : 0)
-                            .offset(y: cardsVisible ? 0 : 20)
-                            .onTapGesture {
-                                if subscription.currentPlan.canMealPrep {
-                                    navigateOrGate(.mealPrep)
-                                } else {
-                                    showPaywall = true
-                                }
-                            }
-
-                            ModeCard(
-                                icon: "wand.and.stars",
-                                title: "Ne Yesem?",
-                                subtitle: "Sana özel tarif önerileri keşfet"
-                            )
-                            .opacity(cardsVisible ? 1 : 0)
-                            .offset(y: cardsVisible ? 0 : 20)
-                            .onTapGesture {
-                                navigateOrGate(.whatToEat)
-                            }
 
                             // Mutfak section
                             Text("MUTFAK")
-                                .font(.system(size: 11, weight: .bold, design: .rounded))
-                                .tracking(1.4)
+                                .font(.eyebrow())
+                                .tracking(1.6)
                                 .foregroundStyle(DS.dust)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.top, 14)
-                                .padding(.leading, 2)
+                                .padding(.top, 26)
 
-                            HStack(spacing: 12) {
-                                UtilCard(
-                                    icon: "cabinet.fill",
+                            HStack(spacing: 0) {
+                                UtilCell(
+                                    icon: "cabinet",
                                     title: "Kilerim",
                                     count: "\(pantryCount)",
                                     unit: "malzeme",
-                                    tint: DS.ember
+                                    tint: DS.eggplant,
+                                    first: true
                                 )
                                 .onTapGesture {
                                     withAnimation(.spring(response: 0.2)) {
@@ -213,12 +227,17 @@ struct ModeSelectionView: View {
                                     }
                                 }
 
-                                UtilCard(
-                                    icon: "basket.fill",
+                                Rectangle()
+                                    .fill(DS.stone)
+                                    .frame(width: 1)
+
+                                UtilCell(
+                                    icon: "basket",
                                     title: "Alışveriş",
                                     count: "\(shoppingCount)",
                                     unit: "eksik ürün",
-                                    tint: DS.terracotta
+                                    tint: DS.tomato,
+                                    first: false
                                 )
                                 .onTapGesture {
                                     withAnimation(.spring(response: 0.2)) {
@@ -226,24 +245,13 @@ struct ModeSelectionView: View {
                                     }
                                 }
                             }
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 4)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 80)
+                        .padding(.horizontal, 22)
+                        .padding(.bottom, 60)
                     }
                 }
-            }
-            .overlay(alignment: .bottom) {
-                Button(action: { showAddRecipe = true }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(DS.flour)
-                        .frame(width: 56, height: 56)
-                        .background(DS.ember)
-                        .clipShape(Circle())
-                        .shadow(color: DS.shadowButton, radius: 8, y: 4)
-                }
-                .accessibilityLabel("Tarif ekle")
-                .padding(.bottom, 24)
             }
             .sheet(isPresented: $showAddRecipe) {
                 AddRecipeView()
@@ -312,13 +320,87 @@ struct ModeSelectionView: View {
 
     private var avatarPlaceholder: some View {
         Text(String(Clerk.shared.user?.firstName?.prefix(1) ?? "N"))
-            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .font(.system(size: 14, weight: .semibold))
             .foregroundStyle(DS.flour)
-            .frame(width: 46, height: 46)
-            .background(
-                LinearGradient(colors: [DS.terracotta, DS.honey], startPoint: .topLeading, endPoint: .bottomTrailing)
-            )
+            .frame(width: 34, height: 34)
+            .background(DS.ink)
             .clipShape(Circle())
+    }
+}
+
+// MARK: - Plus Badge (outlined basil crown tag)
+
+struct PlusBadge: View {
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "crown")
+                .font(.system(size: 10, weight: .medium))
+            Text("PLUS")
+                .font(.system(size: 10, weight: .semibold))
+                .tracking(0.8)
+        }
+        .foregroundStyle(DS.ember)
+        .padding(.horizontal, 7)
+        .frame(height: 20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(DS.ember, lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Featured Mode (Haftalık Plan hero block)
+
+private struct FeaturedModeCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .top) {
+                LinearGradient(
+                    colors: [Color(hex: 0x36A15E), Color(hex: 0x1E7A42)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .frame(height: 112)
+                .clipShape(RoundedRectangle(cornerRadius: DS.radius))
+
+                HStack {
+                    Text("01")
+                        .font(.system(size: 12, weight: .regular))
+                        .monospacedDigit()
+                        .foregroundStyle(.white)
+
+                    Spacer()
+
+                    Image(systemName: "calendar")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(.white)
+                }
+                .padding(.horizontal, 14)
+                .padding(.top, 12)
+            }
+
+            HStack(spacing: 10) {
+                Text("Haftalık Plan")
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundStyle(DS.ink)
+
+                PlusBadge()
+            }
+            .padding(.top, 14)
+
+            Text("Bir haftalık yemek planı hazırla")
+                .font(.system(size: 14))
+                .foregroundStyle(DS.smoke)
+                .padding(.top, 2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.bottom, 18)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(DS.stone).frame(height: 1)
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -353,9 +435,9 @@ private struct AddRecipePrompt: View {
             }
             .padding(16)
             .background(DS.emberLight)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 8)
                     .stroke(DS.ember.opacity(0.25), lineWidth: 1)
             )
         }
@@ -363,60 +445,45 @@ private struct AddRecipePrompt: View {
     }
 }
 
-// MARK: - Util Card (compact Mutfak cards)
+// MARK: - Util Cell (hairline-divided Mutfak stats)
 
-private struct UtilCard: View {
+private struct UtilCell: View {
     let icon: String
     let title: String
     let count: String
     let unit: String
     let tint: Color
-
-    @State private var isPressed = false
+    let first: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(tint)
-                    .frame(width: 38, height: 38)
-                    .background(DS.sand)
-                    .clipShape(RoundedRectangle(cornerRadius: 11))
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(DS.ink)
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(tint)
+            }
+
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(count)
+                    .font(.system(size: 32, weight: .medium, design: .serif))
+                    .foregroundStyle(tint)
+                Text(unit)
+                    .font(.captionText())
                     .foregroundStyle(DS.dust)
             }
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(DS.ink)
-
-                HStack(alignment: .firstTextBaseline, spacing: 5) {
-                    Text(count)
-                        .font(.system(size: 20, weight: .semibold, design: .serif))
-                        .foregroundStyle(tint)
-                    Text(unit)
-                        .font(.captionText())
-                        .foregroundStyle(DS.dust)
-                }
-            }
         }
-        .padding(14)
+        .padding(.top, 16)
+        .padding(.bottom, 4)
+        .padding(.leading, first ? 0 : 16)
+        .padding(.trailing, first ? 16 : 0)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DS.flour)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .shadow(color: DS.shadowCard, radius: 4, y: 2)
-        .scaleEffect(isPressed ? 0.97 : 1.0)
-        .onLongPressGesture(minimumDuration: .infinity, pressing: { pressing in
-            withAnimation(.easeOut(duration: 0.15)) {
-                isPressed = pressing
-            }
-        }, perform: {})
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
     }
@@ -528,7 +595,7 @@ private struct AccountRowLabel: View {
                 .foregroundStyle(DS.ember)
                 .frame(width: 44, height: 44)
                 .background(DS.emberLight)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -548,77 +615,51 @@ private struct AccountRowLabel: View {
         }
         .padding(14)
         .background(DS.sand)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
 
-// MARK: - Mode Card
+// MARK: - Mode Row (numbered editorial list row)
 
-private struct ModeCard: View {
+private struct ModeRow: View {
+    let number: String
     let icon: String
+    let tint: Color
     let title: String
     let subtitle: String
-    var premium: Bool = false
-
-    @State private var isPressed = false
 
     var body: some View {
-        HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 24, weight: .medium))
-                .foregroundStyle(DS.ember)
-                .frame(width: 50, height: 50)
-                .background(DS.cream)
-                .clipShape(RoundedRectangle(cornerRadius: 13))
+        HStack(alignment: .top, spacing: 14) {
+            Text(number)
+                .font(.system(size: 12, weight: .regular))
+                .monospacedDigit()
+                .foregroundStyle(DS.dust)
+                .frame(width: 20, alignment: .leading)
+                .padding(.top, 6)
 
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 7) {
-                    Text(title)
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
-                        .foregroundStyle(DS.ink)
-
-                    if premium {
-                        HStack(spacing: 3) {
-                            Image(systemName: "crown.fill")
-                                .font(.system(size: 10))
-                            Text("PLUS")
-                                .font(.system(size: 10, weight: .heavy))
-                                .tracking(0.4)
-                        }
-                        .foregroundStyle(DS.terracotta)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 2)
-                        .background(DS.terracotta.opacity(0.14))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                    }
-                }
+                Text(title)
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(DS.ink)
 
                 Text(subtitle)
-                    .font(.system(size: 13.5, weight: .regular))
+                    .font(.system(size: 14))
                     .foregroundStyle(DS.smoke)
                     .lineLimit(1)
             }
 
             Spacer()
 
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(DS.dust)
+            Image(systemName: icon)
+                .font(.system(size: 19, weight: .medium))
+                .foregroundStyle(tint)
+                .padding(.top, 4)
         }
-        .padding(16)
-        .background(DS.sand)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(DS.stone, lineWidth: 1)
-        )
-        .shadow(color: DS.shadowCard, radius: 4, y: 2)
-        .scaleEffect(isPressed ? 0.97 : 1.0)
-        .onLongPressGesture(minimumDuration: .infinity, pressing: { pressing in
-            withAnimation(.easeOut(duration: 0.15)) {
-                isPressed = pressing
-            }
-        }, perform: {})
+        .padding(.vertical, 18)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(DS.stone).frame(height: 1)
+        }
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
     }

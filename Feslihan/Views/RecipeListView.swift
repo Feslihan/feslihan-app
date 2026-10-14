@@ -158,8 +158,8 @@ struct RecipeListView: View {
     }
 
     private let columns = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 14),
+        GridItem(.flexible(), spacing: 14),
     ]
 
     private var activeFiltersBar: some View {
@@ -351,28 +351,66 @@ struct RecipeListView: View {
                 recipeScrollContent
             }
         }
+        .overlay(alignment: .bottomTrailing) {
+            if !recipes.isEmpty {
+                Button {
+                    showAddRecipe = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(DS.flour)
+                        .frame(width: 56, height: 56)
+                        .background(DS.ink)
+                        .clipShape(RoundedRectangle(cornerRadius: DS.radius))
+                }
+                .accessibilityLabel("Tarif ekle")
+                .padding(.trailing, 22)
+                .padding(.bottom, 24)
+            }
+        }
+        .sheet(isPresented: $showAddRecipe) {
+            AddRecipeView()
+        }
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(DS.sand)
-                    .frame(width: 96, height: 96)
-                Image(systemName: "fork.knife")
-                    .font(.system(size: 44, weight: .medium))
-                    .foregroundStyle(DS.dust)
-            }
-            Text("Henüz tarif eklemediniz…")
-                .font(.system(size: 19, weight: .regular, design: .serif))
-                .italic()
+        VStack(alignment: .leading, spacing: 0) {
+            Image(systemName: "frying.pan")
+                .font(.system(size: 34, weight: .light))
                 .foregroundStyle(DS.ink)
+
+            Text("Henüz tarif eklemediniz…")
+                .font(.system(size: 22, weight: .regular, design: .serif))
+                .italic()
+                .foregroundStyle(DS.smoke)
+                .padding(.top, 20)
+
             Text("Bir video linki yapıştır, gerisini Feslihan halletsin.")
                 .font(.bodyText())
                 .foregroundStyle(DS.smoke)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 250)
+                .frame(maxWidth: 270, alignment: .leading)
+                .padding(.top, 8)
+
+            Button {
+                showAddRecipe = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 15, weight: .semibold))
+                    Text("İlk Tarifini Ekle")
+                        .font(.buttonFont())
+                }
+                .foregroundStyle(DS.flour)
+                .padding(.horizontal, 22)
+                .frame(height: 50)
+                .background(DS.ember)
+                .clipShape(RoundedRectangle(cornerRadius: DS.radius))
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 26)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 22)
     }
 
     private var isDefaultView: Bool {
@@ -421,9 +459,14 @@ struct RecipeListView: View {
                 }
             }
         }
-        .padding(12)
-        .background(DS.sand)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 14)
+        .frame(height: 46)
+        .background(DS.cream)
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.radius)
+                .stroke(DS.stone, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: DS.radius))
         .padding(.horizontal, 16)
     }
 
@@ -449,8 +492,12 @@ struct RecipeListView: View {
                 }
                 .foregroundStyle(DS.ember)
                 .padding(14)
-                .background(DS.emberLight)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .background(DS.cream)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.radius)
+                        .stroke(DS.stone, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: DS.radius))
             }
             .buttonStyle(.plain)
 
@@ -474,8 +521,12 @@ struct RecipeListView: View {
                 }
                 .foregroundStyle(DS.tomato)
                 .padding(14)
-                .background(DS.tomato.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .background(DS.cream)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.radius)
+                        .stroke(DS.stone, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: DS.radius))
             }
             .buttonStyle(.plain)
         }
@@ -498,7 +549,7 @@ struct RecipeListView: View {
                         } label: {
                             VStack(spacing: 8) {
                                 ZStack {
-                                    RoundedRectangle(cornerRadius: 14)
+                                    RoundedRectangle(cornerRadius: 8)
                                         .strokeBorder(DS.dust.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, dash: [6]))
                                         .frame(width: 100, height: 100)
                                     Image(systemName: "plus")
@@ -545,7 +596,7 @@ struct RecipeListView: View {
                 .padding(.vertical, 12)
                 .padding(.horizontal, 20)
                 .background(DS.ember.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 16)
@@ -559,7 +610,7 @@ struct RecipeListView: View {
                 .foregroundStyle(DS.ink)
                 .padding(.horizontal, 16)
 
-            LazyVGrid(columns: columns, spacing: 12) {
+            LazyVGrid(columns: columns, spacing: 22) {
                 ForEach(filtered) { recipe in
                     NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
                         RecipeCard(recipe: recipe)
@@ -586,7 +637,7 @@ struct RecipeListView: View {
                 .foregroundStyle(DS.smoke)
                 .padding(.horizontal, 16)
 
-            LazyVGrid(columns: columns, spacing: 12) {
+            LazyVGrid(columns: columns, spacing: 22) {
                 ForEach(filtered) { recipe in
                     NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
                         RecipeCard(recipe: recipe)
@@ -618,7 +669,7 @@ struct RecipeListView: View {
                 .foregroundStyle(DS.smoke)
                 .padding(.horizontal, 16)
 
-            LazyVGrid(columns: columns, spacing: 12) {
+            LazyVGrid(columns: columns, spacing: 22) {
                 ForEach(filtered) { recipe in
                     NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
                         RecipeCard(recipe: recipe)
@@ -864,7 +915,7 @@ private struct FolderCard: View {
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 8)
                     .fill(DS.sand)
                     .frame(width: 100, height: 100)
 
@@ -875,9 +926,9 @@ private struct FolderCard: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: 100, height: 100)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 8)
                                 .fill(.black.opacity(0.2))
                         )
                 } else {
@@ -932,39 +983,33 @@ private struct RecipeCard: View {
                         }
                     }
                 }
-                .frame(height: 120)
-                .clipped()
+                .frame(height: 112)
+                .clipShape(RoundedRectangle(cornerRadius: DS.radius))
 
-                // Heart badge
+                // Heart badge — flat white glyph over the photo
                 if recipe.isFavorite {
                     Image(systemName: "heart.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(DS.tomato)
-                        .frame(width: 28, height: 28)
-                        .background(.white.opacity(0.92))
-                        .clipShape(Circle())
-                        .padding(8)
+                        .font(.system(size: 15))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.25), radius: 2)
+                        .padding(10)
                 }
             }
 
-            // Info
-            VStack(alignment: .leading, spacing: 7) {
+            // Info — borderless editorial block
+            VStack(alignment: .leading, spacing: 4) {
                 Text(recipe.title)
-                    .font(.system(size: 14.5, weight: .semibold, design: .rounded))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(DS.ink)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                    .frame(height: 36, alignment: .top)
+                    .frame(height: 38, alignment: .top)
 
                 HStack {
                     if let minutes = recipe.cookingTimeMinutes {
-                        HStack(spacing: 4) {
-                            Image(systemName: "clock")
-                                .font(.system(size: 11))
-                            Text(minutes >= 60 ? "\(minutes / 60) sa \(minutes % 60 > 0 ? "\(minutes % 60) dk" : "")" : "\(minutes) dk")
-                                .font(.captionText())
-                        }
-                        .foregroundStyle(DS.dust)
+                        Text(minutes >= 60 ? "\(minutes / 60) sa \(minutes % 60 > 0 ? "\(minutes % 60) dk" : "")" : "\(minutes) dk")
+                            .font(.captionText())
+                            .foregroundStyle(DS.dust)
                     }
 
                     Spacer()
@@ -975,20 +1020,15 @@ private struct RecipeCard: View {
                         HStack(spacing: 3) {
                             ForEach(1...3, id: \.self) { i in
                                 Circle()
-                                    .fill(i <= dots ? DS.ember : DS.stone)
-                                    .frame(width: 6, height: 6)
+                                    .fill(i <= dots ? DS.ink : DS.stone)
+                                    .frame(width: 5, height: 5)
                             }
                         }
                     }
                 }
             }
-            .padding(.horizontal, 11)
-            .padding(.top, 10)
-            .padding(.bottom, 12)
+            .padding(.top, 9)
         }
-        .background(DS.flour)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .shadow(color: DS.shadowCard, radius: 4, y: 2)
     }
 
     private func formatLikes(_ count: Int) -> String {
@@ -1179,7 +1219,7 @@ struct RecipeFilterSheet: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(DS.ember)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 16)
@@ -1208,13 +1248,13 @@ struct RecipeFilterSheet: View {
         Button {
             withAnimation(.easeInOut(duration: 0.2)) { selectedTab = index }
         } label: {
-            VStack(spacing: 6) {
+            VStack(spacing: 10) {
                 Text(title)
-                    .font(.system(size: 13, weight: selectedTab == index ? .semibold : .medium, design: .rounded))
+                    .font(.system(size: 13, weight: selectedTab == index ? .semibold : .medium))
                     .foregroundStyle(selectedTab == index ? DS.ink : DS.dust)
                     .lineLimit(1)
                 Rectangle()
-                    .fill(selectedTab == index ? DS.ember : .clear)
+                    .fill(selectedTab == index ? DS.ink : .clear)
                     .frame(height: 2)
             }
         }
@@ -1234,23 +1274,36 @@ struct RecipeFilterSheet: View {
                     .font(.system(size: 14))
                     .foregroundStyle(DS.ink)
             }
-            .padding(10)
-            .background(DS.sand)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .padding(.horizontal, 14)
+            .frame(height: 46)
+            .background(DS.cream)
+            .overlay(
+                RoundedRectangle(cornerRadius: DS.radius)
+                    .stroke(DS.stone, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: DS.radius))
 
-            // Legend
-            HStack(spacing: 16) {
-                HStack(spacing: 4) {
-                    Circle().fill(DS.ember).frame(width: 8, height: 8)
+            // Legend — teaches the tap behaviour
+            HStack(spacing: 14) {
+                HStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(DS.ember)
+                        .frame(width: 13, height: 13)
                     Text("dokun → eklensin")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(DS.smoke)
+                        .font(.captionText())
+                        .foregroundStyle(DS.dust)
                 }
-                HStack(spacing: 4) {
-                    Circle().fill(DS.terracotta).frame(width: 8, height: 8)
+                HStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(DS.tomato.opacity(0.12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(DS.tomato, lineWidth: 1.5)
+                        )
+                        .frame(width: 13, height: 13)
                     Text("tekrar dokun → çıkar")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(DS.smoke)
+                        .font(.captionText())
+                        .foregroundStyle(DS.dust)
                 }
             }
 
@@ -1261,21 +1314,35 @@ struct RecipeFilterSheet: View {
                     Button {
                         cycleIngredient(name)
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: 6) {
                             if state == .included {
                                 Image(systemName: "plus")
-                                    .font(.system(size: 10, weight: .bold))
+                                    .font(.system(size: 11, weight: .bold))
                             } else if state == .excluded {
                                 Image(systemName: "minus")
-                                    .font(.system(size: 10, weight: .bold))
+                                    .font(.system(size: 11, weight: .bold))
                             }
                             Text(name)
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.system(size: 14, weight: .semibold))
+                                .strikethrough(state == .excluded, color: DS.tomato.opacity(0.55))
                         }
-                        .foregroundStyle(state == .none ? DS.ink : .white)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .background(state == .included ? DS.ember : state == .excluded ? DS.terracotta : DS.sand)
+                        .foregroundStyle(
+                            state == .included ? .white :
+                            state == .excluded ? DS.tomato : DS.smoke
+                        )
+                        .padding(.horizontal, 14)
+                        .frame(height: 38)
+                        .background(
+                            state == .included ? DS.ember :
+                            state == .excluded ? DS.tomato.opacity(0.10) : DS.sand
+                        )
+                        .overlay(
+                            Capsule().strokeBorder(
+                                state == .excluded ? DS.tomato.opacity(0.5) :
+                                state == .none ? DS.stone : .clear,
+                                lineWidth: 1
+                            )
+                        )
                         .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -1452,11 +1519,14 @@ private struct FilterChipGrid: View {
                     toggle(item)
                 } label: {
                     Text(item)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(selected ? .white : DS.ink)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(selected ? .white : DS.smoke)
+                        .padding(.horizontal, 16)
+                        .frame(height: 38)
                         .background(selected ? DS.ember : DS.sand)
+                        .overlay(
+                            Capsule().strokeBorder(selected ? .clear : DS.stone, lineWidth: 1)
+                        )
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
