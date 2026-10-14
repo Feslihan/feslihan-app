@@ -344,12 +344,14 @@ struct RecipeDetailView: View {
             if let rawURL = recipe.sourceURL,
                let dto = await APIService.lookup(url: cleanURL(rawURL)) {
                 print("[Detail] Got nutrition: cal=\(dto.calories_total_kcal ?? -1), user=\(dto.platform_user ?? "nil")")
-                recipe.caloriesTotalKcal = dto.calories_total_kcal
-                recipe.caloriesPerServingKcal = dto.calories_per_serving_kcal
-                recipe.proteinGrams = dto.protein_grams
-                recipe.carbsGrams = dto.carbs_grams
-                recipe.fatGrams = dto.fat_grams
-                recipe.fiberGrams = dto.fiber_grams
+                // Only overwrite local nutrition when the backend provides a value;
+                // otherwise keep whatever we already have locally.
+                recipe.caloriesTotalKcal = dto.calories_total_kcal ?? recipe.caloriesTotalKcal
+                recipe.caloriesPerServingKcal = dto.calories_per_serving_kcal ?? recipe.caloriesPerServingKcal
+                recipe.proteinGrams = dto.protein_grams ?? recipe.proteinGrams
+                recipe.carbsGrams = dto.carbs_grams ?? recipe.carbsGrams
+                recipe.fatGrams = dto.fat_grams ?? recipe.fatGrams
+                recipe.fiberGrams = dto.fiber_grams ?? recipe.fiberGrams
                 recipe.servings = dto.servings
                 recipe.platformUser = dto.platform_user
                 recipe.platform = dto.platform
