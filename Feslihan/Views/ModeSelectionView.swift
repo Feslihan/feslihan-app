@@ -30,6 +30,16 @@ struct ModeSelectionView: View {
 
     private let minPantryCount = 30
 
+    /// Turkish greeting that adapts to the time of day.
+    private var greeting: String {
+        switch Calendar.current.component(.hour, from: Date()) {
+        case 5..<12: return "Günaydın,"
+        case 12..<18: return "İyi günler,"
+        case 18..<22: return "İyi akşamlar,"
+        default: return "İyi geceler,"
+        }
+    }
+
     private func goBack() {
         withAnimation(.spring(response: 0.2)) {
             selectedMode = nil
@@ -100,7 +110,7 @@ struct ModeSelectionView: View {
                         // Greeting + avatar
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("İyi akşamlar,")
+                                Text(greeting)
                                     .font(.handwritten())
                                     .foregroundStyle(DS.dust)
 
@@ -108,6 +118,7 @@ struct ModeSelectionView: View {
                                     .font(.displayLarge())
                                     .foregroundStyle(DS.ink)
                             }
+                            .accessibilityElement(children: .combine)
 
                             Spacer()
 
@@ -125,6 +136,7 @@ struct ModeSelectionView: View {
                                     avatarPlaceholder
                                 }
                             }
+                            .accessibilityLabel("Hesabım")
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 8)
@@ -230,6 +242,7 @@ struct ModeSelectionView: View {
                         .clipShape(Circle())
                         .shadow(color: DS.shadowButton, radius: 8, y: 4)
                 }
+                .accessibilityLabel("Tarif ekle")
                 .padding(.bottom, 24)
             }
             .sheet(isPresented: $showAddRecipe) {
@@ -404,6 +417,8 @@ private struct UtilCard: View {
                 isPressed = pressing
             }
         }, perform: {})
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -587,5 +602,7 @@ private struct ModeCard: View {
                 isPressed = pressing
             }
         }, perform: {})
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
     }
 }
