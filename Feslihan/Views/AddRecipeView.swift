@@ -19,9 +19,6 @@ struct AddRecipeView: View {
     enum ProcessingState {
         case idle
         case fetchingCaption
-        case extractingFrames
-        case extractingAudio
-        case transcribing
         case analyzingRecipe
         case done
         case error
@@ -37,7 +34,7 @@ struct AddRecipeView: View {
                 switch processingState {
                 case .idle:
                     idleView
-                case .fetchingCaption, .extractingFrames, .extractingAudio, .transcribing, .analyzingRecipe:
+                case .fetchingCaption, .analyzingRecipe:
                     processingView
                 case .done:
                     if let recipe = processedRecipe {
@@ -190,10 +187,6 @@ struct AddRecipeView: View {
                     } else {
                         checklistRow("Video bilgileri", state: checkState(for: .fetchingCaption))
                         Divider().background(DS.stone)
-                        checklistRow("Ses çıkartma", state: checkState(for: .extractingAudio))
-                        Divider().background(DS.stone)
-                        checklistRow("Yazı çevirme", state: checkState(for: .transcribing))
-                        Divider().background(DS.stone)
                         checklistRow("Tarif analizi", state: checkState(for: .analyzingRecipe))
                     }
                 }
@@ -226,7 +219,7 @@ struct AddRecipeView: View {
     private enum CheckState { case done, active, waiting }
 
     private func checkState(for step: ProcessingState) -> CheckState {
-        let order: [ProcessingState] = [.fetchingCaption, .extractingAudio, .transcribing, .analyzingRecipe]
+        let order: [ProcessingState] = [.fetchingCaption, .analyzingRecipe]
         guard let targetIdx = order.firstIndex(of: step),
               let currentIdx = order.firstIndex(of: processingState) else { return .waiting }
         if targetIdx < currentIdx { return .done }
@@ -350,30 +343,6 @@ struct AddRecipeView: View {
         }
     }
 
-    // MARK: - Status
-
-    private var statusText: String {
-        switch processingState {
-        case .fetchingCaption: return "Açıklama getiriliyor..."
-        case .extractingFrames: return "Video analiz ediliyor..."
-        case .extractingAudio: return "Ses ayıklanıyor..."
-        case .transcribing: return "Yazıya çevriliyor..."
-        case .analyzingRecipe: return "Tarif hazırlanıyor..."
-        default: return ""
-        }
-    }
-
-    private var statusDescription: String {
-        switch processingState {
-        case .fetchingCaption: return "Video açıklaması indiriliyor"
-        case .extractingFrames: return "Videodan kareler çıkarılıyor"
-        case .extractingAudio: return "Videodan ses dosyası oluşturuluyor"
-        case .transcribing: return "Konuşmalar yazıya çevriliyor"
-        case .analyzingRecipe: return "Tüm veriler birlikte analiz ediliyor"
-        default: return ""
-        }
-    }
-
     // MARK: - Actions
 
     private func fetchCaption() {
@@ -416,8 +385,30 @@ struct AddRecipeView: View {
         detectPlatform() == "nefisyemektarifleri"
     }
 
+    /// Validate the pasted link is a well-formed http(s) URL on a supported host.
+    /// Returns a Turkish error message if invalid, or nil if the link is OK.
+    private func urlValidationError() -> String? {
+        let raw = urlText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let components = URLComponents(string: raw),
+              let scheme = components.scheme?.lowercased(),
+              scheme == "http" || scheme == "https",
+              let host = components.host, !host.isEmpty else {
+            return "Geçerli bir bağlantı yapıştırın (https://…)."
+        }
+        guard detectPlatform() != "other" else {
+            return "Bu platform desteklenmiyor. Instagram, TikTok, X veya nefisyemektarifleri bağlantısı yapıştırın."
+        }
+        return nil
+    }
+
     private func processAll() {
         guard canProcess else { return }
+
+        if let message = urlValidationError() {
+            errorMessage = message
+            processingState = .error
+            return
+        }
 
         if !subscription.canAddRecipe {
             showPaywall = true
@@ -529,54 +520,32 @@ struct AddRecipeView: View {
     }
 
     private func processVideoRecipe() async throws {
+        // Social video platforms don't expose the raw video file to the device, so
+        // we work from the post's caption/metadata rather than extracting media.
         processingState = .fetchingCaption
-        var captionResult: CaptionResult?
-        do {
-            let result = try await CaptionService.fetchCaption(from: trimmedURL)
-            if !result.caption.isEmpty {
-                captionResult = result
-            }
-        } catch {
-            // Caption fetch failed — fall back to audio-only transcription.
-        }
-
-        // Try to extract audio from the video for transcription
-        var audioData: Data?
-        processingState = .extractingAudio
-        if let videoURL = URL(string: trimmedURL) {
-            do {
-                let audioURL = try await AudioExtractor.extractAudio(from: videoURL)
-                audioData = try Data(contentsOf: audioURL)
-                try? FileManager.default.removeItem(at: audioURL)
-            } catch {
-                // Audio extraction failed — continue without audio.
-            }
-        }
-
-        // Need at least one source of information
-        guard captionResult != nil || audioData != nil else {
+        let captionResult = try await CaptionService.fetchCaption(from: trimmedURL)
+        guard !captionResult.caption.isEmpty else {
             throw FeslihanError.captionFetchFailed
         }
 
         processingState = .analyzingRecipe
         let recipe = try await ClaudeService.analyzeRecipe(
             transcription: "",
-            caption: captionResult?.caption ?? "",
-            audio: audioData
+            caption: captionResult.caption
         )
 
         var dto = RecipeDTO.from(
             processed: recipe,
             url: trimmedURL,
             platform: detectPlatform(),
-            caption: captionResult?.caption ?? "",
+            caption: captionResult.caption,
             requestedBy: Clerk.shared.user?.id ?? "default",
             userId: Clerk.shared.user?.id
         )
-        dto.thumbnail_base64 = captionResult?.thumbnailData?.base64EncodedString()
-        dto.creator_profile_pic_base64 = captionResult?.authorProfilePicData?.base64EncodedString()
+        dto.thumbnail_base64 = captionResult.thumbnailData?.base64EncodedString()
+        dto.creator_profile_pic_base64 = captionResult.authorProfilePicData?.base64EncodedString()
         // Prefer oEmbed author over Claude's extraction
-        if let author = captionResult?.authorName, !author.isEmpty {
+        if let author = captionResult.authorName, !author.isEmpty {
             dto.platform_user = author
         }
         // Fetch profile pic from the device (social platforms block server IPs)

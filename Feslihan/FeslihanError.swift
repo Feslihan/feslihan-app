@@ -2,7 +2,6 @@ import Foundation
 
 enum FeslihanError: LocalizedError {
     case videoLoadFailed
-    case audioExtractionFailed
     case recipeParseFailed
     case captionFetchFailed
     case noInputProvided
@@ -12,8 +11,6 @@ enum FeslihanError: LocalizedError {
         switch self {
         case .videoLoadFailed:
             return "Video yüklenemedi"
-        case .audioExtractionFailed:
-            return "Ses ayıklanamadı"
         case .recipeParseFailed:
             return "Tarif işlenemedi"
         case .captionFetchFailed:
