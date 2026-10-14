@@ -100,8 +100,7 @@ struct OnboardingView: View {
                             .frame(height: 50)
                             .foregroundStyle(DS.flour)
                             .background(DS.ember)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .shadow(color: DS.shadowButton, radius: 8, y: 4)
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     }
 
                     Button {
@@ -111,9 +110,13 @@ struct OnboardingView: View {
                             .font(.buttonFont())
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .foregroundStyle(DS.ember)
-                            .background(DS.emberLight)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .foregroundStyle(DS.ink)
+                            .background(DS.cream)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: DS.radius)
+                                    .stroke(DS.ink, lineWidth: 1)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     }
                 }
                 .padding(.horizontal, 20)

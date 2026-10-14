@@ -23,19 +23,54 @@ struct RecipeDetailView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    // Hero image - tappable to open video
-                    if let data = recipe.thumbnailData,
-                       let uiImage = UIImage(data: data) {
+                    // Hero — photo with scrim, outline chips and serif title overlaid
+                    ZStack(alignment: .bottomLeading) {
                         GeometryReader { geo in
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: geo.size.width, height: 380)
-                                .clipped()
+                            Group {
+                                if let data = recipe.thumbnailData,
+                                   let uiImage = UIImage(data: data) {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                } else {
+                                    Color(hex: 0x2A2A2A)
+                                }
+                            }
+                            .frame(width: geo.size.width, height: 320)
+                            .clipped()
                         }
-                        .frame(height: 380)
-                        .onTapGesture { openVideo() }
+                        .frame(height: 320)
+
+                        LinearGradient(
+                            colors: [.clear, .black.opacity(0.55)],
+                            startPoint: .center,
+                            endPoint: .bottom
+                        )
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 7) {
+                                if let cuisine = recipe.cuisine {
+                                    heroChip(cuisine.capitalized)
+                                }
+                                if let minutes = recipe.cookingTimeMinutes {
+                                    heroChip(formatMinutes(minutes), icon: "clock")
+                                }
+                                if recipe.saveCount >= 1 {
+                                    heroChip("\(recipe.saveCount)", icon: "heart.fill")
+                                }
+                            }
+
+                            Text(recipe.title)
+                                .font(.system(size: 36, weight: .semibold, design: .serif))
+                                .foregroundStyle(.white)
+                                .lineLimit(3)
+                                .minimumScaleFactor(0.65)
+                        }
+                        .padding(.horizontal, 22)
+                        .padding(.bottom, 22)
                     }
+                    .frame(height: 320)
+                    .onTapGesture { openVideo() }
 
                     VStack(alignment: .leading, spacing: 24) {
                         // Recipe owner
@@ -67,9 +102,7 @@ struct RecipeDetailView: View {
 
                                     Spacer()
                                 }
-                                .padding(12)
-                                .background(DS.sand)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .padding(.vertical, 4)
                             } else {
                                 Button {
                                     let profileURL: String
@@ -114,67 +147,25 @@ struct RecipeDetailView: View {
 
                                         Spacer()
 
-                                        Image(systemName: "arrow.up.right")
-                                            .font(.system(size: 12, weight: .medium))
-                                            .foregroundStyle(DS.dust)
+                                        Image(systemName: "play.fill")
+                                            .font(.system(size: 14))
+                                            .foregroundStyle(DS.ink)
                                     }
-                                    .padding(12)
-                                    .background(DS.sand)
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .padding(.vertical, 4)
                                 }
                             }
                         }
 
-                        // Title + meta
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(recipe.title)
-                                .font(.system(size: 28, weight: .semibold, design: .serif))
-                                .foregroundStyle(DS.ink)
-
-                            HStack(spacing: 12) {
-                                if let minutes = recipe.cookingTimeMinutes {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "clock")
-                                        Text(formatMinutes(minutes))
-                                    }
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundStyle(DS.smoke)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 5)
-                                    .background(DS.sand)
-                                    .clipShape(Capsule())
-                                }
-                                if let cuisine = recipe.cuisine {
-                                    Text(cuisine.capitalized)
-                                        .font(.system(size: 13, weight: .medium))
-                                        .foregroundStyle(DS.smoke)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 5)
-                                        .background(DS.sand)
-                                        .clipShape(Capsule())
-                                }
-                                if recipe.saveCount >= 1 {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "heart.fill")
-                                        Text("\(recipe.saveCount) kez kaydedildi")
-                                    }
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundStyle(DS.terracotta)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 5)
-                                    .background(DS.sand)
-                                    .clipShape(Capsule())
-                                }
-                            }
-                        }
-
-                        // Underlined text tabs
-                        HStack(spacing: 22) {
+                        // Underlined text tabs over a hairline
+                        HStack(spacing: 24) {
                             tabButton(title: "Malzemeler", index: 0)
                             tabButton(title: "Yapılış", index: 1)
                             tabButton(title: "Besin", index: 2)
+                            Spacer()
                         }
-                        .padding(.bottom, 1)
+                        .overlay(alignment: .bottom) {
+                            Rectangle().fill(DS.stone).frame(height: 1)
+                        }
 
                         // Tab content
                         switch selectedTab {
@@ -207,8 +198,7 @@ struct RecipeDetailView: View {
                         .frame(height: 50)
                         .foregroundStyle(DS.flour)
                         .background(DS.ember)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .shadow(color: DS.shadowButton, radius: 8, y: 4)
+                        .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     }
 
                     if let src = recipe.sourceURL, src.hasPrefix("http") {
@@ -221,9 +211,13 @@ struct RecipeDetailView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .foregroundStyle(DS.ember)
-                            .background(DS.emberLight)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .foregroundStyle(DS.ink)
+                            .background(DS.cream)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: DS.radius)
+                                    .stroke(DS.ink, lineWidth: 1)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                         }
                     }
                 }
@@ -257,7 +251,7 @@ struct RecipeDetailView: View {
                     }
                     .padding(12)
                     .background(DS.sand)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 } else {
                     Button { showReview = true } label: {
                         HStack(spacing: 8) {
@@ -270,14 +264,17 @@ struct RecipeDetailView: View {
                         .frame(height: 40)
                         .foregroundStyle(DS.ember)
                         .background(DS.emberLight)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.top, 10)
+            .padding(.top, 12)
             .padding(.bottom, 16)
             .background(DS.cream)
+            .overlay(alignment: .top) {
+                Rectangle().fill(DS.stone).frame(height: 1)
+            }
         }
         .ignoresSafeArea(edges: .top)
         .fullScreenCover(isPresented: $showCookingMode) {
@@ -312,9 +309,8 @@ struct RecipeDetailView: View {
                             .font(.system(size: 16, weight: .medium))
                             .foregroundStyle(DS.ink)
                             .frame(width: 38, height: 38)
-                            .background(.white.opacity(0.85))
+                            .background(.white)
                             .clipShape(Circle())
-                            .shadow(color: DS.shadowCard, radius: 4, y: 2)
                     }
 
                     Button {
@@ -330,9 +326,8 @@ struct RecipeDetailView: View {
                             .font(.system(size: 18, weight: .medium))
                             .foregroundStyle(recipe.isFavorite ? DS.tomato : DS.ink)
                             .frame(width: 38, height: 38)
-                            .background(.white.opacity(0.85))
+                            .background(.white)
                             .clipShape(Circle())
-                            .shadow(color: DS.shadowCard, radius: 4, y: 2)
                     }
                 }
             }
@@ -459,7 +454,7 @@ struct RecipeDetailView: View {
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundStyle(DS.smoke)
                             Text(formatCost(cost * servingMultiplier))
-                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .font(.system(size: 18, weight: .semibold))
                                 .foregroundStyle(DS.ink)
                         }
                         Spacer()
@@ -475,7 +470,7 @@ struct RecipeDetailView: View {
                 }
             }
             .background(DS.emberLight.opacity(0.5))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)
     }
@@ -494,6 +489,25 @@ struct RecipeDetailView: View {
         }
     }
 
+    // MARK: - Hero Chip (outlined, on photo)
+
+    private func heroChip(_ text: String, icon: String? = nil) -> some View {
+        HStack(spacing: 5) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 11, weight: .medium))
+            }
+            Text(text)
+                .font(.system(size: 13, weight: .medium))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 13)
+        .frame(height: 32)
+        .overlay(
+            Capsule().strokeBorder(.white.opacity(0.7), lineWidth: 1)
+        )
+    }
+
     // MARK: - Tab Button
 
     private func tabButton(title: String, index: Int) -> some View {
@@ -504,14 +518,14 @@ struct RecipeDetailView: View {
         } label: {
             VStack(spacing: 10) {
                 Text(title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(selectedTab == index ? DS.ember : DS.dust)
+                    .font(.system(size: 15, weight: selectedTab == index ? .semibold : .medium))
+                    .foregroundStyle(selectedTab == index ? DS.ink : DS.dust)
 
                 Rectangle()
-                    .fill(selectedTab == index ? DS.ember : Color.clear)
-                    .frame(height: 2.5)
-                    .clipShape(Capsule())
+                    .fill(selectedTab == index ? DS.ink : Color.clear)
+                    .frame(height: 2)
             }
+            .fixedSize()
         }
     }
 
@@ -533,37 +547,39 @@ struct RecipeDetailView: View {
                 }
 
                 HStack(spacing: 12) {
-                    HStack(spacing: 7) {
-                        Image(systemName: "person.2.fill")
-                            .font(.system(size: 14))
-                        Text("Porsiyon")
-                            .font(.label())
-                    }
-                    .foregroundStyle(DS.smoke)
+                    Text("Porsiyon")
+                        .font(.label())
+                        .foregroundStyle(DS.smoke)
 
                     Spacer()
 
-                    HStack(spacing: 4) {
-                        ForEach(multiplierOptions, id: \.value) { option in
+                    // Joined segmented control — ink selection, hairline separators
+                    HStack(spacing: 0) {
+                        ForEach(Array(multiplierOptions.enumerated()), id: \.element.value) { index, option in
                             Button {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     servingMultiplier = option.value
                                 }
                             } label: {
                                 Text(option.label)
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .padding(.horizontal, 11)
-                                    .padding(.vertical, 6)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .frame(width: 42, height: 32)
                                     .foregroundStyle(servingMultiplier == option.value ? DS.flour : DS.ink)
-                                    .background(servingMultiplier == option.value ? DS.ember : DS.flour)
-                                    .clipShape(Capsule())
+                                    .background(servingMultiplier == option.value ? DS.ink : DS.cream)
+                            }
+                            .buttonStyle(.plain)
+
+                            if index < multiplierOptions.count - 1 {
+                                Rectangle().fill(DS.stone).frame(width: 1, height: 32)
                             }
                         }
                     }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.radius)
+                            .stroke(DS.stone, lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                 }
-                .padding(10)
-                .background(DS.sand)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
 
             // Estimated cost flip card
@@ -637,7 +653,7 @@ struct RecipeDetailView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     if let header = part.header {
                         Text(header)
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(DS.ember)
                     }
                     Text(part.body)
@@ -713,7 +729,7 @@ struct RecipeDetailView: View {
                     if let cal = recipe.caloriesTotalKcal {
                         VStack(spacing: 4) {
                             Text("\(Int(cal * servingMultiplier))")
-                                .font(.system(size: 40, weight: .bold, design: .rounded))
+                                .font(.system(size: 40, weight: .medium, design: .serif))
                                 .foregroundStyle(DS.ink)
                             Text("toplam kcal")
                                 .font(.system(size: 13, weight: .medium))
@@ -729,7 +745,7 @@ struct RecipeDetailView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(DS.sand)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
 
                     // Macro bars

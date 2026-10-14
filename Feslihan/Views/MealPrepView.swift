@@ -356,7 +356,7 @@ private struct MethodChoiceView: View {
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("AI ile Oluştur")
-                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .font(.system(size: 17, weight: .semibold))
                                 .foregroundStyle(DS.ink)
                             Text("Tercihlerini söyle, AI senin için plan hazırlasın")
                                 .font(.system(size: 13))
@@ -371,9 +371,9 @@ private struct MethodChoiceView: View {
                     }
                     .padding(18)
                     .background(DS.flour)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: 8)
                             .stroke(DS.stone, lineWidth: 1.5)
                     )
                 }
@@ -390,7 +390,7 @@ private struct MethodChoiceView: View {
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Manuel Oluştur")
-                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .font(.system(size: 17, weight: .semibold))
                                 .foregroundStyle(DS.ink)
                             Text("Tariflerini seç, kendi planını kendin kur")
                                 .font(.system(size: 13))
@@ -405,9 +405,9 @@ private struct MethodChoiceView: View {
                     }
                     .padding(18)
                     .background(DS.flour)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: 8)
                             .stroke(DS.stone, lineWidth: 1.5)
                     )
                 }
@@ -463,15 +463,19 @@ private struct PeopleStepView: View {
 
                             if selected == count {
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 14, weight: .medium))
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 24, height: 24)
+                                        .background(DS.ember)
+                                        .clipShape(Circle())
                             }
                         }
                         .padding(16)
                         .foregroundStyle(DS.ink)
                         .background(selected == count ? DS.emberLight : DS.flour)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 8)
                                 .stroke(selected == count ? DS.ember : DS.stone, lineWidth: 1.5)
                         )
                     }
@@ -494,7 +498,7 @@ private struct PeopleStepView: View {
                     .frame(height: 50)
                     .background(DS.ember)
                     .foregroundStyle(DS.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -547,15 +551,19 @@ private struct MealsStepView: View {
 
                             if selected == meal {
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 14, weight: .medium))
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 24, height: 24)
+                                        .background(DS.ember)
+                                        .clipShape(Circle())
                             }
                         }
                         .padding(16)
                         .foregroundStyle(DS.ink)
                         .background(selected == meal ? DS.emberLight : DS.flour)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 8)
                                 .stroke(selected == meal ? DS.ember : DS.stone, lineWidth: 1.5)
                         )
                     }
@@ -578,7 +586,7 @@ private struct MealsStepView: View {
                     .frame(height: 50)
                     .background(DS.ember)
                     .foregroundStyle(DS.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -640,9 +648,9 @@ private struct StyleStepView: View {
                         .padding(.vertical, 20)
                         .foregroundStyle(DS.ink)
                         .background(isSelected ? DS.emberLight : DS.flour)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 8)
                                 .stroke(isSelected ? DS.ember : DS.stone, lineWidth: 1.5)
                         )
                     }
@@ -665,7 +673,7 @@ private struct StyleStepView: View {
                     .frame(height: 50)
                     .background(selected.isEmpty ? DS.ember.opacity(0.4) : DS.ember)
                     .foregroundStyle(DS.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .disabled(selected.isEmpty)
             .padding(.horizontal, 20)
@@ -720,15 +728,19 @@ private struct PeriodStepView: View {
 
                             if selected == p {
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 14, weight: .medium))
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 24, height: 24)
+                                        .background(DS.ember)
+                                        .clipShape(Circle())
                             }
                         }
                         .padding(16)
                         .foregroundStyle(DS.ink)
                         .background(selected == p ? DS.emberLight : DS.flour)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 8)
                                 .stroke(selected == p ? DS.ember : DS.stone, lineWidth: 1.5)
                         )
                     }
@@ -751,7 +763,7 @@ private struct PeriodStepView: View {
                     .frame(height: 50)
                     .background(DS.ember)
                     .foregroundStyle(DS.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -800,15 +812,19 @@ private struct KidsStepView: View {
 
                         if !hasKids {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .medium))
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 24, height: 24)
+                                    .background(DS.ember)
+                                    .clipShape(Circle())
                         }
                     }
                     .padding(16)
                     .foregroundStyle(DS.ink)
                     .background(!hasKids ? DS.emberLight : DS.flour)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: 8)
                             .stroke(!hasKids ? DS.ember : DS.stone, lineWidth: 1.5)
                     )
                 }
@@ -831,15 +847,19 @@ private struct KidsStepView: View {
 
                         if hasKids {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .medium))
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 24, height: 24)
+                                    .background(DS.ember)
+                                    .clipShape(Circle())
                         }
                     }
                     .padding(16)
                     .foregroundStyle(DS.ink)
                     .background(hasKids ? DS.emberLight : DS.flour)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: 8)
                             .stroke(hasKids ? DS.ember : DS.stone, lineWidth: 1.5)
                     )
                 }
@@ -893,7 +913,7 @@ private struct KidsStepView: View {
                     .frame(height: 50)
                     .background(DS.ember)
                     .foregroundStyle(DS.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -947,15 +967,19 @@ private struct PrepStyleStepView: View {
 
                             if selected == style {
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 14, weight: .medium))
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 24, height: 24)
+                                        .background(DS.ember)
+                                        .clipShape(Circle())
                             }
                         }
                         .padding(16)
                         .foregroundStyle(DS.ink)
                         .background(selected == style ? DS.emberLight : DS.flour)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 8)
                                 .stroke(selected == style ? DS.ember : DS.stone, lineWidth: 1.5)
                         )
                     }
@@ -978,7 +1002,7 @@ private struct PrepStyleStepView: View {
                     .frame(height: 50)
                     .background(DS.ember)
                     .foregroundStyle(DS.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -1026,15 +1050,19 @@ private struct BudgetStepView: View {
 
                             if selected == level {
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 14, weight: .medium))
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .frame(width: 24, height: 24)
+                                        .background(DS.ember)
+                                        .clipShape(Circle())
                             }
                         }
                         .padding(16)
                         .foregroundStyle(DS.ink)
                         .background(selected == level ? DS.emberLight : DS.flour)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14)
+                            RoundedRectangle(cornerRadius: 8)
                                 .stroke(selected == level ? DS.ember : DS.stone, lineWidth: 1.5)
                         )
                     }
@@ -1057,7 +1085,7 @@ private struct BudgetStepView: View {
                     .frame(height: 50)
                     .background(DS.ember)
                     .foregroundStyle(DS.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
@@ -1167,15 +1195,15 @@ private struct ManualMealPlanBuilder: View {
                         // Plan name
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Plan Adı")
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(DS.smoke)
                             TextField("örn. Bu Haftanın Planı", text: $planName)
                                 .font(.system(size: 16))
                                 .padding(14)
                                 .background(DS.flour)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
+                                    RoundedRectangle(cornerRadius: 8)
                                         .stroke(DS.stone, lineWidth: 1)
                                 )
                         }
@@ -1184,7 +1212,7 @@ private struct ManualMealPlanBuilder: View {
                         // People count picker
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Kişi Sayısı")
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundStyle(DS.smoke)
                             HStack(spacing: 8) {
                                 ForEach(PeopleCount.allCases, id: \.self) { count in
@@ -1197,15 +1225,15 @@ private struct ManualMealPlanBuilder: View {
                                             Image(systemName: count.icon)
                                                 .font(.system(size: 12))
                                             Text(count.rawValue)
-                                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                                .font(.system(size: 13, weight: .semibold))
                                         }
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 10)
                                         .foregroundStyle(peopleCount == count ? .white : DS.ink)
                                         .background(peopleCount == count ? DS.ember : DS.flour)
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
+                                            RoundedRectangle(cornerRadius: 8)
                                                 .stroke(peopleCount == count ? DS.ember : DS.stone, lineWidth: 1)
                                         )
                                     }
@@ -1224,14 +1252,14 @@ private struct ManualMealPlanBuilder: View {
                                     }
                                 } label: {
                                     Text("\(count) Gün")
-                                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                        .font(.system(size: 14, weight: .semibold))
                                         .frame(maxWidth: .infinity)
                                         .padding(.vertical, 10)
                                         .foregroundStyle(dayCount == count ? .white : DS.ink)
                                         .background(dayCount == count ? DS.ember : DS.flour)
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
+                                            RoundedRectangle(cornerRadius: 8)
                                                 .stroke(dayCount == count ? DS.ember : DS.stone, lineWidth: 1)
                                         )
                                 }
@@ -1294,7 +1322,7 @@ private struct ManualMealPlanBuilder: View {
                                 .padding(16)
                                 .foregroundStyle(DS.ink)
                                 .background(DS.sand)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                             .buttonStyle(.plain)
                             .padding(.horizontal, 20)
@@ -1323,8 +1351,7 @@ private struct ManualMealPlanBuilder: View {
                         .frame(height: 50)
                         .foregroundStyle(.white)
                         .background(isSaved ? DS.emberLight : DS.ember)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .shadow(color: isSaved ? .clear : DS.shadowButton, radius: 8, y: 4)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .disabled(isSaved || isSaving)
                     .padding(.horizontal, 20)
@@ -1604,7 +1631,7 @@ struct MealPlanResultView: View {
                             .padding(16)
                             .foregroundStyle(DS.ink)
                             .background(DS.sand)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 20)
@@ -1624,8 +1651,7 @@ struct MealPlanResultView: View {
                         .frame(height: 50)
                         .foregroundStyle(.white)
                         .background(isSaved ? DS.emberLight : DS.ember)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .shadow(color: isSaved ? .clear : DS.shadowButton, radius: 8, y: 4)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .disabled(isSaved || isSaving)
                     .padding(.horizontal, 20)
@@ -1835,7 +1861,7 @@ private struct SummaryPill: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
         .background(DS.sand)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
 
@@ -1949,8 +1975,12 @@ private struct DayCard: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .background(DS.sand)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(DS.cream)
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.radius)
+                .stroke(DS.stone, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: DS.radius))
     }
 }
 
@@ -2155,9 +2185,12 @@ struct ShoppingListSheet: View {
                                 }
                             }
                         }
-                        .background(DS.flour)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .shadow(color: DS.shadowCard, radius: 4, y: 2)
+                        .background(DS.cream)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DS.radius)
+                                .stroke(DS.stone, lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                         .padding(.horizontal, 20)
                     }
                     .padding(.top, 8)
@@ -2238,7 +2271,7 @@ struct RecipeSwapSheet: View {
                     }
                     .padding(12)
                     .background(DS.sand)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
 

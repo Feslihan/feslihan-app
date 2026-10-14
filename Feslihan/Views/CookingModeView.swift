@@ -59,7 +59,7 @@ struct CookingModeView: View {
                 .foregroundStyle(.white.opacity(0.5))
 
             Text("Bu tarifte adım bulunamadı")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
 
@@ -73,12 +73,12 @@ struct CookingModeView: View {
 
             Button { dismiss() } label: {
                 Text("Kapat")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.system(size: 17, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
                     .foregroundStyle(DS.emberDark)
                     .background(DS.emberLight)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
@@ -94,12 +94,12 @@ struct CookingModeView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("ADIM \(currentIndex + 1) / \(steps.count)")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .font(.system(size: 14, weight: .bold))
                             .tracking(0.4)
                             .foregroundStyle(.white.opacity(0.55))
                         if let section = steps[currentIndex].section {
                             Text(section)
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(DS.honey.opacity(0.7))
                         }
                     }
@@ -147,7 +147,7 @@ struct CookingModeView: View {
                             if let section = step.section,
                                index == 0 || steps[index - 1].section != section {
                                 Text(section)
-                                    .font(.system(size: 13, weight: .heavy, design: .rounded))
+                                    .font(.system(size: 13, weight: .semibold))
                                     .tracking(1.2)
                                     .foregroundStyle(DS.emberLight.opacity(0.7))
                                     .textCase(.uppercase)
@@ -160,7 +160,7 @@ struct CookingModeView: View {
                                 .foregroundStyle(DS.honey)
 
                             Text(step.text)
-                                .font(.system(size: 24, weight: .semibold, design: .rounded))
+                                .font(.system(size: 24, weight: .semibold))
                                 .foregroundStyle(.white)
                                 .multilineTextAlignment(.center)
                                 .lineSpacing(10)
@@ -187,13 +187,13 @@ struct CookingModeView: View {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 16, weight: .semibold))
                             Text("Önceki")
-                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .font(.system(size: 17, weight: .semibold))
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .foregroundStyle(currentIndex > 0 ? .white.opacity(0.9) : .white.opacity(0.3))
                         .background(.white.opacity(currentIndex > 0 ? 0.12 : 0.05))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .disabled(currentIndex == 0)
 
@@ -202,12 +202,12 @@ struct CookingModeView: View {
                             showReview = true
                         } label: {
                             Text("Tamamlandı")
-                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .font(.system(size: 17, weight: .semibold))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 50)
                                 .foregroundStyle(DS.emberDark)
                                 .background(DS.emberLight)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                     } else {
                         Button {
@@ -215,7 +215,7 @@ struct CookingModeView: View {
                         } label: {
                             HStack(spacing: 6) {
                                 Text("Sonraki")
-                                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                                    .font(.system(size: 17, weight: .semibold))
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 16, weight: .semibold))
                             }
@@ -223,7 +223,7 @@ struct CookingModeView: View {
                             .frame(height: 50)
                             .foregroundStyle(DS.emberDark)
                             .background(DS.emberLight)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                     }
                 }
@@ -256,7 +256,7 @@ struct CookingModeView: View {
                         .contentTransition(.numericText())
                 } else {
                     Text(formatTimer(duration))
-                        .font(.system(size: 22, weight: .heavy, design: .rounded))
+                        .font(.system(size: 22, weight: .heavy))
                 }
             }
             .foregroundStyle(.white)
@@ -337,8 +337,12 @@ struct RecipeReviewSheet: View {
                 .font(.system(size: 15))
                 .lineLimit(2...4)
                 .padding(14)
-                .background(DS.sand)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .background(DS.cream)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.radius)
+                        .stroke(DS.stone, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                 .padding(.horizontal, 20)
 
             Spacer()
@@ -357,8 +361,8 @@ struct RecipeReviewSheet: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
                     .foregroundStyle(DS.flour)
-                    .background(rating > 0 ? DS.ember : DS.stone)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .background(rating > 0 ? DS.ember : DS.sand)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .disabled(rating == 0 || isSaving)
 

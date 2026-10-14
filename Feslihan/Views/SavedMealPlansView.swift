@@ -35,7 +35,7 @@ struct SavedMealPlansView: View {
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("Kayıtlı Planlar")
+                            Text("Planlarım")
                                 .font(.system(size: 30, weight: .semibold, design: .serif))
                                 .foregroundStyle(DS.ink)
 
@@ -71,8 +71,11 @@ struct SavedMealPlansView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: onCreateNew) {
                         Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(DS.ink)
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(DS.flour)
+                            .frame(width: 38, height: 38)
+                            .background(DS.ember)
+                            .clipShape(Circle())
                     }
                 }
             }
@@ -199,49 +202,65 @@ private struct SavedPlanCard: View {
     @State private var showMenu = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(plan.name)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(DS.ink)
-
-                    HStack(spacing: 4) {
-                        Image(systemName: "calendar")
-                            .font(.system(size: 12))
-                        Text(plan.createdDate.map { formatDateRange($0, days: plan.plan.days?.count ?? 7) } ?? "")
-                            .font(.system(size: 13))
-                    }
-                    .foregroundStyle(DS.smoke)
-                }
-
-                Spacer()
-
-                Menu {
-                    Button(role: .destructive, action: onDelete) {
-                        Label("Sil", systemImage: "trash")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(DS.smoke)
-                        .frame(width: 32, height: 32)
-                }
+        HStack(spacing: 13) {
+            ZStack {
+                RoundedRectangle(cornerRadius: DS.radius)
+                    .fill(DS.emberLight)
+                    .frame(width: 64, height: 64)
+                Image(systemName: "calendar")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundStyle(DS.ember)
             }
 
-            HStack(spacing: 8) {
-                StatPill(icon: "person.2", value: plan.peopleCount, label: "Kişi")
-                StatPill(icon: "fork.knife", value: "\(plan.totalMeals)", label: "Tarif")
-                StatPill(icon: "flame", value: plan.avgCalories > 0 ? "\(plan.avgCalories)" : "-", label: "kcal/gün")
+            VStack(alignment: .leading, spacing: 6) {
+                Text(plan.name)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(DS.ink)
+                    .lineLimit(1)
+
+                HStack(spacing: 7) {
+                    Text(plan.timeAgo)
+                        .font(.captionText())
+                        .fontWeight(.bold)
+                        .foregroundStyle(DS.ember)
+                    Circle().fill(DS.dust).frame(width: 3, height: 3)
+                    Text("\(plan.totalMeals) öğün")
+                        .font(.captionText())
+                        .foregroundStyle(DS.dust)
+                    if plan.avgCalories > 0 {
+                        Circle().fill(DS.dust).frame(width: 3, height: 3)
+                        Text("~\(plan.avgCalories) kcal")
+                            .font(.captionText())
+                            .foregroundStyle(DS.dust)
+                    }
+                }
+                .lineLimit(1)
             }
 
-            Text("Oluşturuldu: \(plan.timeAgo)")
-                .font(.system(size: 12))
+            Spacer()
+
+            Menu {
+                Button(role: .destructive, action: onDelete) {
+                    Label("Sil", systemImage: "trash")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(DS.dust)
+                    .frame(width: 28, height: 28)
+            }
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(DS.dust)
         }
-        .padding(16)
-        .background(DS.sand)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .padding(12)
+        .background(DS.cream)
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.radius)
+                .stroke(DS.stone, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: DS.radius))
     }
 
     private func formatDateRange(_ start: Date, days: Int) -> String {
@@ -273,7 +292,7 @@ private struct StatPill: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(DS.cream)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
 
@@ -343,8 +362,7 @@ private struct SavedPlanDetailSheet: View {
                         .frame(height: 50)
                         .foregroundStyle(.white)
                         .background(DS.ember)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .shadow(color: DS.shadowButton, radius: 8, y: 4)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .disabled(isSaving)
                     .padding(.horizontal, 20)
@@ -422,13 +440,12 @@ private struct SavedPlanDetailSheet: View {
         } label: {
             VStack(spacing: 10) {
                 Text(title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(selectedTab == index ? DS.ember : DS.dust)
+                    .font(.system(size: 15, weight: selectedTab == index ? .semibold : .medium))
+                    .foregroundStyle(selectedTab == index ? DS.ink : DS.dust)
 
                 Rectangle()
-                    .fill(selectedTab == index ? DS.ember : Color.clear)
-                    .frame(height: 2.5)
-                    .clipShape(Capsule())
+                    .fill(selectedTab == index ? DS.ink : Color.clear)
+                    .frame(height: 2)
             }
         }
     }
@@ -539,7 +556,7 @@ private struct SavedPlanDetailSheet: View {
                         }
                     }
                     .background(DS.sand)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     .padding(.horizontal, 20)
                 }
             }
@@ -639,9 +656,12 @@ private struct SavedPlanDetailSheet: View {
                             }
                         }
                     }
-                    .background(DS.flour)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .shadow(color: DS.shadowCard, radius: 4, y: 2)
+                    .background(DS.cream)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.radius)
+                            .stroke(DS.stone, lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     .padding(.horizontal, 20)
 
                     let needCount = parsedShoppingList.filter { !pantryNames.contains($0.name.lowercased()) }.count
@@ -829,7 +849,7 @@ struct AddToPlanSheet: View {
                 .font(.system(size: 56, weight: .medium))
                 .foregroundStyle(DS.ember)
             Text("Eklendi!")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.system(size: 22, weight: .semibold, design: .serif))
                 .foregroundStyle(DS.ink)
             Text("\"\(info.title)\" plana eklendi")
                 .font(.system(size: 15))
@@ -856,10 +876,10 @@ struct AddToPlanSheet: View {
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(DS.emberLight)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
 
                 Text("Plan Seç")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(DS.smoke)
                     .padding(.top, 4)
 
@@ -885,7 +905,7 @@ struct AddToPlanSheet: View {
                         }
                         .padding(14)
                         .background(DS.sand)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                 }
             }
@@ -913,11 +933,11 @@ struct AddToPlanSheet: View {
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(DS.emberLight)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
                     // Day selector
                     Text("Gün Seç")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(DS.smoke)
 
                     let days = selectedPlan?.plan.days ?? []
@@ -943,9 +963,9 @@ struct AddToPlanSheet: View {
                             }
                             .padding(12)
                             .background(selectedDayIndex == index ? DS.emberLight : DS.sand)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
+                                RoundedRectangle(cornerRadius: 8)
                                     .stroke(selectedDayIndex == index ? DS.ember : Color.clear, lineWidth: 1.5)
                             )
                         }
@@ -954,7 +974,7 @@ struct AddToPlanSheet: View {
                     // Meal type
                     if selectedDayIndex != nil {
                         Text("Öğün Türü")
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(DS.smoke)
                             .padding(.top, 4)
 
@@ -973,7 +993,7 @@ struct AddToPlanSheet: View {
                                     .padding(12)
                                     .foregroundStyle(selectedMealType == type.label ? .white : DS.ink)
                                     .background(selectedMealType == type.label ? DS.ink : DS.sand)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
                                 }
                             }
                         }
@@ -1001,8 +1021,7 @@ struct AddToPlanSheet: View {
                     .frame(height: 50)
                     .foregroundStyle(.white)
                     .background(backendRecipeId != nil ? DS.ember : DS.stone)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .shadow(color: DS.shadowButton, radius: 8, y: 4)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .disabled(isSaving || backendRecipeId == nil)
                 .padding(.horizontal, 20)
