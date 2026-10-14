@@ -942,13 +942,15 @@ private struct RecipeCard: View {
                 .clipped()
 
                 // Heart badge
-                Image(systemName: "heart.fill")
-                    .font(.system(size: 12))
-                    .foregroundStyle(DS.tomato)
-                    .frame(width: 28, height: 28)
-                    .background(.white.opacity(0.92))
-                    .clipShape(Circle())
-                    .padding(8)
+                if recipe.isFavorite {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(DS.tomato)
+                        .frame(width: 28, height: 28)
+                        .background(.white.opacity(0.92))
+                        .clipShape(Circle())
+                        .padding(8)
+                }
             }
 
             // Info
