@@ -12,6 +12,7 @@ import { safeFetchText, UrlNotAllowedError } from "./security/ssrf.js";
 import { rateLimit } from "./middleware/rate-limit.js";
 import { reserveRecipeQuota, refundRecipeQuota, requirePremiumPlan, QuotaError } from "./quota.js";
 import { enqueueJob, registerJobHandler, startJobWorker } from "./jobs.js";
+import { fixTurkish, findBestMatch, splitAmountFromName } from "./ingredient-matching.js";
 
 // Burst protection for the expensive AI routes (per authenticated user).
 const aiRateLimit = rateLimit({ windowMs: 60_000, max: 10, name: "ai" });
@@ -192,212 +193,6 @@ function extractUserFromURL(url: string): string | null {
   return null;
 }
 
-// Word-level Turkish character fixes (ASCII → proper Turkish)
-const turkishWordMap: Record<string, string> = {
-  sarimsak: "sarımsak",
-  sogan: "soğan",
-  sogani: "soğanı",
-  kiyma: "kıyma",
-  feslegen: "fesleğen",
-  cilek: "çilek",
-  salca: "salça",
-  salcasi: "salçası",
-  nisasta: "nişasta",
-  kirmizi: "kırmızı",
-  yesil: "yeşil",
-  kasar: "kaşar",
-  yogurt: "yoğurt",
-  sut: "süt",
-  tereyagi: "tereyağı",
-  zeytinyagi: "zeytinyağı",
-  seker: "şeker",
-  sekeri: "şekeri",
-  pirinc: "pirinç",
-  havuc: "havuç",
-  patlican: "patlıcan",
-  fistik: "fıstık",
-  fistigi: "fıstığı",
-  ispanak: "ıspanak",
-  baligi: "balığı",
-  yapragi: "yaprağı",
-  tatli: "tatlı",
-  misir: "mısır",
-  pirasa: "pırasa",
-  salatalik: "salatalık",
-  seftali: "şeftali",
-  kayisi: "kayısı",
-  visne: "vişne",
-  uzum: "üzüm",
-  cicek: "çiçek",
-  corek: "çörek",
-  corekotu: "çörekotu",
-  aci: "acı",
-  bugday: "buğday",
-  cesnisi: "çeşnisi",
-  pastirma: "pastırma",
-  corba: "çorba",
-  borek: "börek",
-  guvec: "güveç",
-  kofte: "köfte",
-  tursu: "turşu",
-  recel: "reçel",
-  lavash: "lavaş",
-  cikolata: "çikolata",
-  biskuvi: "bisküvi",
-  eriste: "erişte",
-  findik: "fındık",
-  kori: "köri",
-  kornison: "kornişon",
-  yagi: "yağı",
-  yag: "yağ",
-  eksisi: "ekşisi",
-  sivi: "sıvı",
-  siviyag: "sıvıyağ",
-  tatlandirici: "tatlandırıcı",
-  zerdecal: "zerdeçal",
-  arpacik: "arpacık",
-  ezmesi: "ezmesi",
-  cipsi: "cipsi",
-  mercimek: "mercimek",
-  peyniri: "peyniri",
-  pudra: "pudra",
-  kabartma: "kabartma",
-  fasulye: "fasulye",
-  dolma: "dolma",
-  sucuk: "sucuk",
-  susam: "susam",
-  kuskus: "kuskus",
-  incir: "incir",
-};
-
-function turkishCapitalizeWord(word: string): string {
-  if (!word) return word;
-  const first = word[0];
-  if (first === "i") return "İ" + word.slice(1);
-  if (first === "ı") return "I" + word.slice(1);
-  return first.toLocaleUpperCase("tr-TR") + word.slice(1);
-}
-
-// Words that should stay lowercase (connectors/prepositions)
-const LOWERCASE_WORDS = new Set(["veya", "ve", "için", "ile", "ya", "da"]);
-
-function fixTurkish(name: string): string {
-  const lower = name.toLocaleLowerCase("tr-TR").replace(/\s{2,}/g, " ").trim();
-  // Fix each word: apply word map, then capitalize (except connectors)
-  const words = lower.split(/\s+/).map((w) => turkishWordMap[w] ?? w);
-  return words
-    .map((w, i) => (i > 0 && LOWERCASE_WORDS.has(w)) ? w : turkishCapitalizeWord(w))
-    .join(" ");
-}
-
-// Bigram similarity (Dice coefficient) for fuzzy matching
-function bigrams(str: string): Set<string> {
-  const s = str.toLocaleLowerCase("tr-TR").trim();
-  const set = new Set<string>();
-  for (let i = 0; i < s.length - 1; i++) set.add(s.slice(i, i + 2));
-  return set;
-}
-
-function diceCoefficient(a: string, b: string): number {
-  const biA = bigrams(a);
-  const biB = bigrams(b);
-  if (biA.size === 0 && biB.size === 0) return a.toLocaleLowerCase("tr-TR") === b.toLocaleLowerCase("tr-TR") ? 1 : 0;
-  let intersection = 0;
-  for (const bi of biA) if (biB.has(bi)) intersection++;
-  return (2 * intersection) / (biA.size + biB.size);
-}
-
-// Suffixes that fundamentally change the ingredient (X ≠ X yağı, X unu, etc.)
-const PRODUCT_FORM_SUFFIXES = [
-  " yağı", " yağ", " unu", " un", " suyu", " sosu", " sos",
-  " ezmesi", " püresi", " rendesi", " tozu", " toz",
-  " cipsi", " gevreği", " lapası", " sütü", " süt",
-  " peyniri", " peynir", " ekmeği", " ekmek",
-  " eti", " fileto",
-];
-
-// Suffixes that are just alternate names (safe to strip for matching)
-const COSMETIC_SUFFIXES = [
-  " içi", // ceviz içi = ceviz
-];
-
-// Prefixes that are qualifiers, not identity changers (safe to ignore for matching)
-const IGNORABLE_PREFIXES = [
-  "taze ", "kuru ", "organik ", "toz ", "çiğ ",
-  "büyük ", "küçük ", "orta ", "orta boy ",
-  "az yağlı ", "tam yağlı ", "yağsız ", "ekstra ",
-  "kavrulmuş ", "közlenmiş ", "haşlanmış ", "eritilmiş ",
-  "rendelenmiş ", "doğranmış ", "dilimlenmiş ", "süzme ",
-  "ince ", "iri ", "sade ", "light ",
-  "pul ", "tane ", "çekilmiş ", "öğütülmüş ",
-  "soğuk ", "ılık ", "sıcak ",
-  "koyu ", "açık ",
-];
-
-function getProductForm(name: string): string | null {
-  const lower = name.toLocaleLowerCase("tr-TR").trim();
-  for (const suffix of PRODUCT_FORM_SUFFIXES) {
-    if (lower.endsWith(suffix)) return suffix.trim();
-  }
-  return null;
-}
-
-function stripPrefixes(name: string): string {
-  let s = name.toLocaleLowerCase("tr-TR").trim();
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const prefix of IGNORABLE_PREFIXES) {
-      if (s.startsWith(prefix)) {
-        s = s.slice(prefix.length);
-        changed = true;
-      }
-    }
-  }
-  return s;
-}
-
-function normalizeForMatch(name: string): string {
-  let s = stripPrefixes(name);
-  for (const suffix of COSMETIC_SUFFIXES) {
-    if (s.endsWith(suffix)) { s = s.slice(0, -suffix.length).trim(); break; }
-  }
-  return s;
-}
-
-function findBestMatch(
-  name: string,
-  allIngredients: { id: string; name: string }[]
-): { id: string; name: string } | null {
-  const lowerA = name.toLocaleLowerCase("tr-TR").trim();
-  const normA = normalizeForMatch(name);
-  const formA = getProductForm(name);
-
-  let bestScore = 0;
-  let bestMatch: { id: string; name: string } | null = null;
-
-  for (const existing of allIngredients) {
-    const lowerB = existing.name.toLocaleLowerCase("tr-TR").trim();
-    const normB = normalizeForMatch(existing.name);
-    const formB = getProductForm(existing.name);
-
-    // If product forms differ, never merge (e.g. "Susam" vs "Susam yağı")
-    if (formA !== formB) continue;
-
-    // Exact normalized match (after stripping prefixes + cosmetic suffixes)
-    if (normA === normB) return existing;
-
-    // Bigram similarity on normalized forms (high threshold)
-    const dice = diceCoefficient(normA, normB);
-    if (dice > 0.8 && dice > bestScore) {
-      bestScore = dice;
-      bestMatch = existing;
-    }
-  }
-
-  return bestMatch;
-}
-
 // Cached ingredient list — refreshed per request batch
 let _cachedIngredients: { id: string; name: string }[] | null = null;
 let _cacheTime = 0;
@@ -569,9 +364,10 @@ async function buildShoppingListFromRecipes(recipeIds: string[]): Promise<Shoppi
     }
   }
 
-  // Resolve ingredient IDs
+  // Resolve ingredient IDs — lookup only: display names may carry measure
+  // words ("1 çay kaşığı tuz") and must never create ingredient rows.
   const displayNames = order.map((k) => map.get(k)!.displayName);
-  const idMap = await resolveIngredientMap(displayNames);
+  const idMap = await lookupIngredientMap(displayNames);
 
   return order.map((key) => {
     const entry = map.get(key)!;
@@ -796,7 +592,13 @@ app.post("/recipes", async (req, res) => {
   const creatorUsername = data.platform_user || meta.platformUser || extractUserFromURL(data.url) || "unknown";
   await ensureCreator(creatorUsername, data.platform, data.creator_profile_pic_base64);
 
-  // Resolve ingredient IDs for ingredients_with_measures
+  // Resolve base ingredients first — this is the only path allowed to create
+  // new ingredient rows (the AI prompt constrains these to core names).
+  const ingredientsWithoutMeasures = await resolveIngredientIds(data.ingredients_without_measures ?? []);
+
+  // Then resolve IDs for ingredients_with_measures — lookup only: these
+  // display names may carry measure words ("1 çay kaşığı tuz") and must
+  // never create ingredient rows.
   const ingWithMeasures: { name: string; amount: string; section?: string; ingredient_id: string }[] = (data.ingredients_with_measures ?? []).map(
     (i: any) => ({
       name: fixTurkish((i.name ?? "").replace(/\s{2,}/g, " ").trim()),
@@ -806,7 +608,7 @@ app.post("/recipes", async (req, res) => {
     })
   );
   if (ingWithMeasures.length > 0) {
-    const nameToId = await resolveIngredientMap(ingWithMeasures.map((i) => i.name));
+    const nameToId = await lookupIngredientMap(ingWithMeasures.map((i) => i.name));
     for (const ing of ingWithMeasures) {
       ing.ingredient_id = nameToId.get(ing.name) ?? nameToId.get(fixTurkish(ing.name)) ?? "";
     }
@@ -824,7 +626,7 @@ app.post("/recipes", async (req, res) => {
       title: data.title,
       description: data.description,
       ingredientsWithMeasures: ingWithMeasures,
-      ingredientsWithoutMeasures: await resolveIngredientIds(data.ingredients_without_measures ?? []),
+      ingredientsWithoutMeasures,
       thumbnailUrl,
       servings: data.servings,
       caloriesTotalKcal: data.calories_total_kcal,
@@ -1269,6 +1071,35 @@ async function mergeIngredientRows(
       )
       WHERE shopping_ingredient_ids::text LIKE ${"%" + dupe.id + "%"}
     `);
+
+    // meal_plans.shopping_list: array of objects with ingredient_id field
+    await db.execute(sql`
+      UPDATE meal_plans
+      SET shopping_list = (
+        SELECT jsonb_agg(
+          CASE
+            WHEN elem->>'ingredient_id' = ${dupe.id} THEN jsonb_set(elem, '{ingredient_id}', to_jsonb(${keep.id}::text))
+            ELSE elem
+          END
+        )
+        FROM jsonb_array_elements(shopping_list) AS elem
+      )
+      WHERE shopping_list::text LIKE ${"%" + dupe.id + "%"}
+    `);
+
+    // ingredients.alternative_ids: array of ID strings (drop self-references)
+    await db.execute(sql`
+      UPDATE ingredients
+      SET alternative_ids = (
+        SELECT COALESCE(jsonb_agg(DISTINCT new_elem), '[]'::jsonb)
+        FROM (
+          SELECT CASE WHEN elem = ${dupe.id}::text THEN ${keep.id}::text ELSE elem END AS new_elem
+          FROM jsonb_array_elements_text(alternative_ids) AS elem
+        ) sub
+        WHERE new_elem <> ingredients.id::text
+      )
+      WHERE alternative_ids::text LIKE ${"%" + dupe.id + "%"}
+    `);
   }
 
   // Delete duplicates
@@ -1287,10 +1118,11 @@ app.post("/ingredients/consolidate", requireAdmin, async (req, res) => {
     const all = await db.select().from(ingredients).orderBy(ingredients.name);
     console.log(`[Consolidate] Processing ${all.length} ingredients (dry_run=${dryRun})...`);
 
-    // Phase 1: Group by exact match after fixTurkish normalization
+    // Phase 1: Group by exact match after stripping leading measure words
+    // ("Adet Limon" → "Limon") and fixTurkish normalization
     const groups = new Map<string, typeof all>();
     for (const row of all) {
-      const canonical = fixTurkish(row.name);
+      const canonical = fixTurkish(splitAmountFromName(row.name).name);
       if (!groups.has(canonical)) groups.set(canonical, []);
       groups.get(canonical)!.push(row);
     }
@@ -1366,7 +1198,7 @@ app.post("/ingredients/consolidate", requireAdmin, async (req, res) => {
 
       const keep = sorted[0];
       const toMerge = sorted.slice(1);
-      const canonical = fixTurkish(keep.name);
+      const canonical = fixTurkish(splitAmountFromName(keep.name).name);
 
       console.log(`  Fuzzy merge: [${allInGroup.map((r) => `"${r.name}"`).join(", ")}] -> "${canonical}"`);
       fuzzyLog.push({ keep: canonical, merged: toMerge.map((d) => d.name) });
@@ -2420,8 +2252,9 @@ app.post("/recipes/scrape-web", async (req, res) => {
         baseIngredients.push(parts.name.toLocaleLowerCase("tr-TR"));
       }
 
-      // Resolve ingredient IDs
-      const nameToId = await resolveIngredientMap(ingredientsWithMeasures.map((i) => i.name));
+      // Resolve ingredient IDs — lookup only; rows are created from
+      // base_ingredients when the recipe is saved, never from display names.
+      const nameToId = await lookupIngredientMap(ingredientsWithMeasures.map((i) => i.name));
       for (const ing of ingredientsWithMeasures) {
         const fixed = fixTurkish(ing.name);
         ing.ingredient_id = nameToId.get(fixed) ?? "";
@@ -2541,26 +2374,10 @@ function decodeHTMLEntities(str: string): string {
 }
 
 function parseIngredientLine(raw: string): { name: string; amount: string } {
-  // Patterns: "4 su bardağı un", "1 adet yumurta", "400 gr kıyma", "Sarımsaklı yoğurt"
-  const amountMatch = raw.match(
-    /^([\d½¼¾⅓⅔.,/]+\s*(?:su bardağı|çay bardağı|yemek kaşığı|tatlı kaşığı|çay kaşığı|adet|kg|gr|g|ml|lt|litre|paket|demet|diş|dal|dilim|avuç|tutam|bardak|fincan|kaşık|porsiyon|büyük|küçük|orta boy|orta)\s*)/i
-  );
-  if (amountMatch) {
-    return {
-      amount: amountMatch[1].trim(),
-      name: cleanIngredientName(raw.slice(amountMatch[0].length).trim()),
-    };
-  }
-  // Simple number prefix: "2 soğan"
-  const simpleMatch = raw.match(/^([\d½¼¾⅓⅔.,/]+\s*)/);
-  if (simpleMatch && raw.length > simpleMatch[0].length) {
-    return {
-      amount: simpleMatch[1].trim(),
-      name: cleanIngredientName(raw.slice(simpleMatch[0].length).trim()),
-    };
-  }
-  // No amount (e.g. "Sarımsaklı yoğurt", "Kuru nane")
-  return { amount: "", name: cleanIngredientName(raw) };
+  // Patterns: "4 su bardağı un", "3-4 kaşık zeytinyağı", "yarım demet
+  // maydanoz", "bir adet limon", "Sarımsaklı yoğurt"
+  const { amount, name } = splitAmountFromName(raw);
+  return { amount, name: cleanIngredientName(name) };
 }
 
 function cleanIngredientName(name: string): string {
