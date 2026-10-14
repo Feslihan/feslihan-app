@@ -123,7 +123,7 @@ struct SettingsView: View {
     private func signOut() {
         isWorking = true
         Task {
-            try? await Clerk.shared.signOut()
+            try? await Clerk.shared.auth.signOut()
             isWorking = false
         }
     }
