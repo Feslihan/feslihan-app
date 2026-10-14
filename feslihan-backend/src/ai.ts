@@ -1,6 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const client = new Anthropic();
+// Bound every Claude call: a hung upstream request otherwise ties up a connection
+// and keeps burning cost. 120s comfortably covers our largest generations
+// (meal-plan at 16K max_tokens); the SDK retries transient failures twice.
+const client = new Anthropic({
+  timeout: 120_000,
+  maxRetries: 2,
+});
 
 const PREDEFINED_TAGS = [
   "meze", "tatlı", "tuzlu", "atıştırmalık", "ana yemek", "çorba", "salata",

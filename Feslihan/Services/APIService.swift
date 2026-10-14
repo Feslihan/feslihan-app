@@ -1,7 +1,33 @@
 import Foundation
+import ClerkKit
 
 enum APIService {
     static let baseURL = "https://feslihan-app.vercel.app"
+
+    // MARK: - Auth
+
+    /// The current Clerk session JWT, or nil if signed out.
+    private static func authToken() async -> String? {
+        try? await Clerk.shared.session?.getToken()
+    }
+
+    /// A GET request for `url` carrying the Clerk bearer token.
+    private static func authedGet(_ url: URL) async -> URLRequest {
+        var request = URLRequest(url: url)
+        if let token = await authToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        return request
+    }
+
+    /// A copy of `request` with the Clerk bearer token attached.
+    private static func authed(_ request: URLRequest) async -> URLRequest {
+        var request = request
+        if let token = await authToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        return request
+    }
 
     /// Check if a recipe already exists for this URL.
     static func lookup(url: String) async -> RecipeDTO? {
@@ -10,7 +36,7 @@ enum APIService {
             return nil
         }
 
-        guard let (data, response) = try? await URLSession.shared.data(from: requestURL),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(requestURL)),
               let http = response as? HTTPURLResponse,
               http.statusCode == 200 else {
             return nil
@@ -23,7 +49,7 @@ enum APIService {
     static func fetchAll() async -> [RecipeDTO] {
         guard let requestURL = URL(string: "\(baseURL)/recipes") else { return [] }
 
-        guard let (data, response) = try? await URLSession.shared.data(from: requestURL),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(requestURL)),
               let http = response as? HTTPURLResponse,
               http.statusCode == 200 else {
             return []
@@ -36,7 +62,7 @@ enum APIService {
     static func fetchUserRecipes(userId: String) async -> [RecipeDTO] {
         guard let requestURL = URL(string: "\(baseURL)/users/\(userId)/recipes") else { return [] }
 
-        guard let (data, response) = try? await URLSession.shared.data(from: requestURL),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(requestURL)),
               let http = response as? HTTPURLResponse,
               http.statusCode == 200 else {
             return []
@@ -57,7 +83,7 @@ enum APIService {
             "comment": comment ?? NSNull()
         ]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse,
               http.statusCode == 200 else { return false }
         return true
@@ -68,7 +94,7 @@ enum APIService {
         guard let url = URL(string: "\(baseURL)/reviews/\(reviewId)?user_id=\(userId)") else { return false }
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse,
               http.statusCode == 200 else { return false }
         return true
@@ -77,7 +103,7 @@ enum APIService {
     /// Fetch all recipe IDs a user has reviewed/tried.
     static func fetchUserReviews(userId: String) async -> [UserReviewDTO] {
         guard let url = URL(string: "\(baseURL)/users/\(userId)/reviews") else { return [] }
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
               let http = response as? HTTPURLResponse,
               http.statusCode == 200 else { return [] }
         return (try? JSONDecoder().decode([UserReviewDTO].self, from: data)) ?? []
@@ -87,7 +113,7 @@ enum APIService {
     static func fetchIngredients() async -> [IngredientDTO] {
         guard let requestURL = URL(string: "\(baseURL)/ingredients") else { return [] }
 
-        guard let (data, response) = try? await URLSession.shared.data(from: requestURL),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(requestURL)),
               let http = response as? HTTPURLResponse,
               http.statusCode == 200 else {
             return []
@@ -100,7 +126,7 @@ enum APIService {
     static func fetchTags() async -> [String] {
         guard let requestURL = URL(string: "\(baseURL)/tags") else { return [] }
 
-        guard let (data, response) = try? await URLSession.shared.data(from: requestURL),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(requestURL)),
               let http = response as? HTTPURLResponse,
               http.statusCode == 200 else {
             return []
@@ -120,7 +146,7 @@ enum APIService {
         guard let body = try? JSONEncoder().encode(recipe) else { return nil }
         request.httpBody = body
 
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse,
               (200...201).contains(http.statusCode) else {
             return nil
@@ -143,7 +169,7 @@ enum APIService {
         let body = ["url": url]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: await authed(request))
 
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
             let responseBody = String(data: data, encoding: .utf8) ?? ""
@@ -158,7 +184,7 @@ enum APIService {
 
     static func fetchFolders(userId: String) async -> [FolderDTO] {
         guard let url = URL(string: "\(baseURL)/users/\(userId)/folders") else { return [] }
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
               let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
         return (try? JSONDecoder().decode([FolderDTO].self, from: data)) ?? []
     }
@@ -170,7 +196,7 @@ enum APIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: [String: Any] = ["user_id": userId, "name": name, "emoji": emoji ?? ""]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse, http.statusCode == 201 else { return nil }
         return try? JSONDecoder().decode(FolderDTO.self, from: data)
     }
@@ -179,7 +205,7 @@ enum APIService {
         guard let url = URL(string: "\(baseURL)/folders/\(id)") else { return false }
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse, http.statusCode == 204 else { return false }
         return true
     }
@@ -191,7 +217,7 @@ enum APIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: [String: Any?] = ["folder_id": folderId]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body.compactMapValues { $0 })
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse, http.statusCode == 200 else { return false }
         return true
     }
@@ -203,7 +229,7 @@ enum APIService {
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: ["is_favorite": isFavorite])
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse, http.statusCode == 200 else { return false }
         return true
     }
@@ -213,7 +239,7 @@ enum APIService {
         guard let url = URL(string: "\(baseURL)/users/\(userId)/recipes/\(recipeId)") else { return false }
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse, http.statusCode == 204 else { return false }
         return true
     }
@@ -221,7 +247,7 @@ enum APIService {
     /// Fetch estimated cost for a recipe.
     static func fetchRecipeCost(recipeId: String) async -> RecipeCostDTO? {
         guard let requestURL = URL(string: "\(baseURL)/recipes/\(recipeId)/cost") else { return nil }
-        guard let (data, response) = try? await URLSession.shared.data(from: requestURL),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(requestURL)),
               let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
         return try? JSONDecoder().decode(RecipeCostDTO.self, from: data)
     }
@@ -231,7 +257,7 @@ enum APIService {
     /// Fetch the user's pantry items.
     static func fetchPantry(userId: String) async -> [PantryItemDTO] {
         guard let url = URL(string: "\(baseURL)/users/\(userId)/pantry") else { return [] }
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
               let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
         return (try? JSONDecoder().decode([PantryItemDTO].self, from: data)) ?? []
     }
@@ -243,7 +269,7 @@ enum APIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body = ["ingredient_names": ingredientNames]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse, http.statusCode == 201 else { return false }
         return true
     }
@@ -252,7 +278,7 @@ enum APIService {
         guard let url = URL(string: "\(baseURL)/users/\(userId)/pantry/\(ingredientId)") else { return false }
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse, http.statusCode == 204 else { return false }
         return true
     }
@@ -261,7 +287,7 @@ enum APIService {
 
     static func fetchShoppingList(userId: String) async -> [ShoppingItemDTO] {
         guard let url = URL(string: "\(baseURL)/users/\(userId)/shopping-list") else { return [] }
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
               let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
         return (try? JSONDecoder().decode([ShoppingItemDTO].self, from: data)) ?? []
     }
@@ -273,7 +299,7 @@ enum APIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body = ["ingredient_names": ingredientNames]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse, http.statusCode == 201 else { return false }
         return true
     }
@@ -285,7 +311,7 @@ enum APIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: [String: Bool] = ["is_checked": isChecked]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse, http.statusCode == 200 else { return false }
         return true
     }
@@ -294,7 +320,7 @@ enum APIService {
         guard let url = URL(string: "\(baseURL)/users/\(userId)/shopping-list/\(itemId)") else { return false }
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
-        guard let (_, response) = try? await URLSession.shared.data(for: request),
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse, http.statusCode == 204 else { return false }
         return true
     }
@@ -303,7 +329,7 @@ enum APIService {
     static func fetchCreator(username: String) async -> InstagramUserDTO? {
         guard let requestURL = URL(string: "\(baseURL)/creators/\(username)") else { return nil }
 
-        guard let (data, response) = try? await URLSession.shared.data(from: requestURL),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(requestURL)),
               let http = response as? HTTPURLResponse,
               http.statusCode == 200 else {
             return nil
@@ -315,7 +341,7 @@ enum APIService {
     /// Backfill missing creator profile pictures from this device.
     static func backfillCreatorPictures() async {
         guard let url = URL(string: "\(baseURL)/creators/missing-pictures") else { return }
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
               let http = response as? HTTPURLResponse, http.statusCode == 200,
               let creators = try? JSONDecoder().decode([MissingPicCreator].self, from: data),
               !creators.isEmpty else { return }
@@ -331,7 +357,7 @@ enum APIService {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             let body: [String: String] = ["base64": picData.base64EncodedString()]
             request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-            if let (_, resp) = try? await URLSession.shared.data(for: request),
+            if let (_, resp) = try? await URLSession.shared.data(for: await authed(request)),
                let httpResp = resp as? HTTPURLResponse, httpResp.statusCode == 200 {
                 filled += 1
                 print("[Backfill] Filled @\(creator.username)")

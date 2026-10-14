@@ -7,9 +7,28 @@ import { uploadImage, s3KeyFromUrl, getImage } from "./s3.js";
 import { analyzeRecipe, analyzeNutrition, generateMealPlan, classifyIngredients, classifyFreezerFriendly, findAlternativeIngredients } from "./ai.js";
 import { eq, desc, inArray, and, sql, isNull } from "drizzle-orm";
 import { seedPlatformRecipes, mapPlatformRecipesToUser } from "./seed-recipes.js";
+import { requireAuth, requireAdmin } from "./middleware/auth.js";
+import { safeFetchText, UrlNotAllowedError } from "./security/ssrf.js";
+import { rateLimit } from "./middleware/rate-limit.js";
+import { reserveRecipeQuota, refundRecipeQuota, requirePremiumPlan, QuotaError } from "./quota.js";
+
+// Burst protection for the expensive AI routes (per authenticated user).
+const aiRateLimit = rateLimit({ windowMs: 60_000, max: 10, name: "ai" });
 
 const app = express();
-app.use(express.json({ limit: "50mb" }));
+
+// Body-size caps, applied before parsing so oversized payloads are rejected
+// (413) without buffering the full body. The AI routes are capped well below
+// the global 50MB: /ai/meal-plan is pure JSON, and /ai/analyze only needs room
+// for base64 frames + audio. Recipe uploads elsewhere still allow 50MB thumbs.
+const jsonGlobal = express.json({ limit: "50mb" });
+const jsonAiAnalyze = express.json({ limit: "12mb" });
+const jsonAiMealPlan = express.json({ limit: "256kb" });
+app.use((req, res, next) => {
+  if (req.path === "/ai/analyze") return jsonAiAnalyze(req, res, next);
+  if (req.path === "/ai/meal-plan") return jsonAiMealPlan(req, res, next);
+  return jsonGlobal(req, res, next);
+});
 
 const PREDEFINED_TAGS = [
   "meze",
@@ -64,6 +83,23 @@ app.use((req, _res, next) => {
     console.log(`  ingredients: ${body.ingredients_without_measures?.length || 0} base items`);
   }
   next();
+});
+
+// Public routes that do not require authentication.
+// Only image serving is public: images are fetched by AsyncImage / plain GETs
+// that cannot carry a Bearer token, and expose S3 image bytes only.
+function isPublicRoute(req: express.Request): boolean {
+  return req.method === "GET" && /^\/images\/[^/]+\/[^/]+$/.test(req.path);
+}
+
+// Global authentication gate: every request except the public allowlist must
+// carry a valid Clerk session JWT. Identity is derived from the token (req.auth).
+app.use((req, res, next) => {
+  if (isPublicRoute(req)) {
+    next();
+    return;
+  }
+  requireAuth(req, res, next);
 });
 
 function toSnake(obj: any): any {
@@ -719,6 +755,7 @@ app.get("/recipes/lookup", async (req, res) => {
 // Save a new recipe
 app.post("/recipes", async (req, res) => {
   const data = req.body;
+  const userId = req.auth!.userId;
 
   // Return existing if URL already saved
   const existing = await db
@@ -729,12 +766,8 @@ app.post("/recipes", async (req, res) => {
 
   if (existing.length > 0) {
     // Recipe already processed — just add user mapping
-    if (data.user_id) {
-      await saveUserRecipe(data.user_id, existing[0].id);
-      console.log(`  -> Already exists, added mapping for user ${data.user_id}`);
-    } else {
-      console.log(`  -> Already exists, returning cached`);
-    }
+    await saveUserRecipe(userId, existing[0].id);
+    console.log(`  -> Already exists, added mapping for user ${userId}`);
     res.json(await enrichRecipe(existing[0]));
     return;
   }
@@ -801,14 +834,12 @@ app.post("/recipes", async (req, res) => {
       difficulty: data.difficulty,
       freezerFriendly: data.freezer_friendly ?? false,
       healthScore: data.health_score,
-      requestedBy: data.requested_by,
+      requestedBy: userId,
     })
     .returning();
 
   // Add user-recipe mapping
-  if (data.user_id) {
-    await saveUserRecipe(data.user_id, result[0].id);
-  }
+  await saveUserRecipe(userId, result[0].id);
 
   console.log(`  -> Saved: ${result[0].title} (thumbnail: ${thumbnailUrl ? "YES" : "NO"})`);
   res.status(201).json(toSnake(result[0]));
@@ -844,7 +875,7 @@ app.get("/users/:userId/recipes", async (req, res) => {
       isFavorite: userRecipes.isFavorite,
     })
     .from(userRecipes)
-    .where(eq(userRecipes.userId, req.params.userId));
+    .where(eq(userRecipes.userId, req.auth!.userId));
 
   if (mappings.length === 0) {
     res.json([]);
@@ -887,7 +918,7 @@ app.get("/recipes/:id", async (req, res) => {
 });
 
 // Backfill missing metadata from captions
-app.post("/recipes/backfill", async (_req, res) => {
+app.post("/recipes/backfill", requireAdmin, async (_req, res) => {
   const all = await db.select().from(recipes);
   let updated = 0;
 
@@ -918,7 +949,7 @@ app.post("/recipes/backfill", async (_req, res) => {
 });
 
 // Backfill freezer_friendly for existing recipes using AI
-app.post("/recipes/backfill-freezer", async (_req, res) => {
+app.post("/recipes/backfill-freezer", requireAdmin, async (_req, res) => {
   const all = await db.select().from(recipes);
   const enriched = await enrichRecipes(all);
 
@@ -964,12 +995,9 @@ app.post("/recipes/backfill-freezer", async (_req, res) => {
 
 // Sync Clerk user to local DB
 app.post("/users/sync", async (req, res) => {
-  const { clerk_id, email, name, avatar_url } = req.body;
-
-  if (!clerk_id) {
-    res.status(400).json({ error: "clerk_id required" });
-    return;
-  }
+  // Identity comes from the verified token, never from the request body.
+  const clerk_id = req.auth!.userId;
+  const { email, name, avatar_url } = req.body;
 
   const existing = await db
     .select()
@@ -1022,7 +1050,8 @@ app.get("/ingredients", async (_req, res) => {
 });
 
 // Update price tier for an ingredient
-app.put("/ingredients/:name/price-tier", async (req, res) => {
+app.put("/ingredients/:name/price-tier", requireAdmin, async (req, res) => {
+  const name = req.params.name as string;
   const { price_tier } = req.body;
   if (!["cheap", "neutral", "expensive"].includes(price_tier)) {
     res.status(400).json({ error: "price_tier must be cheap, neutral, or expensive" });
@@ -1032,7 +1061,7 @@ app.put("/ingredients/:name/price-tier", async (req, res) => {
   const result = await db
     .update(ingredients)
     .set({ priceTier: price_tier })
-    .where(eq(ingredients.name, req.params.name))
+    .where(eq(ingredients.name, name))
     .returning();
 
   if (result.length === 0) {
@@ -1044,7 +1073,8 @@ app.put("/ingredients/:name/price-tier", async (req, res) => {
 });
 
 // Update availability for an ingredient
-app.put("/ingredients/:name/availability", async (req, res) => {
+app.put("/ingredients/:name/availability", requireAdmin, async (req, res) => {
+  const name = req.params.name as string;
   const { availability } = req.body;
   if (!["easy", "neutral", "rare"].includes(availability)) {
     res.status(400).json({ error: "availability must be easy, neutral, or rare" });
@@ -1054,7 +1084,7 @@ app.put("/ingredients/:name/availability", async (req, res) => {
   const result = await db
     .update(ingredients)
     .set({ availability })
-    .where(eq(ingredients.name, req.params.name))
+    .where(eq(ingredients.name, name))
     .returning();
 
   if (result.length === 0) {
@@ -1066,7 +1096,7 @@ app.put("/ingredients/:name/availability", async (req, res) => {
 });
 
 // Classify all unclassified ingredients using Claude
-app.post("/ingredients/classify", async (_req, res) => {
+app.post("/ingredients/classify", requireAdmin, async (_req, res) => {
   // Fetch ingredients missing price_tier or availability
   const all = await db.select().from(ingredients).orderBy(ingredients.name);
   const unclassified = all.filter((r) => !r.priceTier || !r.availability);
@@ -1110,7 +1140,7 @@ app.post("/ingredients/classify", async (_req, res) => {
 });
 
 // Find and populate alternative ingredients using Claude
-app.post("/ingredients/find-alternatives", async (_req, res) => {
+app.post("/ingredients/find-alternatives", requireAdmin, async (_req, res) => {
   try {
     const all = await db.select({ id: ingredients.id, name: ingredients.name }).from(ingredients).orderBy(ingredients.name);
     const names = all.map((r) => r.name);
@@ -1245,7 +1275,7 @@ async function mergeIngredientRows(
 }
 
 // Consolidate ingredients: exact + fuzzy dedup
-app.post("/ingredients/consolidate", async (req, res) => {
+app.post("/ingredients/consolidate", requireAdmin, async (req, res) => {
   const dryRun = req.query.dry_run === "true";
   try {
     const all = await db.select().from(ingredients).orderBy(ingredients.name);
@@ -1424,7 +1454,7 @@ async function searchMarketPrice(keyword: string): Promise<{ pricePerUnit: numbe
   }
 }
 
-app.post("/ingredients/fetch-prices", async (req, res) => {
+app.post("/ingredients/fetch-prices", requireAdmin, async (req, res) => {
   const forceAll = req.query.force === "true";
   const all = await db.select().from(ingredients).orderBy(ingredients.name);
   const toFetch = forceAll ? all : all.filter((r) => !r.pricePerUnit);
@@ -1564,10 +1594,11 @@ app.get("/images/:folder/:file", async (req, res) => {
 });
 
 // Delete recipe
-app.delete("/recipes/:id", async (req, res) => {
+app.delete("/recipes/:id", requireAdmin, async (req, res) => {
+  const id = req.params.id as string;
   const result = await db
     .delete(recipes)
-    .where(eq(recipes.id, req.params.id))
+    .where(eq(recipes.id, id))
     .returning();
 
   if (result.length === 0) {
@@ -1579,7 +1610,7 @@ app.delete("/recipes/:id", async (req, res) => {
 });
 
 // Fix Turkish characters in existing ingredients and recipes
-app.post("/recipes/fix-turkish", async (_req, res) => {
+app.post("/recipes/fix-turkish", requireAdmin, async (_req, res) => {
   // 1. Fix ingredients table
   const allIngs = await db.select().from(ingredients);
   let ingFixed = 0;
@@ -1681,14 +1712,14 @@ app.get("/users/:userId/folders", async (req, res) => {
   const folders = await db
     .select()
     .from(userFolders)
-    .where(eq(userFolders.userId, req.params.userId))
+    .where(eq(userFolders.userId, req.auth!.userId))
     .orderBy(userFolders.sortOrder);
 
   // Get recipe counts per folder
   const mappings = await db
     .select({ folderId: userRecipes.folderId, recipeId: userRecipes.recipeId })
     .from(userRecipes)
-    .where(eq(userRecipes.userId, req.params.userId));
+    .where(eq(userRecipes.userId, req.auth!.userId));
 
   const countMap = new Map<string, number>();
   for (const m of mappings) {
@@ -1707,9 +1738,10 @@ app.get("/users/:userId/folders", async (req, res) => {
 
 // Create folder
 app.post("/folders", async (req, res) => {
-  const { user_id, name, emoji } = req.body;
-  if (!user_id || !name) {
-    res.status(400).json({ error: "user_id and name required" });
+  const user_id = req.auth!.userId;
+  const { name, emoji } = req.body;
+  if (!name) {
+    res.status(400).json({ error: "name required" });
     return;
   }
 
@@ -1742,7 +1774,7 @@ app.put("/folders/:id", async (req, res) => {
   const result = await db
     .update(userFolders)
     .set(updates)
-    .where(eq(userFolders.id, req.params.id))
+    .where(and(eq(userFolders.id, req.params.id), eq(userFolders.userId, req.auth!.userId)))
     .returning();
 
   if (result.length === 0) {
@@ -1755,12 +1787,25 @@ app.put("/folders/:id", async (req, res) => {
 
 // Delete folder (recipes become unfoldered, not deleted)
 app.delete("/folders/:id", async (req, res) => {
+  const userId = req.auth!.userId;
+
+  // Only the folder's owner may delete it.
+  const deleted = await db
+    .delete(userFolders)
+    .where(and(eq(userFolders.id, req.params.id), eq(userFolders.userId, userId)))
+    .returning();
+
+  if (deleted.length === 0) {
+    res.status(404).json({ error: "Folder not found" });
+    return;
+  }
+
+  // Unfolder this user's recipes that pointed at the deleted folder.
   await db
     .update(userRecipes)
     .set({ folderId: null })
-    .where(eq(userRecipes.folderId, req.params.id));
+    .where(and(eq(userRecipes.folderId, req.params.id), eq(userRecipes.userId, userId)));
 
-  await db.delete(userFolders).where(eq(userFolders.id, req.params.id));
   res.status(204).send();
 });
 
@@ -1770,7 +1815,7 @@ app.delete("/users/:userId/recipes/:recipeId", async (req, res) => {
     .delete(userRecipes)
     .where(
       and(
-        eq(userRecipes.userId, req.params.userId),
+        eq(userRecipes.userId, req.auth!.userId),
         eq(userRecipes.recipeId, req.params.recipeId)
       )
     )
@@ -1788,12 +1833,25 @@ app.delete("/users/:userId/recipes/:recipeId", async (req, res) => {
 app.put("/users/:userId/recipes/:recipeId/folder", async (req, res) => {
   const { folder_id } = req.body;
 
+  // If moving into a folder, it must belong to the auth user.
+  if (folder_id) {
+    const folder = await db
+      .select({ id: userFolders.id })
+      .from(userFolders)
+      .where(and(eq(userFolders.id, folder_id), eq(userFolders.userId, req.auth!.userId)))
+      .limit(1);
+    if (folder.length === 0) {
+      res.status(404).json({ error: "Folder not found" });
+      return;
+    }
+  }
+
   const result = await db
     .update(userRecipes)
     .set({ folderId: folder_id || null })
     .where(
       and(
-        eq(userRecipes.userId, req.params.userId),
+        eq(userRecipes.userId, req.auth!.userId),
         eq(userRecipes.recipeId, req.params.recipeId)
       )
     )
@@ -1816,7 +1874,7 @@ app.put("/users/:userId/recipes/:recipeId/favorite", async (req, res) => {
     .set({ isFavorite: is_favorite ?? false })
     .where(
       and(
-        eq(userRecipes.userId, req.params.userId),
+        eq(userRecipes.userId, req.auth!.userId),
         eq(userRecipes.recipeId, req.params.recipeId)
       )
     )
@@ -1832,9 +1890,10 @@ app.put("/users/:userId/recipes/:recipeId/favorite", async (req, res) => {
 
 // Save a meal plan
 app.post("/meal-plans", async (req, res) => {
-  const { user_id, name, plan, recipe_ids, shopping_list } = req.body;
-  if (!user_id || !plan) {
-    res.status(400).json({ error: "user_id and plan required" });
+  const user_id = req.auth!.userId;
+  const { name, plan, recipe_ids, shopping_list } = req.body;
+  if (!plan) {
+    res.status(400).json({ error: "plan required" });
     return;
   }
 
@@ -1863,7 +1922,7 @@ app.get("/users/:userId/meal-plans", async (req, res) => {
   const result = await db
     .select()
     .from(mealPlans)
-    .where(eq(mealPlans.userId, req.params.userId))
+    .where(eq(mealPlans.userId, req.auth!.userId))
     .orderBy(desc(mealPlans.createdAt));
 
   // Backfill old plans that have no shopping_list or recipe_ids
@@ -1890,7 +1949,7 @@ app.get("/users/:userId/meal-plans", async (req, res) => {
       const mappings = await db
         .select({ recipeId: userRecipes.recipeId })
         .from(userRecipes)
-        .where(eq(userRecipes.userId, req.params.userId));
+        .where(eq(userRecipes.userId, req.auth!.userId));
       const existingRecipeRows = mappings.length > 0
         ? await db.select().from(recipes).where(inArray(recipes.id, mappings.map(m => m.recipeId)))
         : [];
@@ -1925,11 +1984,11 @@ app.get("/users/:userId/meal-plans", async (req, res) => {
                   caloriesTotalKcal: meal.calories ?? null,
                   cookingTimeMinutes: 30,
                   tags: [],
-                  requestedBy: req.params.userId,
+                  requestedBy: req.auth!.userId,
                 })
                 .returning();
               titleToId[title] = created.id;
-              await saveUserRecipe(req.params.userId, created.id);
+              await saveUserRecipe(req.auth!.userId, created.id);
             }
           }
         }
@@ -1999,7 +2058,7 @@ app.put("/meal-plans/:id", async (req, res) => {
     const result = await db
       .update(mealPlans)
       .set(updates)
-      .where(eq(mealPlans.id, req.params.id))
+      .where(and(eq(mealPlans.id, req.params.id), eq(mealPlans.userId, req.auth!.userId)))
       .returning();
 
     if (result.length === 0) {
@@ -2016,7 +2075,9 @@ app.put("/meal-plans/:id", async (req, res) => {
 
 // Delete a meal plan
 app.delete("/meal-plans/:id", async (req, res) => {
-  await db.delete(mealPlans).where(eq(mealPlans.id, req.params.id));
+  await db
+    .delete(mealPlans)
+    .where(and(eq(mealPlans.id, req.params.id), eq(mealPlans.userId, req.auth!.userId)));
   res.status(204).send();
 });
 
@@ -2024,9 +2085,10 @@ app.delete("/meal-plans/:id", async (req, res) => {
 
 app.post("/recipes/:recipeId/reviews", async (req, res) => {
   try {
-    const { user_id, rating, comment } = req.body;
-    if (!user_id || !rating || rating < 1 || rating > 5) {
-      res.status(400).json({ error: "user_id and rating (1-5) required" });
+    const user_id = req.auth!.userId;
+    const { rating, comment } = req.body;
+    if (!rating || rating < 1 || rating > 5) {
+      res.status(400).json({ error: "rating (1-5) required" });
       return;
     }
     const result = await db.insert(recipeReviews).values({
@@ -2056,24 +2118,20 @@ app.get("/users/:userId/reviews", async (req, res) => {
   const result = await db
     .select()
     .from(recipeReviews)
-    .where(eq(recipeReviews.userId, req.params.userId))
+    .where(eq(recipeReviews.userId, req.auth!.userId))
     .orderBy(desc(recipeReviews.createdAt));
   res.json(toSnake(result));
 });
 
 // Delete a review
 app.delete("/reviews/:reviewId", async (req, res) => {
-  const { user_id } = req.query;
-  if (!user_id) {
-    res.status(400).json({ error: "user_id query param required" });
-    return;
-  }
+  const user_id = req.auth!.userId;
   const result = await db
     .delete(recipeReviews)
     .where(
       and(
         eq(recipeReviews.id, req.params.reviewId),
-        eq(recipeReviews.userId, user_id as string)
+        eq(recipeReviews.userId, user_id)
       )
     )
     .returning();
@@ -2098,7 +2156,7 @@ app.get("/users/:userId/pantry", async (req, res) => {
     })
     .from(userPantry)
     .innerJoin(ingredients, eq(userPantry.ingredientId, ingredients.id))
-    .where(eq(userPantry.userId, req.params.userId))
+    .where(eq(userPantry.userId, req.auth!.userId))
     .orderBy(desc(userPantry.addedAt));
   res.json(rows);
 });
@@ -2122,7 +2180,7 @@ app.post("/users/:userId/pantry", async (req, res) => {
     .from(userPantry)
     .where(
       and(
-        eq(userPantry.userId, req.params.userId),
+        eq(userPantry.userId, req.auth!.userId),
         inArray(userPantry.ingredientId, ingredientIds)
       )
     );
@@ -2132,7 +2190,7 @@ app.post("/users/:userId/pantry", async (req, res) => {
   if (newIds.length > 0) {
     await db.insert(userPantry).values(
       newIds.map((id) => ({
-        userId: req.params.userId,
+        userId: req.auth!.userId,
         ingredientId: id,
       }))
     );
@@ -2145,7 +2203,7 @@ app.delete("/users/:userId/pantry/:ingredientId", async (req, res) => {
     .delete(userPantry)
     .where(
       and(
-        eq(userPantry.userId, req.params.userId),
+        eq(userPantry.userId, req.auth!.userId),
         eq(userPantry.ingredientId, req.params.ingredientId)
       )
     );
@@ -2168,14 +2226,14 @@ app.get("/users/:userId/shopping-list", async (req, res) => {
     })
     .from(userShoppingList)
     .innerJoin(ingredients, eq(userShoppingList.ingredientId, ingredients.id))
-    .where(eq(userShoppingList.userId, req.params.userId))
+    .where(eq(userShoppingList.userId, req.auth!.userId))
     .orderBy(desc(userShoppingList.addedAt));
 
   // Check which shopping list items have alternatives in the user's pantry
   const pantryRows = await db
     .select({ ingredientId: userPantry.ingredientId })
     .from(userPantry)
-    .where(eq(userPantry.userId, req.params.userId));
+    .where(eq(userPantry.userId, req.auth!.userId));
   const pantryIds = new Set(pantryRows.map((r) => r.ingredientId));
 
   // Collect all alternative IDs we need to resolve names for
@@ -2230,7 +2288,7 @@ app.post("/users/:userId/shopping-list", async (req, res) => {
     .from(userShoppingList)
     .where(
       and(
-        eq(userShoppingList.userId, req.params.userId),
+        eq(userShoppingList.userId, req.auth!.userId),
         inArray(userShoppingList.ingredientId, ingredientIds)
       )
     );
@@ -2240,7 +2298,7 @@ app.post("/users/:userId/shopping-list", async (req, res) => {
   if (newIds.length > 0) {
     await db.insert(userShoppingList).values(
       newIds.map((id) => ({
-        userId: req.params.userId,
+        userId: req.auth!.userId,
         ingredientId: id,
       }))
     );
@@ -2256,7 +2314,7 @@ app.put("/users/:userId/shopping-list/:itemId/check", async (req, res) => {
     .where(
       and(
         eq(userShoppingList.id, req.params.itemId),
-        eq(userShoppingList.userId, req.params.userId)
+        eq(userShoppingList.userId, req.auth!.userId)
       )
     );
   res.json({ ok: true });
@@ -2268,7 +2326,7 @@ app.delete("/users/:userId/shopping-list/:itemId", async (req, res) => {
     .where(
       and(
         eq(userShoppingList.id, req.params.itemId),
-        eq(userShoppingList.userId, req.params.userId)
+        eq(userShoppingList.userId, req.auth!.userId)
       )
     );
   res.status(204).send();
@@ -2283,26 +2341,30 @@ app.get("/tags", async (_req, res) => {
 // Scrape recipe from nefisyemektarifleri.com
 app.post("/recipes/scrape-web", async (req, res) => {
   const { url } = req.body;
-  if (!url || !url.includes("nefisyemektarifleri.com")) {
-    res.status(400).json({ error: "Only nefisyemektarifleri.com URLs are supported" });
-    return;
-  }
 
+  let html: string;
   try {
-    const response = await fetch(url, {
+    // SSRF guard: parse the URL, enforce the host allowlist, block
+    // private/link-local addresses, and re-validate every redirect hop.
+    const result = await safeFetchText(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
         "Accept": "text/html,application/xhtml+xml",
         "Accept-Language": "tr-TR,tr;q=0.9",
       },
     });
-
-    if (!response.ok) {
-      res.status(502).json({ error: `Failed to fetch page: ${response.status}` });
+    html = result.text;
+  } catch (err) {
+    if (err instanceof UrlNotAllowedError) {
+      res.status(err.statusCode).json({ error: err.message });
       return;
     }
+    console.error("[scrape-web] fetch failed:", err);
+    res.status(502).json({ error: "Failed to fetch page" });
+    return;
+  }
 
-    const html = await response.text();
+  try {
 
     // Parse title from <h1>
     const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
@@ -2488,8 +2550,15 @@ function cleanIngredientName(name: string): string {
 }
 
 // Analyze recipe from video content
-app.post("/ai/analyze", async (req, res) => {
+app.post("/ai/analyze", aiRateLimit, async (req, res) => {
+  const userId = req.auth!.userId;
+  let reserved = false;
   try {
+    // Reserve a quota slot BEFORE the expensive Claude call so a caller can't
+    // fire the request without holding one. Refunded below if analysis fails.
+    await reserveRecipeQuota(userId);
+    reserved = true;
+
     // Fetch existing ingredient names so Claude picks from them
     const allIngs = await getAllIngredients();
     const existingNames = allIngs.map((i) => i.name);
@@ -2500,23 +2569,34 @@ app.post("/ai/analyze", async (req, res) => {
     });
     res.json(result);
   } catch (err: any) {
+    if (reserved) await refundRecipeQuota(userId);
+    if (err instanceof QuotaError) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+      return;
+    }
     console.error("[AI Analyze]", err.stack || err.message || err);
     res.status(500).json({ error: "AI analysis failed", detail: err.message });
   }
 });
 
 // Generate meal plan
-app.post("/ai/meal-plan", async (req, res) => {
+app.post("/ai/meal-plan", aiRateLimit, async (req, res) => {
   try {
-    // Fetch user's recipes if user_id provided
+    // Identity comes from the verified token, never from the request body.
+    const authUserId = req.auth!.userId;
+
+    // Meal planning is a premium feature (Feslihan+ / Pro). Enforce server-side
+    // rather than trusting the client, which is where cost-DoS came from.
+    await requirePremiumPlan(authUserId);
+    // Fetch the user's recipes to seed the plan.
     let availableRecipes: any[] = [];
     // Build title→id map for resolving recipe names to IDs
     const titleToId: Record<string, string> = {};
-    if (req.body.user_id) {
+    {
       const mappings = await db
         .select({ recipeId: userRecipes.recipeId })
         .from(userRecipes)
-        .where(eq(userRecipes.userId, req.body.user_id));
+        .where(eq(userRecipes.userId, authUserId));
 
       if (mappings.length > 0) {
         const recipeIds = mappings.map((m) => m.recipeId);
@@ -2576,7 +2656,7 @@ app.post("/ai/meal-plan", async (req, res) => {
     const allIngIds = await resolveIngredientIds([...allIngNames]);
 
     // Create missing recipes in one batch
-    const userId = req.body.user_id || "system";
+    const userId = authUserId;
     const newRecipeEntries = allMealEntries.filter((e) => !titleToId[e.title]);
 
     if (newRecipeEntries.length > 0) {
@@ -2606,17 +2686,15 @@ app.post("/ai/meal-plan", async (req, res) => {
       }
 
       // Link all new recipes to user
-      if (req.body.user_id) {
-        // Ensure user exists
-        await db
-          .insert(users)
-          .values({ clerkId: req.body.user_id })
-          .onConflictDoNothing();
-        for (const r of created) {
-          try {
-            await saveUserRecipe(req.body.user_id, r.id);
-          } catch { /* ignore duplicates */ }
-        }
+      // Ensure user exists
+      await db
+        .insert(users)
+        .values({ clerkId: authUserId })
+        .onConflictDoNothing();
+      for (const r of created) {
+        try {
+          await saveUserRecipe(authUserId, r.id);
+        } catch { /* ignore duplicates */ }
       }
     }
 
@@ -2646,13 +2724,17 @@ app.post("/ai/meal-plan", async (req, res) => {
       recipe_ids: allRecipeIds,
     });
   } catch (err: any) {
+    if (err instanceof QuotaError) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+      return;
+    }
     console.error("[AI MealPlan] ERROR:", err.stack || err.message || err);
     res.status(500).json({ error: "Meal plan generation failed", detail: err.message });
   }
 });
 
 // Copy one user's recipes to all other users
-app.post("/admin/share-recipes", async (req, res) => {
+app.post("/admin/share-recipes", requireAdmin, async (req, res) => {
   const { source_user_id } = req.body;
   if (!source_user_id) {
     res.status(400).json({ error: "source_user_id required" });
@@ -2694,7 +2776,7 @@ app.post("/admin/share-recipes", async (req, res) => {
 });
 
 // Map ALL recipes to ALL users
-app.post("/admin/map-all-recipes", async (_req, res) => {
+app.post("/admin/map-all-recipes", requireAdmin, async (_req, res) => {
   const allRecipes = await db.select({ id: recipes.id }).from(recipes);
   const allUsers = await db.select({ clerkId: users.clerkId }).from(users);
 
@@ -2715,7 +2797,7 @@ app.post("/admin/map-all-recipes", async (_req, res) => {
 });
 
 // Fill missing profile pictures for all platform creators
-app.post("/admin/fill-creator-pictures", async (_req, res) => {
+app.post("/admin/fill-creator-pictures", requireAdmin, async (_req, res) => {
   const creators = await db
     .select()
     .from(platformCreators)
@@ -2752,7 +2834,7 @@ app.post("/admin/fill-creator-pictures", async (_req, res) => {
 });
 
 // Map platform recipes to all existing users (retroactive)
-app.post("/admin/map-platform-recipes", async (_req, res) => {
+app.post("/admin/map-platform-recipes", requireAdmin, async (_req, res) => {
   const allUsers = await db.select({ clerkId: users.clerkId }).from(users);
   let totalMapped = 0;
   for (const user of allUsers) {
@@ -2821,7 +2903,7 @@ function cleanIngredientNameFull(raw: string): string {
 }
 
 // Fix ingredient names in all recipes: capitalize, fix Turkish chars, collapse spaces
-app.post("/admin/fix-ingredient-names", async (_req, res) => {
+app.post("/admin/fix-ingredient-names", requireAdmin, async (_req, res) => {
   try {
     const allRecipes = await db.select({ id: recipes.id, ingredientsWithMeasures: recipes.ingredientsWithMeasures }).from(recipes);
     let fixed = 0;
@@ -2868,7 +2950,7 @@ app.post("/admin/fix-ingredient-names", async (_req, res) => {
 });
 
 // Clean dirty ingredient names (veya, commas, slashes, parens) and merge into existing
-app.post("/admin/clean-ingredient-names", async (req, res) => {
+app.post("/admin/clean-ingredient-names", requireAdmin, async (req, res) => {
   const dryRun = req.query.dry_run === "true";
   try {
     const all = await db.select().from(ingredients).orderBy(ingredients.name);
