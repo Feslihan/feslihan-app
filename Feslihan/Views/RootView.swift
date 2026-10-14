@@ -99,9 +99,12 @@ struct RootView: View {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = try? await Clerk.shared.session?.getToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
 
+        // Identity is derived from the token server-side; body carries profile fields only.
         let body: [String: Any?] = [
-            "clerk_id": user.id,
             "email": user.primaryEmailAddress?.emailAddress,
             "name": [user.firstName, user.lastName].compactMap { $0 }.joined(separator: " "),
             "avatar_url": user.imageUrl
