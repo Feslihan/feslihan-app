@@ -245,6 +245,36 @@ export const recipeReviews = pgTable("recipe_reviews", {
     .defaultNow(),
 });
 
+// Durable background-job queue. Rows survive process restarts / serverless
+// cold-starts so fire-and-forget work (classification, price fetches, bulk
+// admin mappings, meal-plan backfills) is never lost. A worker claims pending
+// rows with FOR UPDATE SKIP LOCKED and retries on failure.
+export const jobStatusEnum = pgEnum("job_status", [
+  "pending",
+  "running",
+  "done",
+  "failed",
+]);
+
+export const backgroundJobs = pgTable("background_jobs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  type: varchar("type", { length: 100 }).notNull(),
+  payload: jsonb("payload").notNull().default({}),
+  status: jobStatusEnum("status").notNull().default("pending"),
+  attempts: integer("attempts").notNull().default(0),
+  maxAttempts: integer("max_attempts").notNull().default(3),
+  lastError: text("last_error"),
+  runAt: timestamp("run_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export type BackgroundJob = typeof backgroundJobs.$inferSelect;
+
 export type Recipe = typeof recipes.$inferSelect;
 export type NewRecipe = typeof recipes.$inferInsert;
 export type IngredientRow = typeof ingredients.$inferSelect;

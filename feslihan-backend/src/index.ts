@@ -11,6 +11,7 @@ import { requireAuth, requireAdmin } from "./middleware/auth.js";
 import { safeFetchText, UrlNotAllowedError } from "./security/ssrf.js";
 import { rateLimit } from "./middleware/rate-limit.js";
 import { reserveRecipeQuota, refundRecipeQuota, requirePremiumPlan, QuotaError } from "./quota.js";
+import { enqueueJob, registerJobHandler, startJobWorker } from "./jobs.js";
 
 // Burst protection for the expensive AI routes (per authenticated user).
 const aiRateLimit = rateLimit({ windowMs: 60_000, max: 10, name: "ai" });
@@ -516,9 +517,14 @@ async function resolveIngredientMap(names: string[]): Promise<Map<string, string
     console.log(`[Ingredient] Created ${stillNew.length} new: ${stillNew.join(", ")}`);
   }
 
-  // Classify any unclassified ingredients in background (don't block response)
+  // Classify any unclassified ingredients via a durable job (don't block the
+  // response, and don't lose the work on a serverless cold-start).
   const allResolvedIds = [...nameToId.values()];
-  classifyNewIngredients(allResolvedIds).catch(() => {});
+  if (allResolvedIds.length > 0) {
+    await enqueueJob("classify-ingredients", { ids: allResolvedIds }).catch((err) =>
+      console.error("[Classify] Failed to enqueue:", err?.message || err)
+    );
+  }
 
   return nameToId;
 }
@@ -1454,19 +1460,18 @@ async function searchMarketPrice(keyword: string): Promise<{ pricePerUnit: numbe
   }
 }
 
-app.post("/ingredients/fetch-prices", requireAdmin, async (req, res) => {
-  const forceAll = req.query.force === "true";
+// The actual price fetch (sequential, 500ms/item to avoid 403) runs as a durable
+// background job — never inside the request handler.
+async function fetchPricesJob(forceAll: boolean) {
   const all = await db.select().from(ingredients).orderBy(ingredients.name);
   const toFetch = forceAll ? all : all.filter((r) => !r.pricePerUnit);
-
   if (toFetch.length === 0) {
-    res.json({ updated: 0, failed: 0, total: all.length, message: "All ingredients already have prices" });
+    console.log("[Prices] Nothing to fetch — all ingredients already have prices");
     return;
   }
 
   let updated = 0;
   let failed = 0;
-
   console.log(`[Prices] Fetching prices for ${toFetch.length}/${all.length} ingredients from marketfiyati.org.tr...`);
 
   for (const ing of toFetch) {
@@ -1492,7 +1497,20 @@ app.post("/ingredients/fetch-prices", requireAdmin, async (req, res) => {
   }
 
   console.log(`[Prices] Updated ${updated}/${toFetch.length} (${failed} not found)`);
-  res.json({ updated, failed, total: all.length, fetched: toFetch.length });
+}
+
+app.post("/ingredients/fetch-prices", requireAdmin, async (req, res) => {
+  const forceAll = req.query.force === "true";
+  const all = await db.select({ id: ingredients.id, pricePerUnit: ingredients.pricePerUnit }).from(ingredients);
+  const pending = forceAll ? all.length : all.filter((r) => !r.pricePerUnit).length;
+
+  if (pending === 0) {
+    res.json({ enqueued: false, total: all.length, message: "All ingredients already have prices" });
+    return;
+  }
+
+  const jobId = await enqueueJob("fetch-prices", { forceAll });
+  res.status(202).json({ enqueued: true, job_id: jobId, total: all.length, to_fetch: pending });
 });
 
 // Estimate cost of a recipe based on ingredient prices
@@ -1917,119 +1935,124 @@ app.post("/meal-plans", async (req, res) => {
   res.status(201).json(toSnake(result[0]));
 });
 
-// Get user's meal plans (backfills old plans missing recipe_ids/shopping_list)
+// Does this stored meal plan still need its recipe_ids / shopping_list backfilled?
+function mealPlanNeedsBackfill(plan: { plan: any; shoppingList: any }): boolean {
+  const planData = plan.plan as any;
+  const shoppingListCol = plan.shoppingList as any[];
+  // Needs migration if shopping_list is empty (but the plan has days) or is in
+  // the old string[] format.
+  const isOldFormat = shoppingListCol?.length > 0 && typeof shoppingListCol[0] === "string";
+  return ((!shoppingListCol || shoppingListCol.length === 0) && planData?.days) || isOldFormat;
+}
+
+// Backfill one meal plan: create missing recipes, rebuild recipe_ids, and
+// regenerate the shopping list. This does writes, so it only ever runs inside a
+// background job — never in the GET handler.
+async function backfillMealPlan(userId: string, plan: { id: string; plan: any; recipeIds: any; shoppingList: any }) {
+  const planData = plan.plan as any;
+  const recipeIdsCol = plan.recipeIds as string[];
+
+  // Ensure feslihan creator exists
+  await db
+    .insert(platformCreators)
+    .values({ username: "feslihan", platform: "other", displayName: "Feslihan AI" })
+    .onConflictDoNothing();
+
+  // Build titleToId for existing user recipes
+  const mappings = await db
+    .select({ recipeId: userRecipes.recipeId })
+    .from(userRecipes)
+    .where(eq(userRecipes.userId, userId));
+  const existingRecipeRows = mappings.length > 0
+    ? await db.select().from(recipes).where(inArray(recipes.id, mappings.map(m => m.recipeId)))
+    : [];
+  const titleToId: Record<string, string> = {};
+  for (const r of existingRecipeRows) {
+    titleToId[r.title] = r.id;
+  }
+
+  // Create missing recipes and resolve IDs (only for plans that need recipe creation)
+  if (!recipeIdsCol || recipeIdsCol.length === 0) {
+    for (const day of planData.days ?? []) {
+      for (const meal of day.meals ?? []) {
+        if (!meal.name) continue;
+        const parts = (meal.name as string).split("+").map((s: string) => s.trim());
+        for (const title of parts) {
+          if (titleToId[title]) continue;
+          const ingNames: string[] = (meal.ingredients ?? []).map(
+            (i: string) => i.charAt(0).toUpperCase() + i.slice(1)
+          );
+          const ingIds = await resolveIngredientIds(ingNames);
+          const url = `ai://meal-plan/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+          const [created] = await db
+            .insert(recipes)
+            .values({
+              platform: "other",
+              platformUser: "feslihan",
+              url,
+              title,
+              description: meal.description ?? "",
+              ingredientsWithMeasures: ingNames.map((n: string) => ({ name: n, amount: "" })),
+              ingredientsWithoutMeasures: ingIds,
+              caloriesTotalKcal: meal.calories ?? null,
+              cookingTimeMinutes: 30,
+              tags: [],
+              requestedBy: userId,
+            })
+            .returning();
+          titleToId[title] = created.id;
+          await saveUserRecipe(userId, created.id);
+        }
+      }
+    }
+  }
+
+  // Rebuild plan with recipe_ids
+  const newDays = (planData.days ?? []).map((day: any) => ({
+    day_name: day.day_name,
+    meals: (day.meals ?? []).map((meal: any) => {
+      if (meal.recipe_ids) return { meal_type: meal.meal_type, recipe_ids: meal.recipe_ids };
+      const parts = (meal.name as string || "").split("+").map((s: string) => s.trim());
+      const ids = parts.map((t: string) => titleToId[t]).filter(Boolean);
+      return { meal_type: meal.meal_type, recipe_ids: ids };
+    }),
+  }));
+
+  const allIds = recipeIdsCol?.length > 0
+    ? recipeIdsCol
+    : Object.values(titleToId);
+  const newPlan = { days: newDays, avg_calories_per_day: planData.avg_calories_per_day };
+
+  // Build shopping list from recipe ingredients
+  const newShoppingList = await buildShoppingListFromRecipes(allIds);
+
+  // Update DB
+  await db
+    .update(mealPlans)
+    .set({
+      plan: newPlan,
+      recipeIds: allIds,
+      shoppingList: newShoppingList,
+    })
+    .where(eq(mealPlans.id, plan.id));
+}
+
+// Get user's meal plans. Read-only: old plans missing recipe_ids/shopping_list
+// are backfilled by a durable background job, not inside this handler. The first
+// fetch returns the un-backfilled rows; a subsequent fetch returns the migrated
+// rows once the job has run.
 app.get("/users/:userId/meal-plans", async (req, res) => {
+  const userId = req.auth!.userId;
   const result = await db
     .select()
     .from(mealPlans)
-    .where(eq(mealPlans.userId, req.auth!.userId))
+    .where(eq(mealPlans.userId, userId))
     .orderBy(desc(mealPlans.createdAt));
 
-  // Backfill old plans that have no shopping_list or recipe_ids
-  for (const plan of result) {
-    const planData = plan.plan as any;
-    const shoppingListCol = plan.shoppingList as any[];
-    const recipeIdsCol = plan.recipeIds as string[];
-
-    // Detect if shopping_list needs migration: empty, or old string[] format
-    const isOldFormat = shoppingListCol?.length > 0 && typeof shoppingListCol[0] === "string";
-    const needsBackfill =
-      ((!shoppingListCol || shoppingListCol.length === 0) && planData?.days) || isOldFormat;
-
-    if (!needsBackfill) continue;
-
-    try {
-      // Ensure feslihan creator exists
-      await db
-        .insert(platformCreators)
-        .values({ username: "feslihan", platform: "other", displayName: "Feslihan AI" })
-        .onConflictDoNothing();
-
-      // Build titleToId for existing user recipes
-      const mappings = await db
-        .select({ recipeId: userRecipes.recipeId })
-        .from(userRecipes)
-        .where(eq(userRecipes.userId, req.auth!.userId));
-      const existingRecipeRows = mappings.length > 0
-        ? await db.select().from(recipes).where(inArray(recipes.id, mappings.map(m => m.recipeId)))
-        : [];
-      const titleToId: Record<string, string> = {};
-      for (const r of existingRecipeRows) {
-        titleToId[r.title] = r.id;
-      }
-
-      // Create missing recipes and resolve IDs (only for plans that need recipe creation)
-      if (!recipeIdsCol || recipeIdsCol.length === 0) {
-        for (const day of planData.days ?? []) {
-          for (const meal of day.meals ?? []) {
-            if (!meal.name) continue;
-            const parts = (meal.name as string).split("+").map((s: string) => s.trim());
-            for (const title of parts) {
-              if (titleToId[title]) continue;
-              const ingNames: string[] = (meal.ingredients ?? []).map(
-                (i: string) => i.charAt(0).toUpperCase() + i.slice(1)
-              );
-              const ingIds = await resolveIngredientIds(ingNames);
-              const url = `ai://meal-plan/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-              const [created] = await db
-                .insert(recipes)
-                .values({
-                  platform: "other",
-                  platformUser: "feslihan",
-                  url,
-                  title,
-                  description: meal.description ?? "",
-                  ingredientsWithMeasures: ingNames.map((n: string) => ({ name: n, amount: "" })),
-                  ingredientsWithoutMeasures: ingIds,
-                  caloriesTotalKcal: meal.calories ?? null,
-                  cookingTimeMinutes: 30,
-                  tags: [],
-                  requestedBy: req.auth!.userId,
-                })
-                .returning();
-              titleToId[title] = created.id;
-              await saveUserRecipe(req.auth!.userId, created.id);
-            }
-          }
-        }
-      }
-
-      // Rebuild plan with recipe_ids
-      const newDays = (planData.days ?? []).map((day: any) => ({
-        day_name: day.day_name,
-        meals: (day.meals ?? []).map((meal: any) => {
-          if (meal.recipe_ids) return { meal_type: meal.meal_type, recipe_ids: meal.recipe_ids };
-          const parts = (meal.name as string || "").split("+").map((s: string) => s.trim());
-          const ids = parts.map((t: string) => titleToId[t]).filter(Boolean);
-          return { meal_type: meal.meal_type, recipe_ids: ids };
-        }),
-      }));
-
-      const allIds = recipeIdsCol?.length > 0
-        ? recipeIdsCol
-        : Object.values(titleToId);
-      const newPlan = { days: newDays, avg_calories_per_day: planData.avg_calories_per_day };
-
-      // Build shopping list from recipe ingredients
-      const newShoppingList = await buildShoppingListFromRecipes(allIds);
-
-      // Update DB
-      await db
-        .update(mealPlans)
-        .set({
-          plan: newPlan,
-          recipeIds: allIds,
-          shoppingList: newShoppingList,
-        })
-        .where(eq(mealPlans.id, plan.id));
-
-      // Update in-memory for this response
-      (plan as any).plan = newPlan;
-      (plan as any).recipeIds = allIds;
-      (plan as any).shoppingList = newShoppingList;
-    } catch (err) {
-      console.error(`[meal-plans backfill] Error for plan ${plan.id}:`, err);
-    }
+  if (result.some((plan) => mealPlanNeedsBackfill(plan))) {
+    await enqueueJob("meal-plan-backfill", { userId }).catch((err) =>
+      console.error("[meal-plans] Failed to enqueue backfill:", err?.message || err)
+    );
   }
 
   res.json(toSnake(result));
@@ -2758,41 +2781,29 @@ app.post("/admin/share-recipes", requireAdmin, async (req, res) => {
   const allUsers = await db.select({ clerkId: users.clerkId }).from(users);
   const targetUsers = allUsers.filter((u) => u.clerkId !== source_user_id);
 
-  let created = 0;
-  for (const user of targetUsers) {
-    for (const recipeId of recipeIds) {
-      await saveUserRecipe(user.clerkId, recipeId);
-      created++;
-    }
-  }
-
-  console.log(`[Admin] Shared ${recipeIds.length} recipes from ${source_user_id} to ${targetUsers.length} users (${created} mappings)`);
-  res.json({
+  // The O(users×recipes) mapping loop runs as a durable background job.
+  const jobId = await enqueueJob("share-recipes", { source_user_id });
+  res.status(202).json({
+    enqueued: true,
+    job_id: jobId,
     source_user: source_user_id,
     recipes_count: recipeIds.length,
     target_users_count: targetUsers.length,
-    mappings_created: created,
   });
 });
 
 // Map ALL recipes to ALL users
 app.post("/admin/map-all-recipes", requireAdmin, async (_req, res) => {
-  const allRecipes = await db.select({ id: recipes.id }).from(recipes);
-  const allUsers = await db.select({ clerkId: users.clerkId }).from(users);
+  const [{ count: recipesCount }] = await db.select({ count: sql<number>`count(*)::int` }).from(recipes);
+  const [{ count: usersCount }] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
 
-  let created = 0;
-  for (const user of allUsers) {
-    for (const recipe of allRecipes) {
-      await saveUserRecipe(user.clerkId, recipe.id);
-      created++;
-    }
-  }
-
-  console.log(`[Admin] Mapped ${allRecipes.length} recipes to ${allUsers.length} users (${created} mappings)`);
-  res.json({
-    recipes_count: allRecipes.length,
-    users_count: allUsers.length,
-    mappings_created: created,
+  // The O(users×recipes) mapping loop runs as a durable background job.
+  const jobId = await enqueueJob("map-all-recipes", {});
+  res.status(202).json({
+    enqueued: true,
+    job_id: jobId,
+    recipes_count: recipesCount,
+    users_count: usersCount,
   });
 });
 
@@ -2835,14 +2846,11 @@ app.post("/admin/fill-creator-pictures", requireAdmin, async (_req, res) => {
 
 // Map platform recipes to all existing users (retroactive)
 app.post("/admin/map-platform-recipes", requireAdmin, async (_req, res) => {
-  const allUsers = await db.select({ clerkId: users.clerkId }).from(users);
-  let totalMapped = 0;
-  for (const user of allUsers) {
-    const mapped = await mapPlatformRecipesToUser(user.clerkId);
-    totalMapped += mapped;
-  }
-  console.log(`[Admin] Mapped platform recipes to ${allUsers.length} users (${totalMapped} new mappings)`);
-  res.json({ users_count: allUsers.length, mappings_created: totalMapped });
+  const [{ count: usersCount }] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
+
+  // The per-user mapping loop runs as a durable background job.
+  const jobId = await enqueueJob("map-platform-recipes", {});
+  res.status(202).json({ enqueued: true, job_id: jobId, users_count: usersCount });
 });
 
 // Get Instagram creators missing profile pictures (for client-side backfill)
@@ -3011,8 +3019,78 @@ app.post("/admin/clean-ingredient-names", requireAdmin, async (req, res) => {
   }
 });
 
+// ── Background job handlers ────────────────────────────────────────────
+// Bulk / fire-and-forget work enqueued by request handlers is processed here by
+// the durable worker. Keeping the logic alongside the helpers it depends on
+// avoids circular imports with jobs.ts.
+function registerJobHandlers() {
+  registerJobHandler("classify-ingredients", async (payload) => {
+    await classifyNewIngredients(payload.ids ?? []);
+  });
+
+  registerJobHandler("fetch-prices", async (payload) => {
+    await fetchPricesJob(!!payload.forceAll);
+  });
+
+  registerJobHandler("share-recipes", async (payload) => {
+    const sourceUserId = payload.source_user_id as string;
+    const sourceRecipes = await db
+      .select({ recipeId: userRecipes.recipeId })
+      .from(userRecipes)
+      .where(eq(userRecipes.userId, sourceUserId));
+    const recipeIds = sourceRecipes.map((r) => r.recipeId);
+    const allUsers = await db.select({ clerkId: users.clerkId }).from(users);
+    const targetUsers = allUsers.filter((u) => u.clerkId !== sourceUserId);
+    let created = 0;
+    for (const user of targetUsers) {
+      for (const recipeId of recipeIds) {
+        await saveUserRecipe(user.clerkId, recipeId);
+        created++;
+      }
+    }
+    console.log(`[Admin] Shared ${recipeIds.length} recipes from ${sourceUserId} to ${targetUsers.length} users (${created} mappings)`);
+  });
+
+  registerJobHandler("map-all-recipes", async () => {
+    const allRecipes = await db.select({ id: recipes.id }).from(recipes);
+    const allUsers = await db.select({ clerkId: users.clerkId }).from(users);
+    let created = 0;
+    for (const user of allUsers) {
+      for (const recipe of allRecipes) {
+        await saveUserRecipe(user.clerkId, recipe.id);
+        created++;
+      }
+    }
+    console.log(`[Admin] Mapped ${allRecipes.length} recipes to ${allUsers.length} users (${created} mappings)`);
+  });
+
+  registerJobHandler("map-platform-recipes", async () => {
+    const allUsers = await db.select({ clerkId: users.clerkId }).from(users);
+    let totalMapped = 0;
+    for (const user of allUsers) {
+      totalMapped += await mapPlatformRecipesToUser(user.clerkId);
+    }
+    console.log(`[Admin] Mapped platform recipes to ${allUsers.length} users (${totalMapped} new mappings)`);
+  });
+
+  registerJobHandler("meal-plan-backfill", async (payload) => {
+    const userId = payload.userId as string;
+    const plans = await db.select().from(mealPlans).where(eq(mealPlans.userId, userId));
+    for (const plan of plans) {
+      if (!mealPlanNeedsBackfill(plan)) continue;
+      try {
+        await backfillMealPlan(userId, plan);
+      } catch (err) {
+        console.error(`[meal-plans backfill] Error for plan ${plan.id}:`, err);
+      }
+    }
+  });
+}
+
 app.listen(PORT, async () => {
   await seedTags();
   await seedPlatformRecipes();
+  registerJobHandlers();
+  startJobWorker();
   console.log(`Feslihan API running on http://localhost:${PORT}`);
 });
