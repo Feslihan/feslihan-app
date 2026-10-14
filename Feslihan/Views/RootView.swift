@@ -10,9 +10,11 @@ struct RootView: View {
         if let user = clerk.user {
             SplashView()
                 .task {
+                    SubscriptionService.shared.isReady = false
                     await syncUserToBackend(user)
                     SubscriptionService.shared.setUser(user.id)
                     await SubscriptionService.shared.refreshStatus()
+                    SubscriptionService.shared.isReady = true
                 }
                 .task {
                     // Backfill missing creator profile pictures from this device

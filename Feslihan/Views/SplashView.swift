@@ -2,10 +2,17 @@ import SwiftUI
 
 struct SplashView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @EnvironmentObject private var subscriptions: SubscriptionService
     @State private var iconScale: CGFloat = 0.75
     @State private var titleOpacity: Double = 0
     @State private var subtitleOpacity: Double = 0
     @State private var finished = false
+
+    /// Keep the splash up long enough for the intro animation to play, even
+    /// when auth/subscription load finishes instantly.
+    private let minimumDisplay: TimeInterval = 0.9
+    /// Fallback so a slow network can never hang the splash indefinitely.
+    private let readinessTimeout: TimeInterval = 4.0
 
     var body: some View {
         if finished {
@@ -66,10 +73,25 @@ struct SplashView: View {
                 withAnimation(.easeOut(duration: 0.3).delay(0.6)) {
                     subtitleOpacity = 1.0
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        finished = true
-                    }
+            }
+            .task {
+                // Drive the transition off actual auth/subscription readiness,
+                // with a timeout fallback, instead of a fixed delay.
+                let start = Date()
+                while !subscriptions.isReady,
+                      Date().timeIntervalSince(start) < readinessTimeout {
+                    try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+                }
+
+                let elapsed = Date().timeIntervalSince(start)
+                if elapsed < minimumDisplay {
+                    try? await Task.sleep(
+                        nanoseconds: UInt64((minimumDisplay - elapsed) * 1_000_000_000)
+                    )
+                }
+
+                withAnimation(.easeOut(duration: 0.2)) {
+                    finished = true
                 }
             }
         }
