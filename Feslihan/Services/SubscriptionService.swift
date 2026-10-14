@@ -35,6 +35,10 @@ class SubscriptionService: ObservableObject {
     @Published var currentPlan: FeslihanPlan = .pro
     @Published var recipesUsedThisMonth: Int = 0
 
+    /// Becomes `true` once auth/subscription load has settled for the current
+    /// session. The splash screen waits on this instead of a fixed delay.
+    @Published var isReady = false
+
     // RevenueCat entitlement identifiers — set these in RevenueCat dashboard
     private let proEntitlement = "feslihan_pro"
     private let plusEntitlement = "feslihan_plus"
