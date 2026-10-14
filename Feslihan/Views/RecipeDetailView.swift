@@ -340,10 +340,8 @@ struct RecipeDetailView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .task {
             // Fetch fresh recipe data from backend
-            print("[Detail] sourceURL: \(recipe.sourceURL ?? "nil")")
             if let rawURL = recipe.sourceURL,
                let dto = await APIService.lookup(url: cleanURL(rawURL)) {
-                print("[Detail] Got nutrition: cal=\(dto.calories_total_kcal ?? -1), user=\(dto.platform_user ?? "nil")")
                 // Only overwrite local nutrition when the backend provides a value;
                 // otherwise keep whatever we already have locally.
                 recipe.caloriesTotalKcal = dto.calories_total_kcal ?? recipe.caloriesTotalKcal

@@ -55,8 +55,6 @@ enum ClaudeService {
         }
 
         if http.statusCode != 200 {
-            let responseBody = String(data: data, encoding: .utf8) ?? ""
-            print("[AI Analyze] HTTP \(http.statusCode): \(responseBody)")
             throw FeslihanError.recipeParseFailed
         }
 
@@ -64,7 +62,6 @@ enum ClaudeService {
         do {
             recipeJSON = try JSONDecoder().decode(RecipeJSON.self, from: data)
         } catch {
-            print("[AI Analyze] JSON parse error: \(error)")
             throw error
         }
 
@@ -149,8 +146,6 @@ enum ClaudeService {
         }
 
         if http.statusCode != 200 {
-            let responseBody = String(data: data, encoding: .utf8) ?? ""
-            print("[AI MealPlan] HTTP \(http.statusCode): \(responseBody)")
             throw FeslihanError.recipeParseFailed
         }
 

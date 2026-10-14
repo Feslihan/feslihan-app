@@ -453,6 +453,13 @@ private struct AccountSheet: View {
                     AccountRow(icon: "cart", title: "Alışveriş Listesi", subtitle: "Alması gerekenleri listele") {
                         onNavigate(.shoppingList)
                     }
+
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        AccountRowLabel(icon: "gearshape", title: "Ayarlar", subtitle: "Hesap ve uygulama ayarları")
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 20)
 
@@ -488,35 +495,45 @@ private struct AccountRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 14) {
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(DS.ember)
-                    .frame(width: 44, height: 44)
-                    .background(DS.emberLight)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.sectionHeader())
-                        .foregroundStyle(DS.ink)
-
-                    Text(subtitle)
-                        .font(.label())
-                        .foregroundStyle(DS.smoke)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(DS.dust)
-            }
-            .padding(14)
-            .background(DS.sand)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            AccountRowLabel(icon: icon, title: title, subtitle: subtitle)
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct AccountRowLabel: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .medium))
+                .foregroundStyle(DS.ember)
+                .frame(width: 44, height: 44)
+                .background(DS.emberLight)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.sectionHeader())
+                    .foregroundStyle(DS.ink)
+
+                Text(subtitle)
+                    .font(.label())
+                    .foregroundStyle(DS.smoke)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(DS.dust)
+        }
+        .padding(14)
+        .background(DS.sand)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 

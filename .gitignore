@@ -16,3 +16,8 @@ node_modules/
 
 # macOS
 .DS_Store
+
+# Dev tooling / scratch artifacts
+.playwright-mcp/
+claude-design-*.png
+competitor-images/

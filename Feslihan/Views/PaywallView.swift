@@ -187,7 +187,7 @@ struct PaywallView: View {
             selectedPackage = offerings?.offering(identifier: "feslihan_pro")?.availablePackages.first
                 ?? offerings?.current?.availablePackages.first
         } catch {
-            print("[Paywall] Failed to load offerings: \(error)")
+            // Offerings failed to load — paywall shows without packages.
         }
     }
 

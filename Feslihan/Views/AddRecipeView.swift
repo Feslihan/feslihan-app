@@ -433,7 +433,6 @@ struct AddRecipeView: View {
                     dto.user_id = Clerk.shared.user?.id
                     _ = await APIService.save(recipe: dto)
 
-                    try await Task.sleep(for: .seconds(Double.random(in: 4...5)))
                     processedRecipe = cached.toProcessedRecipe()
                     subscription.recordRecipeAdded()
                     processingState = .done
@@ -538,7 +537,7 @@ struct AddRecipeView: View {
                 captionResult = result
             }
         } catch {
-            print("[Caption] Fetch failed, will try audio-only: \(error)")
+            // Caption fetch failed — fall back to audio-only transcription.
         }
 
         // Try to extract audio from the video for transcription
@@ -550,7 +549,7 @@ struct AddRecipeView: View {
                 audioData = try Data(contentsOf: audioURL)
                 try? FileManager.default.removeItem(at: audioURL)
             } catch {
-                print("[Audio] Extraction failed, continuing without audio: \(error)")
+                // Audio extraction failed — continue without audio.
             }
         }
 

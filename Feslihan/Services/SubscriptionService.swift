@@ -58,6 +58,25 @@ class SubscriptionService: ObservableObject {
         Purchases.shared.logIn(userId) { _, _, _ in }
     }
 
+    /// Restore previously purchased subscriptions and refresh the active plan.
+    /// Returns `true` if the restore completed without error.
+    @discardableResult
+    func restorePurchases() async -> Bool {
+        do {
+            let info = try await Purchases.shared.restorePurchases()
+            if info.entitlements[proEntitlement]?.isActive == true {
+                currentPlan = .pro
+            } else if info.entitlements[plusEntitlement]?.isActive == true {
+                currentPlan = .plus
+            } else {
+                currentPlan = .free
+            }
+            return true
+        } catch {
+            return false
+        }
+    }
+
     func refreshStatus() async {
         // TODO: Remove this when RevenueCat products are live
         // Skip RevenueCat check until products are configured
@@ -79,7 +98,7 @@ class SubscriptionService: ObservableObject {
                 currentPlan = .free
             }
         } catch {
-            print("[Subscription] Error: \(error.localizedDescription)")
+            // Status refresh failed — keep the current plan.
         }
     }
 

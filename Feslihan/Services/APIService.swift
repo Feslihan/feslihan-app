@@ -172,8 +172,6 @@ enum APIService {
         let (data, response) = try await URLSession.shared.data(for: await authed(request))
 
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            let responseBody = String(data: data, encoding: .utf8) ?? ""
-            print("[Scrape] Failed: \(responseBody)")
             throw FeslihanError.recipeParseFailed
         }
 
@@ -346,8 +344,6 @@ enum APIService {
               let creators = try? JSONDecoder().decode([MissingPicCreator].self, from: data),
               !creators.isEmpty else { return }
 
-        print("[Backfill] \(creators.count) creators missing profile pictures")
-        var filled = 0
         for creator in creators {
             guard creator.platform == "instagram" else { continue }
             guard let picData = await CaptionService.fetchInstagramProfilePic(username: creator.username) else { continue }
@@ -357,13 +353,8 @@ enum APIService {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             let body: [String: String] = ["base64": picData.base64EncodedString()]
             request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-            if let (_, resp) = try? await URLSession.shared.data(for: await authed(request)),
-               let httpResp = resp as? HTTPURLResponse, httpResp.statusCode == 200 {
-                filled += 1
-                print("[Backfill] Filled @\(creator.username)")
-            }
+            _ = try? await URLSession.shared.data(for: await authed(request))
         }
-        print("[Backfill] Done: \(filled)/\(creators.count) filled")
     }
 }
 
