@@ -13,6 +13,7 @@ import { rateLimit } from "./middleware/rate-limit.js";
 import { reserveRecipeQuota, refundRecipeQuota, requirePremiumPlan, QuotaError } from "./quota.js";
 import { enqueueJob, registerJobHandler, startJobWorker } from "./jobs.js";
 import { fixTurkish, findBestMatch, splitAmountFromName } from "./ingredient-matching.js";
+import { privacyPolicyHtml, termsHtml } from "./legal.js";
 
 // Burst protection for the expensive AI routes (per authenticated user).
 const aiRateLimit = rateLimit({ windowMs: 60_000, max: 10, name: "ai" });
@@ -87,11 +88,16 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Public routes that do not require authentication.
-// Only image serving is public: images are fetched by AsyncImage / plain GETs
-// that cannot carry a Bearer token, and expose S3 image bytes only.
+// Public routes that do not require authentication:
+//  - image serving: fetched by AsyncImage / plain GETs that cannot carry a
+//    Bearer token, exposing S3 image bytes only.
+//  - legal pages (/kosullar, /gizlilik): linked from the app's Settings and
+//    opened directly in a browser by App Store reviewers, so they must render
+//    without a session.
 function isPublicRoute(req: express.Request): boolean {
-  return req.method === "GET" && /^\/images\/[^/]+\/[^/]+$/.test(req.path);
+  if (req.method !== "GET") return false;
+  if (req.path === "/kosullar" || req.path === "/gizlilik") return true;
+  return /^\/images\/[^/]+\/[^/]+$/.test(req.path);
 }
 
 // Global authentication gate: every request except the public allowlist must
@@ -103,6 +109,16 @@ app.use((req, res, next) => {
   }
   requireAuth(req, res, next);
 });
+
+// Legal pages — served live on the app domain (feslihan.app) for App Store
+// review and linked from SettingsView. Turkish, KVKK-compliant.
+function sendLegalPage(res: express.Response, html: string) {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=3600");
+  res.send(html);
+}
+app.get("/kosullar", (_req, res) => sendLegalPage(res, termsHtml));
+app.get("/gizlilik", (_req, res) => sendLegalPage(res, privacyPolicyHtml));
 
 function toSnake(obj: any): any {
   if (Array.isArray(obj)) return obj.map(toSnake);
