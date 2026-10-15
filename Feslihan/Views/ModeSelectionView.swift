@@ -135,6 +135,7 @@ struct ModeSelectionView: View {
                                 }
                             }
                             .accessibilityLabel("Hesabım")
+                            .accessibilityIdentifier("home.accountButton")
                         }
                         .padding(.horizontal, 22)
                         .padding(.top, 8)
@@ -175,6 +176,7 @@ struct ModeSelectionView: View {
                                         showPaywall = true
                                     }
                                 }
+                                .accessibilityIdentifier("home.mode.mealPrep")
 
                             ModeRow(
                                 number: "02",
@@ -188,6 +190,7 @@ struct ModeSelectionView: View {
                             .onTapGesture {
                                 navigateOrGate(.whatToEat)
                             }
+                            .accessibilityIdentifier("home.mode.whatToEat")
 
                             ModeRow(
                                 number: "03",
@@ -203,6 +206,7 @@ struct ModeSelectionView: View {
                                     selectedMode = .browse
                                 }
                             }
+                            .accessibilityIdentifier("home.mode.browse")
 
                             // Mutfak section
                             Text("MUTFAK")
@@ -226,6 +230,7 @@ struct ModeSelectionView: View {
                                         selectedMode = .pantry
                                     }
                                 }
+                                .accessibilityIdentifier("home.mode.pantry")
 
                                 Rectangle()
                                     .fill(DS.stone)
@@ -244,6 +249,7 @@ struct ModeSelectionView: View {
                                         selectedMode = .shoppingList
                                     }
                                 }
+                                .accessibilityIdentifier("home.mode.shoppingList")
                             }
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 4)

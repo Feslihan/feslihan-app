@@ -48,7 +48,7 @@ enum ClaudeService {
         request.timeoutInterval = 120
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: await APIService.authed(request))
 
         guard let http = response as? HTTPURLResponse else {
             throw FeslihanError.recipeParseFailed
@@ -139,7 +139,7 @@ enum ClaudeService {
         request.timeoutInterval = 120
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: await APIService.authed(request))
 
         guard let http = response as? HTTPURLResponse else {
             throw FeslihanError.recipeParseFailed

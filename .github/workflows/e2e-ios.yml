@@ -1,0 +1,167 @@
+name: E2E iOS UI Tests
+
+# Manually triggered end-to-end suite: boots a fresh Postgres + the real
+# backend (with the real Anthropic API) on a macOS runner, then drives the iOS
+# app in a simulator with XCUITest against that ephemeral stack.
+#
+# Required repository secrets (see E2E_TESTING.md for setup):
+#   CLERK_SECRET_KEY     - secret key of the Clerk DEV instance the app uses
+#   ANTHROPIC_API_KEY    - for /ai/analyze and /ai/meal-plan
+#   E2E_CLERK_USER_ID    - Clerk user id of the dedicated test account
+#   E2E_CLERK_EMAIL      - test account email (…+clerk_test@… for OTP 424242)
+#   E2E_CLERK_PASSWORD   - test account password (optional if OTP-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: "Only run these tests, e.g. FeslihanUITests/A04_PantryTests (empty = full suite)"
+        required: false
+        default: ""
+
+concurrency:
+  group: e2e-ios
+  cancel-in-progress: false
+
+env:
+  DATABASE_URL: "postgresql://localhost:5432/feslihan_e2e?sslmode=disable"
+
+jobs:
+  e2e:
+    name: Backend + iOS simulator E2E
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: feslihan-backend/package-lock.json
+
+      # ── Database ────────────────────────────────────────────────────────
+      - name: Start PostgreSQL
+        run: |
+          brew install postgresql@16 || brew upgrade postgresql@16 || true
+          echo "$(brew --prefix postgresql@16)/bin" >> "$GITHUB_PATH"
+          export PATH="$(brew --prefix postgresql@16)/bin:$PATH"
+          brew services start postgresql@16
+          for i in $(seq 1 30); do
+            pg_isready -h localhost && break
+            sleep 1
+          done
+          createdb -h localhost feslihan_e2e
+          psql -h localhost -d feslihan_e2e -c "select version();"
+
+      # ── Backend ─────────────────────────────────────────────────────────
+      - name: Install backend dependencies
+        working-directory: feslihan-backend
+        run: npm ci
+
+      - name: Write backend .env
+        working-directory: feslihan-backend
+        run: |
+          cat > .env <<EOF
+          DATABASE_URL=${DATABASE_URL}
+          CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+          EOF
+
+      - name: Apply database schema
+        working-directory: feslihan-backend
+        run: npm run db:migrate
+
+      - name: Start backend
+        working-directory: feslihan-backend
+        run: |
+          nohup npm run start > backend.log 2>&1 &
+          echo $! > backend.pid
+          # Wait for the server to listen. Every route is auth-gated, so a 401
+          # from /recipes means Express + Clerk middleware are up.
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/recipes || true)
+            if [ "$code" = "401" ] || [ "$code" = "200" ]; then
+              echo "Backend is up (HTTP $code)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend did not come up:" && cat backend.log
+          exit 1
+
+      - name: Seed e2e data
+        working-directory: feslihan-backend
+        env:
+          E2E_CLERK_USER_ID: ${{ secrets.E2E_CLERK_USER_ID }}
+          E2E_CLERK_EMAIL: ${{ secrets.E2E_CLERK_EMAIL }}
+        run: |
+          # Boot-time seeding (tags, platform recipes, ingredients) runs inside
+          # app.listen; retry until it has finished populating.
+          for i in $(seq 1 12); do
+            if node --env-file=.env --import tsx/esm scripts/seed-e2e.ts; then
+              exit 0
+            fi
+            echo "Seed not ready yet, retrying in 5s…"
+            sleep 5
+          done
+          echo "Seeding failed:" && cat backend.log
+          exit 1
+
+      # ── iOS build & test ────────────────────────────────────────────────
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen || true
+          xcodegen generate
+          xcodebuild -list -project Feslihan.xcodeproj
+
+      - name: Disable simulator hardware keyboard
+        run: |
+          defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
+
+      - name: Run UI tests
+        env:
+          TEST_RUNNER_FESLIHAN_API_URL: "http://127.0.0.1:3000"
+          TEST_RUNNER_E2E_CLERK_EMAIL: ${{ secrets.E2E_CLERK_EMAIL }}
+          TEST_RUNNER_E2E_CLERK_PASSWORD: ${{ secrets.E2E_CLERK_PASSWORD }}
+        run: |
+          FILTER_ARG=""
+          if [ -n "${{ github.event.inputs.test_filter }}" ]; then
+            FILTER_ARG="-only-testing:${{ github.event.inputs.test_filter }}"
+          fi
+          set -o pipefail
+          xcodebuild test \
+            -project Feslihan.xcodeproj \
+            -scheme Feslihan \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -resultBundlePath TestResults/e2e.xcresult \
+            -test-iterations 1 \
+            $FILTER_ARG \
+            | xcbeautify --renderer github-actions || TEST_FAILED=1
+          exit ${TEST_FAILED:-0}
+
+      # ── Diagnostics ─────────────────────────────────────────────────────
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcresult
+          path: TestResults/e2e.xcresult
+          if-no-files-found: ignore
+
+      - name: Upload backend log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log
+          path: feslihan-backend/backend.log
+          if-no-files-found: ignore
+
+      - name: Stop backend
+        if: always()
+        working-directory: feslihan-backend
+        run: |
+          [ -f backend.pid ] && kill "$(cat backend.pid)" 2>/dev/null || true

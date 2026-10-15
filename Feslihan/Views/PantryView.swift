@@ -78,6 +78,7 @@ struct PantryView: View {
                                 .background(DS.ember)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
+                        .accessibilityIdentifier("pantry.emptyAddButton")
                         .padding(.top, 8)
                     }
                     .padding(.horizontal, 40)
@@ -91,6 +92,7 @@ struct PantryView: View {
 
                         TextField("Malzeme ara...", text: $searchText)
                             .font(.bodyText())
+                            .accessibilityIdentifier("pantry.searchField")
                     }
                     .padding(.horizontal, 14)
                     .frame(height: 46)
@@ -148,6 +150,7 @@ struct PantryView: View {
                     .background(DS.ember)
                     .clipShape(Capsule())
                 }
+                .accessibilityIdentifier("pantry.addMenu")
                 .padding(.trailing, 20)
                 .padding(.bottom, 30)
             }
@@ -273,6 +276,7 @@ struct PantryGateView: View {
                         .foregroundStyle(DS.cream)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
+                .accessibilityIdentifier("pantryGate.addButton")
                 .padding(.horizontal, 20)
 
                 Spacer()
@@ -284,6 +288,7 @@ struct PantryGateView: View {
                         .font(.buttonFont())
                         .foregroundStyle(DS.smoke)
                 }
+                .accessibilityIdentifier("pantryGate.backButton")
                 .padding(.bottom, 32)
             }
             .padding(.horizontal, 20)
@@ -342,6 +347,7 @@ struct IngredientPickerSheet: View {
                         TextField("Malzeme ara...", text: $searchText)
                             .font(.bodyText())
                             .focused($isSearchFocused)
+                            .accessibilityIdentifier("ingredientPicker.searchField")
                     }
                     .padding(.horizontal, 14)
                     .frame(height: 46)
@@ -414,6 +420,7 @@ struct IngredientPickerSheet: View {
                             .foregroundStyle(DS.cream)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
+                    .accessibilityIdentifier("ingredientPicker.saveButton")
                     .disabled(selected.isEmpty)
                     .padding(.horizontal, 20)
                     .padding(.bottom, 24)
@@ -425,6 +432,7 @@ struct IngredientPickerSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("İptal") { dismiss() }
                         .foregroundStyle(DS.smoke)
+                        .accessibilityIdentifier("ingredientPicker.cancelButton")
                 }
             }
         }

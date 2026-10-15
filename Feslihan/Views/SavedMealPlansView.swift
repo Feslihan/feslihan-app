@@ -31,6 +31,7 @@ struct SavedMealPlansView: View {
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(DS.ember)
                             .padding(.top, 4)
+                            .accessibilityIdentifier("mealPlans.emptyCreateButton")
                     }
                 } else {
                     ScrollView {
@@ -77,6 +78,7 @@ struct SavedMealPlansView: View {
                             .background(DS.ember)
                             .clipShape(Circle())
                     }
+                    .accessibilityIdentifier("mealPlans.createButton")
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -95,7 +97,7 @@ struct SavedMealPlansView: View {
         guard let userId = Clerk.shared.user?.id else { return }
         guard let url = URL(string: "\(APIService.baseURL)/users/\(userId)/meal-plans") else { return }
 
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
+        guard let (data, response) = try? await URLSession.shared.data(for: await APIService.authedGet(url)),
               let http = response as? HTTPURLResponse,
               http.statusCode == 200 else {
             isLoading = false
@@ -112,7 +114,7 @@ struct SavedMealPlansView: View {
         guard let url = URL(string: "\(APIService.baseURL)/meal-plans/\(plan.id)") else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
-        _ = try? await URLSession.shared.data(for: request)
+        _ = try? await URLSession.shared.data(for: await APIService.authed(request))
         plans.removeAll { $0.id == plan.id }
     }
 }
@@ -746,7 +748,7 @@ private struct SavedPlanDetailSheet: View {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = httpBody
 
-            if let (_, response) = try? await URLSession.shared.data(for: request),
+            if let (_, response) = try? await URLSession.shared.data(for: await APIService.authed(request)),
                let http = response as? HTTPURLResponse,
                http.statusCode == 200 {
                 hasChanges = false
@@ -1040,7 +1042,7 @@ struct AddToPlanSheet: View {
             return
         }
 
-        guard let (data, response) = try? await URLSession.shared.data(from: url),
+        guard let (data, response) = try? await URLSession.shared.data(for: await APIService.authedGet(url)),
               let http = response as? HTTPURLResponse,
               http.statusCode == 200 else {
             isLoading = false
@@ -1129,7 +1131,7 @@ struct AddToPlanSheet: View {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = httpBody
 
-        if let (_, response) = try? await URLSession.shared.data(for: request),
+        if let (_, response) = try? await URLSession.shared.data(for: await APIService.authed(request)),
            let http = response as? HTTPURLResponse,
            http.statusCode == 200 {
             withAnimation(.spring(response: 0.3)) {

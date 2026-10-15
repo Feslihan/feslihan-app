@@ -57,6 +57,7 @@ struct ShoppingListView: View {
                             .background(DS.ember)
                             .clipShape(Circle())
                     }
+                    .accessibilityIdentifier("shopping.addMenu")
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
@@ -93,6 +94,7 @@ struct ShoppingListView: View {
                                 .background(DS.ember)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
+                        .accessibilityIdentifier("shopping.emptyAddButton")
                         .padding(.top, 8)
                     }
                     .padding(.horizontal, 40)
@@ -307,6 +309,7 @@ private struct ShoppingItemRow: View {
                 }
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("shopping.check.\(item.ingredient_name)")
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.ingredient_name)
@@ -337,6 +340,7 @@ private struct ShoppingItemRow: View {
                     .clipShape(Circle())
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("shopping.delete.\(item.ingredient_name)")
         }
         .padding(.leading, 16)
         .padding(.trailing, 12)

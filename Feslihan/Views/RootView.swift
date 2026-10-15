@@ -58,6 +58,7 @@ struct RootView: View {
                                 .background(DS.ember)
                                 .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                         }
+                        .accessibilityIdentifier("auth.signInButton")
 
                         Button {
                             authIsPresented = true
@@ -74,6 +75,7 @@ struct RootView: View {
                                 )
                                 .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                         }
+                        .accessibilityIdentifier("auth.signUpButton")
 
                         Text("Devam ederek Kullanım Koşulları'nı\nkabul etmiş olursunuz.")
                             .font(.captionText())

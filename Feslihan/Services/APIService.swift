@@ -2,7 +2,15 @@ import Foundation
 import ClerkKit
 
 enum APIService {
-    static let baseURL = "https://feslihan-app.vercel.app"
+    /// Backend origin. Overridable via the FESLIHAN_API_URL launch environment
+    /// variable so UI tests can point the app at a local test backend.
+    static let baseURL: String = {
+        if let override = ProcessInfo.processInfo.environment["FESLIHAN_API_URL"],
+           !override.isEmpty {
+            return override
+        }
+        return "https://feslihan-app.vercel.app"
+    }()
 
     // MARK: - Auth
 
@@ -12,7 +20,7 @@ enum APIService {
     }
 
     /// A GET request for `url` carrying the Clerk bearer token.
-    private static func authedGet(_ url: URL) async -> URLRequest {
+    static func authedGet(_ url: URL) async -> URLRequest {
         var request = URLRequest(url: url)
         if let token = await authToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -21,7 +29,7 @@ enum APIService {
     }
 
     /// A copy of `request` with the Clerk bearer token attached.
-    private static func authed(_ request: URLRequest) async -> URLRequest {
+    static func authed(_ request: URLRequest) async -> URLRequest {
         var request = request
         if let token = await authToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -297,8 +305,14 @@ enum APIService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body = ["ingredient_names": ingredientNames]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
+        guard let (data, response) = try? await URLSession.shared.data(for: await authed(request)),
               let http = response as? HTTPURLResponse, http.statusCode == 201 else { return false }
+        // 201 with added == 0 means nothing matched (or it was already in the
+        // list) — don't let the UI flip to "added" on a no-op.
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let added = json["added"] as? Int {
+            return added > 0
+        }
         return true
     }
 
@@ -532,13 +546,7 @@ extension RecipeDTO {
     /// Convert DTO to local SwiftData Recipe. Call from async context.
     func toRecipe(thumbnailData: Data? = nil) -> Recipe {
         let ingredients = ingredients_with_measures.enumerated().map { index, item in
-            let sec = item["section"]?.trimmingCharacters(in: .whitespaces)
-            return Ingredient(
-                name: item["name"] ?? "",
-                amount: item["amount"] ?? "",
-                baseName: index < ingredients_without_measures.count ? ingredients_without_measures[index] : nil,
-                section: (sec?.isEmpty ?? true) ? nil : sec
-            )
+            Self.makeIngredient(item: item, index: index, withoutMeasures: ingredients_without_measures)
         }
 
         return Recipe(
@@ -567,16 +575,28 @@ extension RecipeDTO {
         )
     }
 
+    /// Build an Ingredient from a backend ingredients_with_measures entry.
+    /// Prefers the entry's own base_name/ingredient_id (canonical reference);
+    /// positional pairing with ingredients_without_measures is only a fallback
+    /// for old payloads, where the arrays often misalign.
+    static func makeIngredient(item: [String: String], index: Int, withoutMeasures: [String]) -> Ingredient {
+        let sec = item["section"]?.trimmingCharacters(in: .whitespaces)
+        let baseName = item["base_name"]
+            ?? (index < withoutMeasures.count ? withoutMeasures[index] : nil)
+        let ingredientId = (item["ingredient_id"]?.isEmpty ?? true) ? nil : item["ingredient_id"]
+        return Ingredient(
+            name: item["name"] ?? "",
+            amount: item["amount"] ?? "",
+            baseName: baseName,
+            section: (sec?.isEmpty ?? true) ? nil : sec,
+            ingredientId: ingredientId
+        )
+    }
+
     /// Convert DTO from backend to ProcessedRecipe for the UI.
     func toProcessedRecipe() -> ProcessedRecipe {
         let ingredients = ingredients_with_measures.enumerated().map { index, item in
-            let sec = item["section"]?.trimmingCharacters(in: .whitespaces)
-            return Ingredient(
-                name: item["name"] ?? "",
-                amount: item["amount"] ?? "",
-                baseName: index < ingredients_without_measures.count ? ingredients_without_measures[index] : nil,
-                section: (sec?.isEmpty ?? true) ? nil : sec
-            )
+            Self.makeIngredient(item: item, index: index, withoutMeasures: ingredients_without_measures)
         }
 
         return ProcessedRecipe(

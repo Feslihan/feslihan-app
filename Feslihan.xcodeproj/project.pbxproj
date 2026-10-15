@@ -12,66 +12,93 @@
 		16BAE34B9B74D9EAF2DE36C2 /* RecipeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C106C18CA48DECC3172126F /* RecipeDetailView.swift */; };
 		2131670AB7DC32892D6618F0 /* WhatToEatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DBA950AF8742A25F6D2F326 /* WhatToEatView.swift */; };
 		23504B1FF1DC11A623EC73BC /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F992BF94307474C2BFF7C205 /* PaywallView.swift */; };
+		25428619EB5FC48EC7B610C2 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D71FAFA8851D7414D65263A6 /* OnboardingView.swift */; };
+		3880E5B28454F64DDABD964E /* A06_WhatToEatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF1A15FC2D940D205985E29C /* A06_WhatToEatTests.swift */; };
 		3A7C6E58826E07BEC2FA782D /* MealEditSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05085FE6F97FB2C1E7E27A3A /* MealEditSheet.swift */; };
 		3C189F320DF6FE39594C462F /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0476CE3A99851992669AF1 /* SplashView.swift */; };
 		40E227C1E1FEF54AA042733E /* FeslihanApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A43D2288E882550ECF0B51 /* FeslihanApp.swift */; };
+		4EC33B80D45F6E9F3A172A03 /* ShoppingListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBA0FCD93FFE2DF41E5F50FB /* ShoppingListView.swift */; };
 		571F235585E3576A29BF635D /* ClaudeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2D9D3DE94595547334FEC3 /* ClaudeService.swift */; };
+		602A2C537347B21AB37A2066 /* CookingModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280E29ED73235144D1D41621 /* CookingModeView.swift */; };
 		6350E98712F1A658086F07D8 /* SavedMealPlansView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A798F2EB0F1CF7C9232C30E /* SavedMealPlansView.swift */; };
 		69927C502E5209312F0BB057 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9CA009784BB90E49A89A1526 /* Assets.xcassets */; };
 		788BA106E0E3C65E6216BBEB /* ModeSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691687B0715514978BE8BBB1 /* ModeSelectionView.swift */; };
-		0A1B2C3D4E5F6A7B8C9D0E1F /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F2E3D4C5B6A7980A1B2C3D4 /* OnboardingView.swift */; };
 		7CDAAFFF5066F0AC278E13E3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCB2ED1E9EBB185B78FFDCC /* RootView.swift */; };
 		805E8B6A68BCAE104CB89DF4 /* SubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C8FCE73D37CA447073D5AB /* SubscriptionService.swift */; };
 		85AB5718008B483295110CCD /* FeslihanError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CB25DF3D77ECB2C7BBCC1A7 /* FeslihanError.swift */; };
 		89B3B38B345BF8503C98B2DC /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 1BE12820378971B316AFACA3 /* RevenueCat */; };
+		8DBA14AC4D7055985FB8E6E7 /* A02_HomeHubTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC743C05E9BBDD35A1F9C8E /* A02_HomeHubTests.swift */; };
 		9609AC5BA7CB79262C849D04 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 994D3AC1A1B55628ECC7CD4A /* SettingsView.swift */; };
 		96D9B5A5FD790789DDE05DE4 /* RecipeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ECE372FF4A6F953E2416621 /* RecipeListView.swift */; };
 		9CF01B5C2A87962211CDB203 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0CB9AA850E33E2C435B15A65 /* ClerkKit */; };
-		A1B2C3D4E5F6A7B8C9D0E1F2 /* PantryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E2F3A4B5C6D7E8F9A0B1C2 /* PantryView.swift */; };
 		AA759DF2A392EB88E1B9E373 /* Recipe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3CFA3F8D15C8C043FA7380 /* Recipe.swift */; };
-		B3C4D5E6F7A8B9C0D1E2F3A4 /* ShoppingListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F3A4B5C6D7E8F9A0B1C2D3 /* ShoppingListView.swift */; };
+		B03062B29F457FF918957A54 /* FeslihanUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E094C6225BBF9375678767 /* FeslihanUITestCase.swift */; };
 		B47297C2AFD8D248C21FD1D3 /* MealPrepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C78BB5E44642C36A066EAA62 /* MealPrepView.swift */; };
 		BF5066C53E792D24B90366C6 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = 7F847E9329A2F9EA80B49E77 /* ClerkKitUI */; };
 		BFDE8A00D297EFAFEE20D2C7 /* Movie.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDB0AB1202DBDD7D683D7EB4 /* Movie.swift */; };
+		C546E9347C4F84F3531E6F83 /* A03_RecipeBrowseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E9DB24E10EE622EFE6C16CB /* A03_RecipeBrowseTests.swift */; };
 		C9D20873895BC61C9D616591 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C775F76984A72AE6DB00F07 /* ContentView.swift */; };
-		CCDAA0A75D83A62982321774 /* CookingModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19CAECAC469F39AF9EEC221B /* CookingModeView.swift */; };
+		CBD0D16D0F8BC81610D1FA5F /* A04_PantryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C781086ED48EF398F9F0C5 /* A04_PantryTests.swift */; };
+		CD1A58E8FC38DFFC25617098 /* PantryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62C7AA501F8C53F4B7E4FF09 /* PantryView.swift */; };
 		D762C1D7D692EC54896C1319 /* IngredientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFC53F41E73A7D8A00FB0D3 /* IngredientsView.swift */; };
+		DAFC48389CE373890268322C /* A05_ShoppingListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451660F6194008AF6224D83B /* A05_ShoppingListTests.swift */; };
+		E5E23B26E4CD74A71C311CCD /* A07_MealPlanAITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19711AE3936DB1CDFA4E01A3 /* A07_MealPlanAITests.swift */; };
 		F10BF86F961896576020DE68 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EE80C777D363E51DF793EF /* Config.swift */; };
 		F1643C452ADA825056C7E90A /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772199D387CB7CFE61C07D92 /* APIService.swift */; };
 		F457A8AFF084FC551264F3B7 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3794EBFB0A815B05B46B7F87 /* Theme.swift */; };
+		F986CA244B37A0A83EFFED83 /* A01_AuthFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7D581BEA080F25BC6362785 /* A01_AuthFlowTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3AAF341127FE69DDB57D374D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 06D53CFE5F457FBD076F9487 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 07E53EB43151C57EDE1D83F8;
+			remoteInfo = Feslihan;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		05085FE6F97FB2C1E7E27A3A /* MealEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEditSheet.swift; sourceTree = "<group>"; };
 		05A43D2288E882550ECF0B51 /* FeslihanApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeslihanApp.swift; sourceTree = "<group>"; };
-		19CAECAC469F39AF9EEC221B /* CookingModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CookingModeView.swift; sourceTree = "<group>"; };
+		19711AE3936DB1CDFA4E01A3 /* A07_MealPlanAITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A07_MealPlanAITests.swift; sourceTree = "<group>"; };
 		1A798F2EB0F1CF7C9232C30E /* SavedMealPlansView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedMealPlansView.swift; sourceTree = "<group>"; };
 		1CB25DF3D77ECB2C7BBCC1A7 /* FeslihanError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeslihanError.swift; sourceTree = "<group>"; };
 		1D3CFA3F8D15C8C043FA7380 /* Recipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recipe.swift; sourceTree = "<group>"; };
+		280E29ED73235144D1D41621 /* CookingModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CookingModeView.swift; sourceTree = "<group>"; };
 		2C106C18CA48DECC3172126F /* RecipeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeDetailView.swift; sourceTree = "<group>"; };
+		2E9DB24E10EE622EFE6C16CB /* A03_RecipeBrowseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A03_RecipeBrowseTests.swift; sourceTree = "<group>"; };
 		3794EBFB0A815B05B46B7F87 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		3ECE372FF4A6F953E2416621 /* RecipeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeListView.swift; sourceTree = "<group>"; };
+		451660F6194008AF6224D83B /* A05_ShoppingListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A05_ShoppingListTests.swift; sourceTree = "<group>"; };
 		4C775F76984A72AE6DB00F07 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		4CFC53F41E73A7D8A00FB0D3 /* IngredientsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientsView.swift; sourceTree = "<group>"; };
+		56E094C6225BBF9375678767 /* FeslihanUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeslihanUITestCase.swift; sourceTree = "<group>"; };
 		5DBA950AF8742A25F6D2F326 /* WhatToEatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatToEatView.swift; sourceTree = "<group>"; };
 		61A77A661A1D0EFE85F7EB23 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		62C7AA501F8C53F4B7E4FF09 /* PantryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PantryView.swift; sourceTree = "<group>"; };
 		67C8FCE73D37CA447073D5AB /* SubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionService.swift; sourceTree = "<group>"; };
 		691687B0715514978BE8BBB1 /* ModeSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSelectionView.swift; sourceTree = "<group>"; };
-		1F2E3D4C5B6A7980A1B2C3D4 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		6E2D9D3DE94595547334FEC3 /* ClaudeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeService.swift; sourceTree = "<group>"; };
 		772199D387CB7CFE61C07D92 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		7BC2D60E19F246519FA87D14 /* CaptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionService.swift; sourceTree = "<group>"; };
+		7F5C6517B4D2B0B5B891B424 /* FeslihanUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FeslihanUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		994D3AC1A1B55628ECC7CD4A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9CA009784BB90E49A89A1526 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B7D581BEA080F25BC6362785 /* A01_AuthFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A01_AuthFlowTests.swift; sourceTree = "<group>"; };
 		BDB0AB1202DBDD7D683D7EB4 /* Movie.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Movie.swift; sourceTree = "<group>"; };
+		BF1A15FC2D940D205985E29C /* A06_WhatToEatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A06_WhatToEatTests.swift; sourceTree = "<group>"; };
+		C6C781086ED48EF398F9F0C5 /* A04_PantryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A04_PantryTests.swift; sourceTree = "<group>"; };
 		C78BB5E44642C36A066EAA62 /* MealPrepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealPrepView.swift; sourceTree = "<group>"; };
-		D1E2F3A4B5C6D7E8F9A0B1C2 /* PantryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PantryView.swift; sourceTree = "<group>"; };
+		D71FAFA8851D7414D65263A6 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		D9EE80C777D363E51DF793EF /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		DBA0FCD93FFE2DF41E5F50FB /* ShoppingListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingListView.swift; sourceTree = "<group>"; };
 		DDCB2ED1E9EBB185B78FFDCC /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
-		E2F3A4B5C6D7E8F9A0B1C2D3 /* ShoppingListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingListView.swift; sourceTree = "<group>"; };
 		E4E1F09C463219453E3EB2A1 /* AddRecipeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddRecipeView.swift; sourceTree = "<group>"; };
 		EA0476CE3A99851992669AF1 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
-		F67A09C9F999DAD1D924581F /* Feslihan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Feslihan.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		EDC743C05E9BBDD35A1F9C8E /* A02_HomeHubTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A02_HomeHubTests.swift; sourceTree = "<group>"; };
+		F67A09C9F999DAD1D924581F /* Feslihan.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Feslihan.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F992BF94307474C2BFF7C205 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -93,6 +120,7 @@
 			isa = PBXGroup;
 			children = (
 				F67A09C9F999DAD1D924581F /* Feslihan.app */,
+				7F5C6517B4D2B0B5B891B424 /* FeslihanUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -128,8 +156,24 @@
 			isa = PBXGroup;
 			children = (
 				3B0AAA22441A04CC500D27DC /* Feslihan */,
+				71FCADF0A934902E228AD628 /* FeslihanUITests */,
 				0DB4C039901DDB96F6EAA657 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		71FCADF0A934902E228AD628 /* FeslihanUITests */ = {
+			isa = PBXGroup;
+			children = (
+				B7D581BEA080F25BC6362785 /* A01_AuthFlowTests.swift */,
+				EDC743C05E9BBDD35A1F9C8E /* A02_HomeHubTests.swift */,
+				2E9DB24E10EE622EFE6C16CB /* A03_RecipeBrowseTests.swift */,
+				C6C781086ED48EF398F9F0C5 /* A04_PantryTests.swift */,
+				451660F6194008AF6224D83B /* A05_ShoppingListTests.swift */,
+				BF1A15FC2D940D205985E29C /* A06_WhatToEatTests.swift */,
+				19711AE3936DB1CDFA4E01A3 /* A07_MealPlanAITests.swift */,
+				56E094C6225BBF9375678767 /* FeslihanUITestCase.swift */,
+			);
+			path = FeslihanUITests;
 			sourceTree = "<group>";
 		};
 		7768E2DD4634CB1BADFFE7C4 /* Views */ = {
@@ -137,20 +181,20 @@
 			children = (
 				E4E1F09C463219453E3EB2A1 /* AddRecipeView.swift */,
 				4C775F76984A72AE6DB00F07 /* ContentView.swift */,
+				280E29ED73235144D1D41621 /* CookingModeView.swift */,
 				4CFC53F41E73A7D8A00FB0D3 /* IngredientsView.swift */,
 				05085FE6F97FB2C1E7E27A3A /* MealEditSheet.swift */,
 				C78BB5E44642C36A066EAA62 /* MealPrepView.swift */,
 				691687B0715514978BE8BBB1 /* ModeSelectionView.swift */,
-				1F2E3D4C5B6A7980A1B2C3D4 /* OnboardingView.swift */,
-				D1E2F3A4B5C6D7E8F9A0B1C2 /* PantryView.swift */,
+				D71FAFA8851D7414D65263A6 /* OnboardingView.swift */,
+				62C7AA501F8C53F4B7E4FF09 /* PantryView.swift */,
 				F992BF94307474C2BFF7C205 /* PaywallView.swift */,
 				2C106C18CA48DECC3172126F /* RecipeDetailView.swift */,
-				19CAECAC469F39AF9EEC221B /* CookingModeView.swift */,
 				3ECE372FF4A6F953E2416621 /* RecipeListView.swift */,
 				DDCB2ED1E9EBB185B78FFDCC /* RootView.swift */,
 				1A798F2EB0F1CF7C9232C30E /* SavedMealPlansView.swift */,
 				994D3AC1A1B55628ECC7CD4A /* SettingsView.swift */,
-				E2F3A4B5C6D7E8F9A0B1C2D3 /* ShoppingListView.swift */,
+				DBA0FCD93FFE2DF41E5F50FB /* ShoppingListView.swift */,
 				EA0476CE3A99851992669AF1 /* SplashView.swift */,
 				5DBA950AF8742A25F6D2F326 /* WhatToEatView.swift */,
 			);
@@ -191,6 +235,24 @@
 			productReference = F67A09C9F999DAD1D924581F /* Feslihan.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AA2FEB3A85BD9B91EED63D68 /* FeslihanUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 48E611A1CD0002075BCBF0B3 /* Build configuration list for PBXNativeTarget "FeslihanUITests" */;
+			buildPhases = (
+				D3E448CE78C7D3C33A96DC24 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EF84C8B2A6F10EAF4D8A105E /* PBXTargetDependency */,
+			);
+			name = FeslihanUITests;
+			packageProductDependencies = (
+			);
+			productName = FeslihanUITests;
+			productReference = 7F5C6517B4D2B0B5B891B424 /* FeslihanUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -198,7 +260,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2640;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					AA2FEB3A85BD9B91EED63D68 = {
+						TestTargetID = 07E53EB43151C57EDE1D83F8;
+					};
+				};
 			};
 			buildConfigurationList = 9EBF3740A292E2B860DFA84A /* Build configuration list for PBXProject "Feslihan" */;
 			developmentRegion = en;
@@ -219,6 +286,7 @@
 			projectRoot = "";
 			targets = (
 				07E53EB43151C57EDE1D83F8 /* Feslihan */,
+				AA2FEB3A85BD9B91EED63D68 /* FeslihanUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -245,24 +313,24 @@
 				571F235585E3576A29BF635D /* ClaudeService.swift in Sources */,
 				F10BF86F961896576020DE68 /* Config.swift in Sources */,
 				C9D20873895BC61C9D616591 /* ContentView.swift in Sources */,
+				602A2C537347B21AB37A2066 /* CookingModeView.swift in Sources */,
 				40E227C1E1FEF54AA042733E /* FeslihanApp.swift in Sources */,
 				85AB5718008B483295110CCD /* FeslihanError.swift in Sources */,
 				D762C1D7D692EC54896C1319 /* IngredientsView.swift in Sources */,
 				3A7C6E58826E07BEC2FA782D /* MealEditSheet.swift in Sources */,
 				B47297C2AFD8D248C21FD1D3 /* MealPrepView.swift in Sources */,
 				788BA106E0E3C65E6216BBEB /* ModeSelectionView.swift in Sources */,
-				0A1B2C3D4E5F6A7B8C9D0E1F /* OnboardingView.swift in Sources */,
 				BFDE8A00D297EFAFEE20D2C7 /* Movie.swift in Sources */,
-				A1B2C3D4E5F6A7B8C9D0E1F2 /* PantryView.swift in Sources */,
-				B3C4D5E6F7A8B9C0D1E2F3A4 /* ShoppingListView.swift in Sources */,
+				25428619EB5FC48EC7B610C2 /* OnboardingView.swift in Sources */,
+				CD1A58E8FC38DFFC25617098 /* PantryView.swift in Sources */,
 				23504B1FF1DC11A623EC73BC /* PaywallView.swift in Sources */,
 				AA759DF2A392EB88E1B9E373 /* Recipe.swift in Sources */,
 				16BAE34B9B74D9EAF2DE36C2 /* RecipeDetailView.swift in Sources */,
-				CCDAA0A75D83A62982321774 /* CookingModeView.swift in Sources */,
 				96D9B5A5FD790789DDE05DE4 /* RecipeListView.swift in Sources */,
 				7CDAAFFF5066F0AC278E13E3 /* RootView.swift in Sources */,
 				6350E98712F1A658086F07D8 /* SavedMealPlansView.swift in Sources */,
 				9609AC5BA7CB79262C849D04 /* SettingsView.swift in Sources */,
+				4EC33B80D45F6E9F3A172A03 /* ShoppingListView.swift in Sources */,
 				3C189F320DF6FE39594C462F /* SplashView.swift in Sources */,
 				805E8B6A68BCAE104CB89DF4 /* SubscriptionService.swift in Sources */,
 				F457A8AFF084FC551264F3B7 /* Theme.swift in Sources */,
@@ -270,7 +338,30 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D3E448CE78C7D3C33A96DC24 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F986CA244B37A0A83EFFED83 /* A01_AuthFlowTests.swift in Sources */,
+				8DBA14AC4D7055985FB8E6E7 /* A02_HomeHubTests.swift in Sources */,
+				C546E9347C4F84F3531E6F83 /* A03_RecipeBrowseTests.swift in Sources */,
+				CBD0D16D0F8BC81610D1FA5F /* A04_PantryTests.swift in Sources */,
+				DAFC48389CE373890268322C /* A05_ShoppingListTests.swift in Sources */,
+				3880E5B28454F64DDABD964E /* A06_WhatToEatTests.swift in Sources */,
+				E5E23B26E4CD74A71C311CCD /* A07_MealPlanAITests.swift in Sources */,
+				B03062B29F457FF918957A54 /* FeslihanUITestCase.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		EF84C8B2A6F10EAF4D8A105E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 07E53EB43151C57EDE1D83F8 /* Feslihan */;
+			targetProxy = 3AAF341127FE69DDB57D374D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		07CB2AE7F226A39719AB4C32 /* Debug */ = {
@@ -327,10 +418,8 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = K6N8XQZD5D;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -344,12 +433,28 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
+		};
+		2591E6DD76E2682974F0C48C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dilarahalavurt.feslihan.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Feslihan;
+			};
+			name = Debug;
 		};
 		391A18273142CF0D2F59CAA9 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -386,10 +491,8 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = K6N8XQZD5D;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -410,7 +513,6 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -436,9 +538,35 @@
 			};
 			name = Release;
 		};
+		F489CC1619752F47EE48B6EB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dilarahalavurt.feslihan.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Feslihan;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		48E611A1CD0002075BCBF0B3 /* Build configuration list for PBXNativeTarget "FeslihanUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2591E6DD76E2682974F0C48C /* Debug */,
+				F489CC1619752F47EE48B6EB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		9EBF3740A292E2B860DFA84A /* Build configuration list for PBXProject "Feslihan" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

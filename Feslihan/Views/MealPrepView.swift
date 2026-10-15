@@ -377,6 +377,7 @@ private struct MethodChoiceView: View {
                             .stroke(DS.stone, lineWidth: 1.5)
                     )
                 }
+                .accessibilityIdentifier("mealPrep.aiButton")
                 .offset(y: appeared ? 0 : 20)
                 .opacity(appeared ? 1 : 0)
                 .animation(.easeOut(duration: 0.3).delay(0.05), value: appeared)
@@ -1087,6 +1088,7 @@ private struct BudgetStepView: View {
                     .foregroundStyle(DS.cream)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
+            .accessibilityIdentifier("mealPrep.generateButton")
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
         }
@@ -1490,7 +1492,7 @@ private struct ManualMealPlanBuilder: View {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-            if let (_, response) = try? await URLSession.shared.data(for: request),
+            if let (_, response) = try? await URLSession.shared.data(for: await APIService.authed(request)),
                let http = response as? HTTPURLResponse,
                (200...201).contains(http.statusCode) {
                 withAnimation(.spring(response: 0.3)) {
@@ -1653,6 +1655,7 @@ struct MealPlanResultView: View {
                         .background(isSaved ? DS.emberLight : DS.ember)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
+                    .accessibilityIdentifier("mealPrep.savePlanButton")
                     .disabled(isSaved || isSaving)
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
@@ -1805,7 +1808,7 @@ struct MealPlanResultView: View {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-            if let (_, response) = try? await URLSession.shared.data(for: request),
+            if let (_, response) = try? await URLSession.shared.data(for: await APIService.authed(request)),
                let http = response as? HTTPURLResponse,
                (200...201).contains(http.statusCode) {
                 withAnimation(.spring(response: 0.3)) {

@@ -25,6 +25,8 @@
 	</dict>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Yemek videolarını içe aktarmak için fotoğraf kitaplığı erişimi gereklidir</string>
+	<key>UILaunchScreen</key>
+	<dict/>
 	<key>UIRequiresFullScreen</key>
 	<true/>
 	<key>UISupportedInterfaceOrientations</key>
@@ -36,7 +38,5 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
-	<key>UILaunchScreen</key>
-	<dict/>
 </dict>
 </plist>

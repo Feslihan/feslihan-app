@@ -266,6 +266,7 @@ struct IngredientFlexView: View {
                     .foregroundStyle(DS.cream)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
+            .accessibilityIdentifier("whatToEat.flexContinue")
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
         }
@@ -340,6 +341,7 @@ struct CategorySelectionView: View {
                     .foregroundStyle(DS.cream)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
+            .accessibilityIdentifier("whatToEat.categoryContinue")
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
         }
@@ -882,6 +884,7 @@ struct TimeSelectionView: View {
                     .foregroundStyle(DS.cream)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
+            .accessibilityIdentifier("whatToEat.timeContinue")
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
         }
@@ -955,6 +958,7 @@ struct CuisineSelectionView: View {
                     .foregroundStyle(DS.cream)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             }
+            .accessibilityIdentifier("whatToEat.cuisineContinue")
             .padding(.horizontal, 20)
             .padding(.bottom, 24)
         }
@@ -1104,6 +1108,7 @@ struct SwipeResultsView: View {
                             .clipShape(Circle())
                     }
                     .accessibilityLabel("Geç")
+                    .accessibilityIdentifier("whatToEat.skipButton")
 
                     Button(action: likeCurrent) {
                         Image(systemName: "heart.fill")
@@ -1114,6 +1119,7 @@ struct SwipeResultsView: View {
                             .clipShape(Circle())
                     }
                     .accessibilityLabel("Kaydet")
+                    .accessibilityIdentifier("whatToEat.likeButton")
                 }
                 .padding(.bottom, 24)
             }

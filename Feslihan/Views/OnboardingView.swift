@@ -38,6 +38,7 @@ struct OnboardingView: View {
                     Button("Atla") { onComplete() }
                         .font(.label())
                         .foregroundStyle(DS.dust)
+                        .accessibilityIdentifier("onboarding.skipButton")
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
@@ -102,6 +103,7 @@ struct OnboardingView: View {
                             .background(DS.ember)
                             .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     }
+                    .accessibilityIdentifier("onboarding.primaryButton")
 
                     Button {
                         advance()
@@ -118,6 +120,7 @@ struct OnboardingView: View {
                             )
                             .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     }
+                    .accessibilityIdentifier("onboarding.secondaryButton")
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 24)

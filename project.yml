@@ -30,6 +30,12 @@ targets:
         NSPhotoLibraryUsageDescription: "Yemek videolarını içe aktarmak için fotoğraf kitaplığı erişimi gereklidir"
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        "UISupportedInterfaceOrientations~ipad":
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.dilarahalavurt.feslihan
@@ -37,3 +43,27 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+  FeslihanUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - FeslihanUITests
+    dependencies:
+      - target: Feslihan
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dilarahalavurt.feslihan.uitests
+        TEST_TARGET_NAME: Feslihan
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Feslihan:
+    build:
+      targets:
+        Feslihan: all
+        FeslihanUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - FeslihanUITests

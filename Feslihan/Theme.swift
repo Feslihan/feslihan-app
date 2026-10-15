@@ -76,6 +76,7 @@ struct BackButton: View {
                 .background(DS.sand)
                 .clipShape(Circle())
         }
+        .accessibilityIdentifier("backButton")
     }
 }
 
