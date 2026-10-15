@@ -2,10 +2,11 @@ import "dotenv/config";
 import express from "express";
 import https from "https";
 import { db } from "./db.js";
-import { recipes, ingredients, tags, platformCreators, userRecipes, userFolders, users, mealPlans, userPantry, userShoppingList, recipeReviews } from "./schema.js";
+import { recipes, ingredients, tags, platformCreators, userRecipes, userFolders, users, mealPlans, userPantry, userShoppingList, recipeReviews, connections, recipeShares } from "./schema.js";
+import { createSocialRouter } from "./routes/social.js";
 import { uploadImage, s3KeyFromUrl, getImage } from "./s3.js";
 import { analyzeRecipe, analyzeNutrition, generateMealPlan, classifyIngredients, classifyFreezerFriendly, findAlternativeIngredients } from "./ai.js";
-import { eq, desc, inArray, and, sql, isNull } from "drizzle-orm";
+import { eq, desc, inArray, and, or, sql, isNull } from "drizzle-orm";
 import { seedPlatformRecipes, mapPlatformRecipesToUser } from "./seed-recipes.js";
 import { requireAuth, requireAdmin } from "./middleware/auth.js";
 import { safeFetchText, UrlNotAllowedError } from "./security/ssrf.js";
@@ -103,6 +104,10 @@ app.use((req, res, next) => {
   }
   requireAuth(req, res, next);
 });
+
+// Social graph: friend codes, follow requests, friend recipes, recipe shares.
+// Mounted behind the global auth gate like every other route.
+app.use(createSocialRouter({ toSnake, enrichRecipes, rewriteThumbnail }));
 
 function toSnake(obj: any): any {
   if (Array.isArray(obj)) return obj.map(toSnake);
@@ -885,6 +890,8 @@ app.get("/users/me/export", async (req, res) => {
     pantry,
     shoppingList,
     reviews,
+    userConnections,
+    userShares,
   ] = await Promise.all([
     db.select().from(users).where(eq(users.clerkId, clerk_id)).limit(1),
     db.select().from(userFolders).where(eq(userFolders.userId, clerk_id)),
@@ -893,6 +900,14 @@ app.get("/users/me/export", async (req, res) => {
     db.select().from(userPantry).where(eq(userPantry.userId, clerk_id)),
     db.select().from(userShoppingList).where(eq(userShoppingList.userId, clerk_id)),
     db.select().from(recipeReviews).where(eq(recipeReviews.userId, clerk_id)),
+    db
+      .select()
+      .from(connections)
+      .where(or(eq(connections.requesterId, clerk_id), eq(connections.addresseeId, clerk_id))),
+    db
+      .select()
+      .from(recipeShares)
+      .where(or(eq(recipeShares.senderId, clerk_id), eq(recipeShares.recipientId, clerk_id))),
   ]);
 
   if (profile.length === 0) {
@@ -910,6 +925,8 @@ app.get("/users/me/export", async (req, res) => {
       pantry,
       shoppingList,
       reviews,
+      connections: userConnections,
+      recipeShares: userShares,
     })
   );
 });
@@ -928,6 +945,12 @@ app.delete("/users/me", async (req, res) => {
   await db.delete(userPantry).where(eq(userPantry.userId, clerk_id));
   await db.delete(userShoppingList).where(eq(userShoppingList.userId, clerk_id));
   await db.delete(recipeReviews).where(eq(recipeReviews.userId, clerk_id));
+  await db
+    .delete(connections)
+    .where(or(eq(connections.requesterId, clerk_id), eq(connections.addresseeId, clerk_id)));
+  await db
+    .delete(recipeShares)
+    .where(or(eq(recipeShares.senderId, clerk_id), eq(recipeShares.recipientId, clerk_id)));
   await db.delete(users).where(eq(users.clerkId, clerk_id));
 
   res.status(204).send();
@@ -2055,12 +2078,31 @@ app.post("/recipes/:recipeId/reviews", async (req, res) => {
   }
 });
 
+// Public board: every review on a recipe, with the author's name/avatar.
+// LEFT JOIN so reviews survive a missing users row (client shows a fallback
+// name). Extra keys are additive — shipped clients decoding the old shape
+// keep working.
 app.get("/recipes/:recipeId/reviews", async (req, res) => {
+  const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 100);
+  const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
+
   const result = await db
-    .select()
+    .select({
+      id: recipeReviews.id,
+      userId: recipeReviews.userId,
+      recipeId: recipeReviews.recipeId,
+      rating: recipeReviews.rating,
+      comment: recipeReviews.comment,
+      createdAt: recipeReviews.createdAt,
+      userName: users.name,
+      userAvatarUrl: users.avatarUrl,
+    })
     .from(recipeReviews)
+    .leftJoin(users, eq(users.clerkId, recipeReviews.userId))
     .where(eq(recipeReviews.recipeId, req.params.recipeId))
-    .orderBy(desc(recipeReviews.createdAt));
+    .orderBy(desc(recipeReviews.createdAt))
+    .limit(limit)
+    .offset(offset);
   res.json(toSnake(result));
 });
 
