@@ -18,6 +18,8 @@ struct ModeSelectionView: View {
     @State private var showPaywall = false
     @State private var showMealPrepWizard = false
     @State private var showAccountSheet = false
+    @State private var showInboxSheet = false
+    @State private var pendingShareCount = 0
     @State private var pantryCount = 0
     @State private var shoppingCount = 0
     @State private var recipeCount = 0
@@ -61,6 +63,11 @@ struct ModeSelectionView: View {
         await refreshPantryCount()
         let descriptor = FetchDescriptor<Recipe>()
         recipeCount = (try? modelContext.fetchCount(descriptor)) ?? 0
+        await refreshSocialCounts()
+    }
+
+    private func refreshSocialCounts() async {
+        pendingShareCount = await APIService.fetchSocialMe()?.pending_share_count ?? 0
     }
 
     private func navigateOrGate(_ mode: AppMode) {
@@ -121,6 +128,31 @@ struct ModeSelectionView: View {
                             }
 
                             Spacer()
+
+                            // Inbox: recipes friends sent me, with unread badge
+                            Button { showInboxSheet = true } label: {
+                                ZStack(alignment: .topTrailing) {
+                                    Image(systemName: "tray")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundStyle(DS.ink)
+                                        .frame(width: 34, height: 34)
+                                        .background(DS.sand)
+                                        .clipShape(Circle())
+
+                                    if pendingShareCount > 0 {
+                                        Text("\(min(pendingShareCount, 9))")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundStyle(DS.flour)
+                                            .frame(width: 16, height: 16)
+                                            .background(DS.tomato)
+                                            .clipShape(Circle())
+                                            .offset(x: 4, y: -4)
+                                    }
+                                }
+                            }
+                            .accessibilityLabel("Benimle Paylaşılanlar")
+                            .accessibilityIdentifier("home.inboxButton")
+                            .padding(.trailing, 10)
 
                             Button { showAccountSheet = true } label: {
                                 if let url = Clerk.shared.user?.imageUrl,
@@ -272,6 +304,13 @@ struct ModeSelectionView: View {
             .fullScreenCover(isPresented: $showMealPrepWizard) {
                 MealPrepView(onBack: { showMealPrepWizard = false })
             }
+            .sheet(isPresented: $showInboxSheet, onDismiss: {
+                Task { await refreshSocialCounts() }
+            }) {
+                SharedInboxView(onChange: {
+                    Task { await refreshSocialCounts() }
+                })
+            }
             .sheet(isPresented: $showAccountSheet) {
                 AccountSheet(onNavigate: { mode in
                     showAccountSheet = false
@@ -313,6 +352,7 @@ struct ModeSelectionView: View {
                     let remote = await APIService.fetchUserRecipes(userId: userId)
                     recipeCount = remote.count
                 }
+                await refreshSocialCounts()
             }
             .fullScreenCover(isPresented: $showPantryGate) {
                 PantryGateView(
@@ -601,6 +641,14 @@ private struct AccountSheet: View {
                     AccountRow(icon: "cart", title: "Alışveriş Listesi", subtitle: "Alması gerekenleri listele") {
                         onNavigate(.shoppingList)
                     }
+
+                    NavigationLink {
+                        FriendsView()
+                    } label: {
+                        AccountRowLabel(icon: "person.2", title: "Arkadaşlar", subtitle: "Arkadaş ekle, tarif paylaş")
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("account.friendsRow")
 
                     NavigationLink {
                         SettingsView()
