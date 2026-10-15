@@ -88,4 +88,6 @@ struct Ingredient: Codable, Identifiable, Hashable {
     var amount: String
     var baseName: String?
     var section: String?
+    /// Backend ingredients-table row ID this ingredient resolves to.
+    var ingredientId: String?
 }

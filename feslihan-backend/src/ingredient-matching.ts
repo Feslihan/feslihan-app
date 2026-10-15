@@ -61,7 +61,8 @@ const turkishWordMap: Record<string, string> = {
   yag: "yağ",
   eksisi: "ekşisi",
   sivi: "sıvı",
-  siviyag: "sıvıyağ",
+  siviyag: "sıvı yağ",
+  sıvıyağ: "sıvı yağ",
   tatlandirici: "tatlandırıcı",
   zerdecal: "zerdeçal",
   arpacik: "arpacık",
@@ -138,12 +139,14 @@ const IGNORABLE_PREFIXES = [
   "taze ", "kuru ", "organik ", "toz ", "çiğ ",
   "büyük ", "küçük ", "orta ", "orta boy ",
   "az yağlı ", "tam yağlı ", "yağsız ", "ekstra ",
-  "kavrulmuş ", "közlenmiş ", "haşlanmış ", "eritilmiş ",
+  "kavrulmuş ", "közlenmiş ", "haşlanmış ", "eritilmiş ", "fırınlanmış ",
   "rendelenmiş ", "doğranmış ", "dilimlenmiş ", "süzme ",
   "ince ", "iri ", "sade ", "light ",
   "pul ", "tane ", "çekilmiş ", "öğütülmüş ",
   "soğuk ", "ılık ", "sıcak ",
   "koyu ", "açık ",
+  // Dairy brand names ("İçim Labne" = "Labne")
+  "içim ", "pınar ", "sütaş ", "torku ", "ülker ",
 ];
 
 // Measure units that can lead an ingredient line ("2 su bardağı un",
@@ -221,7 +224,9 @@ export function normalizeForMatch(name: string): string {
   for (const suffix of COSMETIC_SUFFIXES) {
     if (s.endsWith(suffix)) { s = s.slice(0, -suffix.length).trim(); break; }
   }
-  return s;
+  // Canonicalize spelling variants ("sıvıyağ" → "sıvı yağ") so both sides of
+  // a comparison land on the same form.
+  return s.split(/\s+/).map((w) => turkishWordMap[w] ?? w).join(" ");
 }
 
 export function findBestMatch(

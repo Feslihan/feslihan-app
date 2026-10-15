@@ -429,10 +429,35 @@ async function resolveTagNames(ids: string[]): Promise<string[]> {
   return ids.map((id) => idToName.get(id) ?? id);
 }
 
+// Attach the canonical ingredient name to each ingredients_with_measures
+// entry as base_name. Clients must use this (not positional pairing with
+// ingredients_without_measures) for pantry/shopping-list matching.
+function attachBaseNames(entries: any[], idToName: Map<string, string>): any[] {
+  return entries.map((e) => {
+    const name = e?.ingredient_id ? idToName.get(e.ingredient_id) : undefined;
+    return name ? { ...e, base_name: name } : e;
+  });
+}
+
 async function enrichRecipe(recipe: any): Promise<any> {
   const obj = rewriteThumbnail(toSnake(recipe));
   if (obj.ingredients_without_measures && Array.isArray(obj.ingredients_without_measures)) {
     obj.ingredients_without_measures = await resolveIngredientNames(obj.ingredients_without_measures);
+  }
+  if (Array.isArray(obj.ingredients_with_measures)) {
+    const ids = [...new Set(
+      obj.ingredients_with_measures.map((e: any) => e?.ingredient_id).filter(Boolean)
+    )] as string[];
+    if (ids.length > 0) {
+      const rows = await db
+        .select({ id: ingredients.id, name: ingredients.name })
+        .from(ingredients)
+        .where(inArray(ingredients.id, ids));
+      obj.ingredients_with_measures = attachBaseNames(
+        obj.ingredients_with_measures,
+        new Map(rows.map((r) => [r.id, r.name]))
+      );
+    }
   }
   if (obj.tags && Array.isArray(obj.tags)) {
     obj.tags = await resolveTagNames(obj.tags);
@@ -448,6 +473,13 @@ async function enrichRecipes(recipes: any[]): Promise<any[]> {
   for (const r of recipes) {
     const ings = (r.ingredientsWithoutMeasures ?? r.ingredients_without_measures) as string[] | null;
     if (ings) ings.filter((id: string) => uuidPattern.test(id)).forEach((id: string) => allIngIds.add(id));
+    const withMeasures = (r.ingredientsWithMeasures ?? r.ingredients_with_measures) as any[] | null;
+    if (withMeasures) {
+      withMeasures
+        .map((e) => e?.ingredient_id)
+        .filter((id: string) => id && uuidPattern.test(id))
+        .forEach((id: string) => allIngIds.add(id));
+    }
     const ts = (r.tags ?? r.tags) as string[] | null;
     if (ts) ts.filter((id: string) => uuidPattern.test(id)).forEach((id: string) => allTagIds.add(id));
   }
@@ -476,6 +508,9 @@ async function enrichRecipes(recipes: any[]): Promise<any[]> {
       obj.ingredients_without_measures = obj.ingredients_without_measures.map(
         (id: string) => ingIdToName.get(id) ?? id
       );
+    }
+    if (Array.isArray(obj.ingredients_with_measures)) {
+      obj.ingredients_with_measures = attachBaseNames(obj.ingredients_with_measures, ingIdToName);
     }
     if (obj.tags && Array.isArray(obj.tags)) {
       obj.tags = obj.tags.map(
@@ -2130,9 +2165,23 @@ app.post("/users/:userId/shopping-list", async (req, res) => {
     return res.status(400).json({ error: "ingredient_names required" });
   }
 
-  // Resolve names to IDs using the same fuzzy logic as recipe saving
-  const nameToId = await lookupIngredientMap(ingredient_names);
-  const ingredientIds = [...new Set(nameToId.values())];
+  // UUID-shaped values are ingredient IDs (clients send them when they have
+  // the resolved reference); everything else resolves by name with the same
+  // fuzzy logic as recipe saving.
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const idLike = ingredient_names.filter((n) => uuidPattern.test(n.trim()));
+  const nameLike = ingredient_names.filter((n) => !uuidPattern.test(n.trim()));
+
+  const nameToId = await lookupIngredientMap(nameLike);
+  const resolved = new Set(nameToId.values());
+  if (idLike.length > 0) {
+    const validRows = await db
+      .select({ id: ingredients.id })
+      .from(ingredients)
+      .where(inArray(ingredients.id, idLike.map((n) => n.trim())));
+    for (const r of validRows) resolved.add(r.id);
+  }
+  const ingredientIds = [...resolved];
   if (ingredientIds.length === 0) {
     return res.status(201).json({ added: 0 });
   }

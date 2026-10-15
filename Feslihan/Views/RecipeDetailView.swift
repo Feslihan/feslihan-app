@@ -599,7 +599,8 @@ struct RecipeDetailView: View {
                 name: ingredient.name,
                 amount: scaleAmount(ingredient.amount, by: servingMultiplier),
                 baseName: ingredient.baseName,
-                section: ingredient.section
+                section: ingredient.section,
+                ingredientId: ingredient.ingredientId
             )
         }
     }

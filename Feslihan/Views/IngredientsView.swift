@@ -133,7 +133,7 @@ struct IngredientsView: View {
                                 .foregroundStyle(DS.ember)
                         } else {
                             Button {
-                                Task { await addToShoppingList(ingredient.baseName ?? ingredient.name) }
+                                Task { await addToShoppingList(ingredient, displayKey: key) }
                             } label: {
                                 Image(systemName: "cart.badge.plus")
                                     .font(.system(size: 15))
@@ -163,11 +163,17 @@ struct IngredientsView: View {
         isLoaded = true
     }
 
-    private func addToShoppingList(_ name: String) async {
+    private func addToShoppingList(_ ingredient: Ingredient, displayKey: String) async {
         guard let userId = Clerk.shared.user?.id else { return }
-        let success = await APIService.addToShoppingList(userId: userId, ingredientNames: [name])
+        // Prefer the resolved ingredient ID (exact server-side match); fall
+        // back to the base/display name for recipes saved before IDs existed.
+        let reference = ingredient.ingredientId ?? ingredient.baseName ?? ingredient.name
+        let success = await APIService.addToShoppingList(userId: userId, ingredientNames: [reference])
         if success {
-            shoppingListNames.insert(name.lowercased())
+            // Insert the same key the row uses for membership so the icon
+            // updates, whether we sent an ID or a name.
+            shoppingListNames.insert(displayKey)
+            if let base = ingredient.baseName { shoppingListNames.insert(base.lowercased()) }
         }
     }
 }
