@@ -138,7 +138,6 @@ jobs:
             -scheme Feslihan \
             -destination 'platform=iOS Simulator,name=iPhone 16' \
             -resultBundlePath TestResults/e2e.xcresult \
-            -test-iterations 1 \
             $FILTER_ARG \
             | xcbeautify --renderer github-actions || TEST_FAILED=1
           exit ${TEST_FAILED:-0}
