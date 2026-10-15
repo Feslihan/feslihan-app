@@ -837,6 +837,67 @@ app.post("/users/sync", async (req, res) => {
   res.json({ ok: true });
 });
 
+// KVKK: export all personal data held for the authenticated user as JSON.
+// Identity comes from the verified token, never from the request.
+app.get("/users/me/export", async (req, res) => {
+  const clerk_id = req.auth!.userId;
+
+  const [
+    profile,
+    folders,
+    savedRecipes,
+    plans,
+    pantry,
+    shoppingList,
+    reviews,
+  ] = await Promise.all([
+    db.select().from(users).where(eq(users.clerkId, clerk_id)).limit(1),
+    db.select().from(userFolders).where(eq(userFolders.userId, clerk_id)),
+    db.select().from(userRecipes).where(eq(userRecipes.userId, clerk_id)),
+    db.select().from(mealPlans).where(eq(mealPlans.userId, clerk_id)),
+    db.select().from(userPantry).where(eq(userPantry.userId, clerk_id)),
+    db.select().from(userShoppingList).where(eq(userShoppingList.userId, clerk_id)),
+    db.select().from(recipeReviews).where(eq(recipeReviews.userId, clerk_id)),
+  ]);
+
+  if (profile.length === 0) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+
+  res.json(
+    toSnake({
+      exportedAt: new Date(),
+      profile: profile[0],
+      folders,
+      savedRecipes,
+      mealPlans: plans,
+      pantry,
+      shoppingList,
+      reviews,
+    })
+  );
+});
+
+// KVKK: permanently delete the authenticated user and all of their data.
+// Deletions run in FK-safe order (child rows before the users row). Shared
+// global content (recipes requested by the user) is retained, as it is no
+// longer tied to the user's identity after deletion.
+app.delete("/users/me", async (req, res) => {
+  const clerk_id = req.auth!.userId;
+
+  // user_recipes references user_folders (folder_id), so it must go first.
+  await db.delete(userRecipes).where(eq(userRecipes.userId, clerk_id));
+  await db.delete(userFolders).where(eq(userFolders.userId, clerk_id));
+  await db.delete(mealPlans).where(eq(mealPlans.userId, clerk_id));
+  await db.delete(userPantry).where(eq(userPantry.userId, clerk_id));
+  await db.delete(userShoppingList).where(eq(userShoppingList.userId, clerk_id));
+  await db.delete(recipeReviews).where(eq(recipeReviews.userId, clerk_id));
+  await db.delete(users).where(eq(users.clerkId, clerk_id));
+
+  res.status(204).send();
+});
+
 // List all known ingredients (with price tier and price)
 app.get("/ingredients", async (_req, res) => {
   const result = await db

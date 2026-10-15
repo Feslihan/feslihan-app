@@ -107,6 +107,21 @@ struct PaywallView: View {
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(DS.smoke)
 
+                        // Auto-renewable subscription disclosure + legal links (App Store requirement)
+                        VStack(spacing: 8) {
+                            Text(Legal.subscriptionDisclosure)
+                                .font(.system(size: 11))
+                                .foregroundStyle(DS.dust)
+                                .multilineTextAlignment(.center)
+
+                            Text("[Kullanım Koşulları](\(Legal.termsURL.absoluteString)) · [Gizlilik Politikası](\(Legal.privacyURL.absoluteString))")
+                                .font(.system(size: 11, weight: .medium))
+                                .tint(DS.ember)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 4)
+
                         Spacer().frame(height: 20)
                     }
                 }

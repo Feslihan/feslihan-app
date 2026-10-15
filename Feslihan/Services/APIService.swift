@@ -323,6 +323,26 @@ enum APIService {
         return true
     }
 
+    // MARK: - KVKK (Data Rights)
+
+    /// Download all personal data held for the current user as raw JSON (KVKK export).
+    static func exportMyData() async -> Data? {
+        guard let url = URL(string: "\(baseURL)/users/me/export") else { return nil }
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
+        return data
+    }
+
+    /// Permanently delete the current user and all of their data on the backend (KVKK erasure).
+    static func deleteMyData() async -> Bool {
+        guard let url = URL(string: "\(baseURL)/users/me") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
+              let http = response as? HTTPURLResponse, http.statusCode == 204 else { return false }
+        return true
+    }
+
     /// Fetch instagram user info including profile picture URL.
     static func fetchCreator(username: String) async -> InstagramUserDTO? {
         guard let requestURL = URL(string: "\(baseURL)/creators/\(username)") else { return nil }

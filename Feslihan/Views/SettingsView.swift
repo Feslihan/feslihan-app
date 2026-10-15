@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import ClerkKit
 
 struct SettingsView: View {
@@ -8,10 +9,9 @@ struct SettingsView: View {
     @State private var showDeleteConfirm = false
     @State private var isWorking = false
     @State private var statusMessage: String?
+    @State private var exportFile: ExportFile?
 
     private let supportEmail = "destek@feslihan.app"
-    private let termsURL = URL(string: "https://feslihan.app/kosullar")!
-    private let privacyURL = URL(string: "https://feslihan.app/gizlilik")!
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -36,8 +36,9 @@ struct SettingsView: View {
                     }
 
                     section(title: "Yasal") {
-                        SettingsLinkRow(icon: "doc.text", title: "Kullanım Koşulları", url: termsURL)
-                        SettingsLinkRow(icon: "hand.raised", title: "Gizlilik Politikası", url: privacyURL)
+                        SettingsLinkRow(icon: "doc.text", title: "Kullanım Koşulları", url: Legal.termsURL)
+                        SettingsLinkRow(icon: "hand.raised", title: "Gizlilik Politikası", url: Legal.privacyURL)
+                        SettingsLinkRow(icon: "lock.doc", title: "KVKK Aydınlatma Metni", url: Legal.kvkkURL)
                     }
 
                     section(title: "Destek") {
@@ -47,6 +48,9 @@ struct SettingsView: View {
                     }
 
                     section(title: "Hesap") {
+                        SettingsRow(icon: "square.and.arrow.down", title: "Verilerimi İndir") {
+                            exportData()
+                        }
                         SettingsRow(icon: "rectangle.portrait.and.arrow.right", title: "Çıkış Yap") {
                             showSignOutConfirm = true
                         }
@@ -92,6 +96,9 @@ struct SettingsView: View {
             Button("Hesabı Sil", role: .destructive) { deleteAccount() }
             Button("Vazgeç", role: .cancel) {}
         }
+        .sheet(item: $exportFile) { file in
+            ActivityView(items: [file.url])
+        }
     }
 
     @ViewBuilder
@@ -128,10 +135,35 @@ struct SettingsView: View {
         }
     }
 
+    /// KVKK data export: download all personal data and present a share sheet.
+    private func exportData() {
+        isWorking = true
+        statusMessage = nil
+        Task {
+            guard let data = await APIService.exportMyData() else {
+                isWorking = false
+                statusMessage = "Veriler indirilemedi. Lütfen tekrar deneyin."
+                return
+            }
+            let fileURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("feslihan-verilerim.json")
+            do {
+                try data.write(to: fileURL, options: .atomic)
+                exportFile = ExportFile(url: fileURL)
+            } catch {
+                statusMessage = "Veriler kaydedilemedi. Lütfen tekrar deneyin."
+            }
+            isWorking = false
+        }
+    }
+
     private func deleteAccount() {
         isWorking = true
         statusMessage = nil
         Task {
+            // KVKK erasure: remove backend data first, while the session token is
+            // still valid, then delete the Clerk account (which signs the user out).
+            _ = await APIService.deleteMyData()
             do {
                 try await Clerk.shared.user?.delete()
             } catch {
@@ -140,6 +172,23 @@ struct SettingsView: View {
             isWorking = false
         }
     }
+}
+
+/// Identifiable wrapper so the exported file can drive a `.sheet(item:)`.
+private struct ExportFile: Identifiable {
+    let id = UUID()
+    let url: URL
+}
+
+/// UIKit share sheet used to hand the KVKK data export to the user.
+private struct ActivityView: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
 private struct SettingsRow: View {
