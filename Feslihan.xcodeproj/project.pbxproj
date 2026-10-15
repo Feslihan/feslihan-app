@@ -26,6 +26,7 @@
 		6350E98712F1A658086F07D8 /* SavedMealPlansView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A798F2EB0F1CF7C9232C30E /* SavedMealPlansView.swift */; };
 		69927C502E5209312F0BB057 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9CA009784BB90E49A89A1526 /* Assets.xcassets */; };
 		6F5ECA0E0EF9FFD8A7A8EBAC /* A08_AddRecipeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB4773097C3B212B80F98A35 /* A08_AddRecipeTests.swift */; };
+		7108283B45E7CA2625EECE73 /* Legal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146AD5CB21C7CC04452C296A /* Legal.swift */; };
 		788BA106E0E3C65E6216BBEB /* ModeSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691687B0715514978BE8BBB1 /* ModeSelectionView.swift */; };
 		7CDAAFFF5066F0AC278E13E3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCB2ED1E9EBB185B78FFDCC /* RootView.swift */; };
 		805E8B6A68BCAE104CB89DF4 /* SubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C8FCE73D37CA447073D5AB /* SubscriptionService.swift */; };
@@ -69,6 +70,7 @@
 /* Begin PBXFileReference section */
 		05085FE6F97FB2C1E7E27A3A /* MealEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEditSheet.swift; sourceTree = "<group>"; };
 		05A43D2288E882550ECF0B51 /* FeslihanApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeslihanApp.swift; sourceTree = "<group>"; };
+		146AD5CB21C7CC04452C296A /* Legal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Legal.swift; sourceTree = "<group>"; };
 		19711AE3936DB1CDFA4E01A3 /* A07_MealPlanAITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A07_MealPlanAITests.swift; sourceTree = "<group>"; };
 		1A798F2EB0F1CF7C9232C30E /* SavedMealPlansView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedMealPlansView.swift; sourceTree = "<group>"; };
 		1CB25DF3D77ECB2C7BBCC1A7 /* FeslihanError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeslihanError.swift; sourceTree = "<group>"; };
@@ -147,6 +149,7 @@
 				05A43D2288E882550ECF0B51 /* FeslihanApp.swift */,
 				1CB25DF3D77ECB2C7BBCC1A7 /* FeslihanError.swift */,
 				61A77A661A1D0EFE85F7EB23 /* Info.plist */,
+				146AD5CB21C7CC04452C296A /* Legal.swift */,
 				3794EBFB0A815B05B46B7F87 /* Theme.swift */,
 				BB701E392478346F797E16FA /* Models */,
 				4038213EB22840351DBC3A15 /* Services */,
@@ -338,6 +341,7 @@
 				40E227C1E1FEF54AA042733E /* FeslihanApp.swift in Sources */,
 				85AB5718008B483295110CCD /* FeslihanError.swift in Sources */,
 				D762C1D7D692EC54896C1319 /* IngredientsView.swift in Sources */,
+				7108283B45E7CA2625EECE73 /* Legal.swift in Sources */,
 				3A7C6E58826E07BEC2FA782D /* MealEditSheet.swift in Sources */,
 				B47297C2AFD8D248C21FD1D3 /* MealPrepView.swift in Sources */,
 				788BA106E0E3C65E6216BBEB /* ModeSelectionView.swift in Sources */,
