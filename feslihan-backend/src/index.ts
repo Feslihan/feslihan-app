@@ -2304,8 +2304,10 @@ app.get("/tags", async (_req, res) => {
 });
 
 // Scrape recipe from nefisyemektarifleri.com
-app.post("/recipes/scrape-web", async (req, res) => {
+app.post("/recipes/scrape-web", aiRateLimit, async (req, res) => {
+  const userId = req.auth!.userId;
   const { url } = req.body;
+  let reserved = false;
 
   let html: string;
   try {
@@ -2330,6 +2332,11 @@ app.post("/recipes/scrape-web", async (req, res) => {
   }
 
   try {
+    // Reserve a quota slot BEFORE the expensive Claude call so a caller can't
+    // loop this endpoint for unbounded Anthropic spend. Refunded below if the
+    // nutrition analysis (or anything before it) fails.
+    await reserveRecipeQuota(userId);
+    reserved = true;
 
     // Parse title from <h1>
     const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
@@ -2431,6 +2438,11 @@ app.post("/recipes/scrape-web", async (req, res) => {
       nutrition = await analyzeNutrition(recipeText);
     } catch (err) {
       console.error("[Scrape] Nutrition estimation failed:", err);
+      // AI call failed — refund so the user isn't charged a quota slot for it.
+      if (reserved) {
+        await refundRecipeQuota(userId);
+        reserved = false;
+      }
     }
 
     // Determine freezer-friendliness from tags and title
@@ -2466,6 +2478,11 @@ app.post("/recipes/scrape-web", async (req, res) => {
     console.log(`[Scrape] Parsed: ${title} (${ingredientsWithMeasures.length} ingredients, ${cookingTimeMinutes}dk)`);
     res.json(result);
   } catch (err: any) {
+    if (reserved) await refundRecipeQuota(userId);
+    if (err instanceof QuotaError) {
+      res.status(err.statusCode).json({ error: err.message, code: err.code });
+      return;
+    }
     console.error("[Scrape] Error:", err.message || err);
     res.status(500).json({ error: "Scraping failed", detail: err.message });
   }
