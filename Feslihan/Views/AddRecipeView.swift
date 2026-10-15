@@ -85,6 +85,7 @@ struct AddRecipeView: View {
                     // URL input + paste button
                     HStack(spacing: 8) {
                         TextField("Link yapıştır…", text: $urlText)
+                            .accessibilityIdentifier("addRecipe.urlField")
                             .textContentType(.URL)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
@@ -155,6 +156,7 @@ struct AddRecipeView: View {
                             .foregroundStyle(canProcess ? DS.flour : DS.dust)
                             .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     }
+                    .accessibilityIdentifier("addRecipe.submitButton")
                     .disabled(!canProcess)
                     .padding(.horizontal, 20)
                 }
@@ -313,6 +315,7 @@ struct AddRecipeView: View {
                             .foregroundStyle(DS.cream)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
+                    .accessibilityIdentifier("addRecipe.saveButton")
                     .padding(.top, 8)
                 }
                 .padding()

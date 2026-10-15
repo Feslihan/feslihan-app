@@ -37,18 +37,46 @@ final class A03_RecipeBrowseTests: FeslihanUITestCase {
                       "Search for 'Mercimek' did not surface Mercimek Çorbası")
     }
 
-    /// Opening a recipe shows the detail view with its three content tabs.
-    func test03_recipeDetailShowsTabs() {
+    /// Collection chips navigate into Denediklerim/Beğendiklerim and back.
+    func test03_collectionChipsNavigate() {
         assertExists(app.staticTexts["Tüm Tarifler"], timeout: 20, "Recipe list did not load")
 
-        let cell = app.staticTexts["Mercimek Çorbası"]
-        if !cell.exists { app.swipeUp() }
-        assertExists(cell, "Seeded recipe cell missing")
-        cell.tap()
+        // Entering a collection replaces the default view (Tüm Tarifler gone,
+        // "N sonuç" results header shown).
+        app.staticTexts["Denediklerim"].tap()
+        waitForDisappearance(of: app.staticTexts["Tüm Tarifler"], timeout: 10)
+        XCTAssertTrue(
+            app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'sonuç'")).firstMatch
+                .waitForExistence(timeout: 10),
+            "Denediklerim results view did not open"
+        )
+        app.buttons["backButton"].tap()
+        assertExists(app.staticTexts["Tüm Tarifler"], timeout: 10, "Did not return from Denediklerim")
 
-        assertExists(app.staticTexts["Malzemeler"], timeout: 15, "Malzemeler tab missing in detail")
-        assertExists(app.staticTexts["Yapılış"], timeout: 5, "Yapılış tab missing in detail")
-        assertExists(app.staticTexts["Besin"], timeout: 5, "Besin tab missing in detail")
+        app.staticTexts["Beğendiklerim"].tap()
+        waitForDisappearance(of: app.staticTexts["Tüm Tarifler"], timeout: 10)
+        app.buttons["backButton"].tap()
+        assertExists(app.staticTexts["Tüm Tarifler"], timeout: 10, "Did not return to the main list")
+    }
+
+    /// The filter sheet opens with its own title.
+    func test04_filterSheetOpens() {
+        assertExists(app.staticTexts["Tüm Tarifler"], timeout: 20, "Recipe list did not load")
+        tap(id: "recipes.filterButton")
+        assertExists(app.staticTexts["Filtrele"], timeout: 10, "Filter sheet did not open")
+        app.swipeDown(velocity: .fast)
+    }
+
+    /// Opening a recipe shows the detail view with its three content tabs.
+    func test05_recipeDetailShowsTabs() {
+        assertExists(app.staticTexts["Tüm Tarifler"], timeout: 20, "Recipe list did not load")
+
+        openRecipeDetail(title: "Mercimek Çorbası")
+
+        // Detail tabs surface as buttons (the Button swallows its inner text).
+        assertExists(app.buttons["Malzemeler"], timeout: 15, "Malzemeler tab missing in detail")
+        assertExists(app.buttons["Yapılış"], timeout: 5, "Yapılış tab missing in detail")
+        assertExists(app.buttons["Besin"], timeout: 5, "Besin tab missing in detail")
 
         // Ingredients tab content: a known ingredient from the seeded recipe.
         XCTAssertTrue(
@@ -57,7 +85,7 @@ final class A03_RecipeBrowseTests: FeslihanUITestCase {
         )
 
         // Switch to instructions and verify content is rendered.
-        app.staticTexts["Yapılış"].tap()
+        app.buttons["Yapılış"].tap()
         XCTAssertTrue(
             app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'tencere' OR label CONTAINS 'pişirin' OR label CONTAINS 'ekleyin'"))
                 .firstMatch.waitForExistence(timeout: 10),

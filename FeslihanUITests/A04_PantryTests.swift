@@ -78,4 +78,68 @@ final class A04_PantryTests: FeslihanUITestCase {
         delete.tap()
         waitForDisappearance(of: newPill, timeout: 15)
     }
+
+    /// Searching for a nonsense term leaves the pill cloud empty.
+    func test04_searchWithNoResults() {
+        let search = app.textFields["pantry.searchField"]
+        assertExists(search, timeout: 15, "Pantry search field missing")
+        search.tap()
+        search.typeText("zzzzxxx")
+        // A known seeded pill must disappear from the filtered cloud.
+        XCTAssertFalse(app.staticTexts["Patates"].waitForExistence(timeout: 3),
+                       "No-result search still shows pills")
+    }
+
+    /// "Alışveriş Listesine Taşı": a pantry item moves to the shopping list
+    /// (added there, removed here). Uses a test-added item, then cleans up.
+    func test05_moveItemToShoppingList() {
+        // Add a fresh item via the list picker so we never move seeded data.
+        tap(id: "pantry.addMenu", fallbackLabel: "Ekle", timeout: 15)
+        app.buttons["Listeden Seç"].tap()
+        assertExists(app.staticTexts["Malzeme Seç"], timeout: 15, "Picker did not open")
+        let rows = app.scrollViews.descendants(matching: .button)
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 15), "No picker rows")
+        let name = rows.firstMatch.label.trimmingCharacters(in: .whitespacesAndNewlines)
+        rows.firstMatch.tap()
+        app.buttons["ingredientPicker.saveButton"].tap()
+
+        let pill = app.staticTexts[name]
+        XCTAssertTrue(pill.waitForExistence(timeout: 15), "Added item '\(name)' missing")
+
+        // Move to shopping list via context menu.
+        pill.press(forDuration: 1.2)
+        let move = app.buttons["Alışveriş Listesine Taşı"]
+        assertExists(move, timeout: 5, "'Alışveriş Listesine Taşı' menu item missing")
+        move.tap()
+        waitForDisappearance(of: pill, timeout: 15)
+
+        // Verify it landed in the shopping list, then clean it up.
+        goBackHome()
+        openMode(id: "home.mode.shoppingList", fallbackLabel: "Alışveriş")
+        XCTAssertTrue(app.staticTexts[name].waitForExistence(timeout: 15),
+                      "Moved item '\(name)' missing from shopping list")
+        tap(id: "shopping.delete.\(name)", timeout: 10)
+        waitForDisappearance(of: app.staticTexts[name], timeout: 15)
+    }
+
+    /// The bubble-game sheet opens from the add menu and can be dismissed.
+    /// (Popping moving bubbles is intentionally not automated — the targets
+    /// animate continuously; the list picker covers deterministic adding.)
+    func test06_bubbleSheetOpensAndCloses() {
+        tap(id: "pantry.addMenu", fallbackLabel: "Ekle", timeout: 15)
+        let bubbleOption = app.buttons["Baloncuklardan Seç"]
+        assertExists(bubbleOption, timeout: 5, "'Baloncuklardan Seç' menu item missing")
+        bubbleOption.tap()
+
+        assertExists(app.staticTexts["Evinde ne var?"], timeout: 15, "Bubble sheet did not open")
+        // Devam Et disabled with nothing selected.
+        let cont = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Devam Et'")).firstMatch
+        if cont.waitForExistence(timeout: 5) {
+            XCTAssertFalse(cont.isEnabled, "Devam Et should be disabled with no selection")
+        }
+        // Close via the xmark overlay button.
+        let close = app.buttons.matching(NSPredicate(format: "label == 'xmark' OR label == 'Close'")).firstMatch
+        if close.exists && close.isHittable { close.tap() } else { app.swipeDown(velocity: .fast) }
+        assertExists(app.staticTexts["Kilerim"], timeout: 10, "Did not return to pantry")
+    }
 }

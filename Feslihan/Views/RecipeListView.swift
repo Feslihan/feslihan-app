@@ -338,6 +338,7 @@ struct RecipeListView: View {
                     }
                 }
             }
+            .accessibilityIdentifier("recipes.filterButton")
         }
     }
 
@@ -364,6 +365,7 @@ struct RecipeListView: View {
                         .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                 }
                 .accessibilityLabel("Tarif ekle")
+                .accessibilityIdentifier("recipes.addButton")
                 .padding(.trailing, 22)
                 .padding(.bottom, 24)
             }

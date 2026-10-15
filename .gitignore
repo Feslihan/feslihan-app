@@ -21,3 +21,5 @@ node_modules/
 .playwright-mcp/
 claude-design-*.png
 competitor-images/
+TestResults/
+build/

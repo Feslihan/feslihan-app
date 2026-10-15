@@ -200,6 +200,7 @@ struct RecipeDetailView: View {
                         .background(DS.ember)
                         .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     }
+                    .accessibilityIdentifier("detail.cookButton")
 
                     if let src = recipe.sourceURL, src.hasPrefix("http") {
                         Button { openVideo() } label: {
@@ -266,6 +267,7 @@ struct RecipeDetailView: View {
                         .background(DS.emberLight)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
+                    .accessibilityIdentifier("detail.reviewButton")
                 }
             }
             .padding(.horizontal, 20)
@@ -312,6 +314,7 @@ struct RecipeDetailView: View {
                             .background(.white)
                             .clipShape(Circle())
                     }
+                    .accessibilityIdentifier("detail.addToPlanButton")
 
                     Button {
                         recipe.isFavorite.toggle()
@@ -329,6 +332,7 @@ struct RecipeDetailView: View {
                             .background(.white)
                             .clipShape(Circle())
                     }
+                    .accessibilityIdentifier("detail.favoriteButton")
                 }
             }
         }

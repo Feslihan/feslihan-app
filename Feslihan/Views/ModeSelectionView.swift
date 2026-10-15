@@ -168,17 +168,19 @@ struct ModeSelectionView: View {
 
                         // Editorial mode list
                         VStack(spacing: 0) {
-                            FeaturedModeCard(plan: latestPlan)
-                                .opacity(cardsVisible ? 1 : 0)
-                                .offset(y: cardsVisible ? 0 : 20)
-                                .onTapGesture {
-                                    if subscription.currentPlan.canMealPrep {
-                                        navigateOrGate(.mealPrep)
-                                    } else {
-                                        showPaywall = true
-                                    }
+                            Button {
+                                if subscription.currentPlan.canMealPrep {
+                                    navigateOrGate(.mealPrep)
+                                } else {
+                                    showPaywall = true
                                 }
-                                .accessibilityIdentifier("home.mode.mealPrep")
+                            } label: {
+                                FeaturedModeCard(plan: latestPlan)
+                            }
+                            .buttonStyle(.plain)
+                            .opacity(cardsVisible ? 1 : 0)
+                            .offset(y: cardsVisible ? 0 : 20)
+                            .accessibilityIdentifier("home.mode.mealPrep")
 
                             ModeRow(
                                 number: "02",
@@ -287,6 +289,13 @@ struct ModeSelectionView: View {
                 if !hasCompletedOnboarding {
                     showOnboarding = true
                 }
+                #if DEBUG
+                // UI-test hook: the hero card ignores synthesized taps in the
+                // simulator, so tests can enter meal prep via launch argument.
+                if ProcessInfo.processInfo.arguments.contains("-e2eStartMealPrep") {
+                    selectedMode = .mealPrep
+                }
+                #endif
             }
             .fullScreenCover(isPresented: $showOnboarding) {
                 OnboardingView(onComplete: {

@@ -73,4 +73,44 @@ final class A05_ShoppingListTests: FeslihanUITestCase {
             }
         }
     }
+
+    /// Checking and UNchecking: an item moves to Alınanlar and back.
+    func test02_toggleCheckAndUncheck() {
+        // Add one item.
+        tap(id: "shopping.addMenu", timeout: 15)
+        app.buttons["Listeden Seç"].tap()
+        assertExists(app.staticTexts["Malzeme Seç"], timeout: 15, "Picker did not open")
+        let rows = app.scrollViews.descendants(matching: .button)
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 15), "No picker rows")
+        let name = rows.firstMatch.label.trimmingCharacters(in: .whitespacesAndNewlines)
+        rows.firstMatch.tap()
+        app.buttons["ingredientPicker.saveButton"].tap()
+        assertExists(app.staticTexts[name], timeout: 15, "Added item missing")
+
+        // Check → Alınanlar section appears.
+        tap(id: "shopping.check.\(name)", timeout: 10)
+        assertExists(app.staticTexts["Alınanlar"], timeout: 15, "Checked section missing")
+
+        // Uncheck → back to Alınacaklar, Alınanlar disappears.
+        tap(id: "shopping.check.\(name)", timeout: 10)
+        waitForDisappearance(of: app.staticTexts["Alınanlar"], timeout: 15)
+        assertExists(app.staticTexts["Alınacaklar"], timeout: 5, "Unchecked section missing after uncheck")
+
+        // Cleanup.
+        tap(id: "shopping.delete.\(name)", timeout: 10)
+        waitForDisappearance(of: app.staticTexts[name], timeout: 15)
+    }
+
+    /// The bubble-game add sheet opens from the plus menu and closes cleanly.
+    func test03_bubbleSheetOpensAndCloses() {
+        tap(id: "shopping.addMenu", timeout: 15)
+        let bubbleOption = app.buttons["Baloncuklardan Seç"]
+        assertExists(bubbleOption, timeout: 5, "'Baloncuklardan Seç' menu item missing")
+        bubbleOption.tap()
+
+        assertExists(app.staticTexts["Evinde ne var?"], timeout: 15, "Bubble sheet did not open")
+        let close = app.buttons.matching(NSPredicate(format: "label == 'xmark' OR label == 'Close'")).firstMatch
+        if close.exists && close.isHittable { close.tap() } else { app.swipeDown(velocity: .fast) }
+        assertExists(app.staticTexts["Alışveriş Listesi"], timeout: 10, "Did not return to shopping list")
+    }
 }

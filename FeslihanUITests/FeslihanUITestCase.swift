@@ -45,10 +45,13 @@ class FeslihanUITestCase: XCTestCase {
 
     // MARK: - Element lookup
 
-    /// Finds an element by accessibility identifier regardless of its element
-    /// type (SwiftUI combined elements sometimes surface as Other, not Button).
+    /// Finds an element by accessibility identifier. Prefers the Button-typed
+    /// match (its frame is the real tap target); falls back to any element
+    /// type (SwiftUI combined elements sometimes surface as Other).
     func byId(_ identifier: String) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+        let button = app.buttons.matching(identifier: identifier).firstMatch
+        if button.exists { return button }
+        return app.descendants(matching: .any).matching(identifier: identifier).firstMatch
     }
 
     /// Taps the element with `identifier`, falling back to a static text with
@@ -75,6 +78,31 @@ class FeslihanUITestCase: XCTestCase {
                       _ message: String, file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
         XCTAssertTrue(element.waitForExistence(timeout: timeout), message, file: file, line: line)
         return element
+    }
+
+    /// Focuses `element`, clears any existing content, and types `text`.
+    /// Clerk persists a half-finished sign-in attempt in the keychain and
+    /// pre-fills the identifier on the next launch — typing without clearing
+    /// concatenates onto the stale value.
+    func clearAndType(_ element: XCUIElement, text: String) {
+        // Tap the field body left of center — password fields keep a
+        // show/hide icon at the right edge that would swallow the tap.
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.6)).tap()
+        _ = app.keyboards.firstMatch.waitForExistence(timeout: 5)
+        // Clear any stale content (Clerk persists half-finished attempts).
+        app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 100))
+        app.typeText(text)
+    }
+
+    /// Waits for `element` to become enabled; returns the final state.
+    @discardableResult
+    func waitUntilEnabled(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if element.exists && element.isEnabled { return true }
+            usleep(300_000)
+        }
+        return element.exists && element.isEnabled
     }
 
     /// Waits for `element` to disappear.
@@ -106,6 +134,27 @@ class FeslihanUITestCase: XCTestCase {
         assertHomeHub(file: file, line: line)
     }
 
+    /// Finds a Clerk input by its placeholder/label text. Clerk's custom
+    /// styling masks the underlying TextField from the accessibility tree
+    /// (the whole sheet exposes zero textFields); the inputs surface as
+    /// StaticText placeholders instead. Tapping that element's frame focuses
+    /// the real field, after which `app.typeText` reaches the first responder.
+    func clerkInput(labelContains candidates: [String]) -> XCUIElement {
+        let typePredicate = NSPredicate(
+            format: "elementType == %d OR elementType == %d OR elementType == %d",
+            XCUIElement.ElementType.staticText.rawValue,
+            XCUIElement.ElementType.textField.rawValue,
+            XCUIElement.ElementType.secureTextField.rawValue
+        )
+        let labelPredicate = NSCompoundPredicate(orPredicateWithSubpredicates:
+            candidates.map { NSPredicate(format: "label CONTAINS[c] %@ OR placeholderValue CONTAINS[c] %@", $0, $0) }
+        )
+        return app.descendants(matching: .any)
+            .matching(typePredicate)
+            .matching(labelPredicate)
+            .firstMatch
+    }
+
     /// Signs in through Clerk's prebuilt AuthView. Supports both password and
     /// email-code (OTP) first factors; for Clerk dev instances the test-mode
     /// code 424242 is accepted for "+clerk_test" emails without sending email.
@@ -116,32 +165,74 @@ class FeslihanUITestCase: XCTestCase {
 
         app.buttons["auth.signInButton"].tap()
 
-        // Clerk sheet: first input is the email (or email/username) field.
-        let emailField = app.textFields.firstMatch
-        XCTAssertTrue(emailField.waitForExistence(timeout: 20),
-                      "Clerk AuthView email field did not appear", file: file, line: line)
-        emailField.tap()
-        emailField.typeText(TestEnv.email)
+        // Email step. Clerk's Continue button stays disabled while the field
+        // is empty, which doubles as our "did the text actually land" check —
+        // typeText can silently no-op when the software keyboard isn't up yet.
+        let emailInput = clerkInput(labelContains: ["email", "e-posta"])
+        XCTAssertTrue(emailInput.waitForExistence(timeout: 20),
+                      "Clerk AuthView email input did not appear", file: file, line: line)
+
+        let continueButton = app.buttons["Continue"].exists
+            ? app.buttons["Continue"]
+            : app.buttons.matching(NSPredicate(format: "label IN %@", ["Devam", "Devam et", "Devam Et"])).firstMatch
+
+        var attempts = 0
+        repeat {
+            clearAndType(emailInput, text: TestEnv.email)
+            attempts += 1
+        } while !waitUntilEnabled(continueButton, timeout: 4) && attempts < 3
+
+        XCTAssertTrue(continueButton.isEnabled,
+                      "Email text never registered in Clerk's input (Continue stayed disabled)",
+                      file: file, line: line)
         tapClerkContinue(file: file, line: line)
 
-        // Second factor: either a password secure field or an OTP code entry.
-        let secureField = app.secureTextFields.firstMatch
-        if !TestEnv.password.isEmpty, secureField.waitForExistence(timeout: 8) {
-            secureField.tap()
-            secureField.typeText(TestEnv.password)
-            tapClerkContinue(file: file, line: line)
-        } else {
-            // OTP path. Clerk renders the code entry as one or more text fields.
-            let codeField = app.textFields.firstMatch
-            if codeField.waitForExistence(timeout: 8) {
-                codeField.tap()
-                codeField.typeText(TestEnv.otpCode)
-            } else {
-                // Some Clerk versions keep keyboard focus on the code boxes —
-                // type blindly into the app.
-                app.typeText(TestEnv.otpCode)
-            }
+        // Clerk surfaces validation problems inline; fail fast with the
+        // actual message instead of timing out on the next step.
+        let clerkError = app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS[c] 'invalid' OR label CONTAINS[c] 'geçersiz' OR label CONTAINS[c] 'not found' OR label CONTAINS[c] 'bulunamadı'")
+        ).firstMatch
+        if clerkError.waitForExistence(timeout: 3) {
+            print("CLERKFAIL-HIERARCHY-BEGIN")
+            print(app.debugDescription)
+            print("CLERKFAIL-HIERARCHY-END")
+            XCTFail("Clerk rejected the identifier: '\(clerkError.label)' — see CLERKFAIL-HIERARCHY in log",
+                    file: file, line: line)
+            return
         }
+
+        // Second factor — always drive the EMAIL CODE path: its screen
+        // auto-focuses the code boxes with the keyboard up, and test mode
+        // accepts the fixed 424242 for +clerk_test addresses. Clerk remembers
+        // the last-used factor, so a password screen may appear first; switch
+        // over via "Use another method".
+        let otpScreen = app.staticTexts["Check your email"]
+        let passwordScreen = app.staticTexts["Enter password"]
+
+        if !otpScreen.waitForExistence(timeout: 12) {
+            XCTAssertTrue(passwordScreen.waitForExistence(timeout: 5),
+                          "Clerk showed neither the email-code nor the password screen",
+                          file: file, line: line)
+            let useAnother = app.descendants(matching: .any).matching(
+                NSPredicate(format: "label == 'Use another method'")
+            ).firstMatch
+            XCTAssertTrue(useAnother.waitForExistence(timeout: 5),
+                          "'Use another method' link missing on password screen", file: file, line: line)
+            useAnother.tap()
+            let emailCodeOption = app.descendants(matching: .any).matching(
+                NSPredicate(format: "label CONTAINS[c] 'email code' OR label CONTAINS[c] 'code to'")
+            ).firstMatch
+            XCTAssertTrue(emailCodeOption.waitForExistence(timeout: 10),
+                          "'Email code' alternative method not offered", file: file, line: line)
+            emailCodeOption.tap()
+            XCTAssertTrue(otpScreen.waitForExistence(timeout: 15),
+                          "Email-code screen did not appear after switching method",
+                          file: file, line: line)
+        }
+
+        // Code boxes grab focus on appear; give the keyboard a beat.
+        _ = app.keyboards.firstMatch.waitForExistence(timeout: 5)
+        app.typeText(TestEnv.otpCode)
 
         // Successful sign-in dismisses the sheet; landing buttons disappear.
         let signedIn = NSPredicate(format: "exists == false")
@@ -178,13 +269,46 @@ class FeslihanUITestCase: XCTestCase {
         }
     }
 
-    /// Asserts the home hub (mode selection screen) is visible.
+    /// Asserts the home hub (mode selection screen) is visible, then waits
+    /// for the async pantry counter to load. Tapping Haftalık Plan or Ne
+    /// Yesem? while pantryCount is still 0 trips the 30-item pantry gate.
     func assertHomeHub(timeout: TimeInterval = 25, file: StaticString = #filePath, line: UInt = #line) {
         let pantryCell = byId("home.mode.pantry")
-        if pantryCell.waitForExistence(timeout: timeout) { return }
-        // Fallback: the Kilerim util cell label.
-        XCTAssertTrue(app.staticTexts["Kilerim"].waitForExistence(timeout: 5),
-                      "Home hub did not appear", file: file, line: line)
+        if !pantryCell.waitForExistence(timeout: timeout) {
+            XCTAssertTrue(app.staticTexts["Kilerim"].waitForExistence(timeout: 5),
+                          "Home hub did not appear", file: file, line: line)
+        }
+        let deadline = Date().addingTimeInterval(12)
+        while (firstInt(in: pantryCell.label) ?? 0) < 30 && Date() < deadline {
+            usleep(500_000)
+        }
+    }
+
+    /// Relaunches the app straight into the saved-plans (meal prep) screen
+    /// via the DEBUG-only -e2eStartMealPrep launch argument. The hub's hero
+    /// card ignores synthesized taps in the simulator (real touches work),
+    /// so tests cannot reach this screen by tapping.
+    func relaunchIntoMealPrep(file: StaticString = #filePath, line: UInt = #line) {
+        app.terminate()
+        app.launchArguments.append("-e2eStartMealPrep")
+        app.launch()
+        dismissOnboardingIfPresent()
+        XCTAssertTrue(
+            app.staticTexts["Planlarım"].waitForExistence(timeout: 25)
+                || byId("mealPlans.createButton").waitForExistence(timeout: 5)
+                || byId("mealPlans.emptyCreateButton").exists,
+            "Saved plans screen did not open via -e2eStartMealPrep",
+            file: file, line: line
+        )
+        app.launchArguments.removeAll { $0 == "-e2eStartMealPrep" }
+    }
+
+    /// Dismisses the 30-item pantry gate if a premature tap tripped it.
+    func dismissPantryGateIfPresent() {
+        let gateBack = app.buttons["pantryGate.backButton"]
+        if app.staticTexts["Önce kilerini doldur!"].exists, gateBack.exists {
+            gateBack.tap()
+        }
     }
 
     /// Opens one of the five modes from the home hub.
@@ -194,13 +318,56 @@ class FeslihanUITestCase: XCTestCase {
         tap(id: id, fallbackLabel: fallbackLabel, file: file, line: line)
     }
 
+    /// Taps the in-app back button. Uses a coordinate tap: overlay-style back
+    /// buttons report isHittable == false even when perfectly tappable.
+    func tapBack() {
+        let back = app.buttons["backButton"].firstMatch
+        if back.exists {
+            back.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
+    }
+
     /// Returns to the home hub using the in-app back button.
     func goBackHome(file: StaticString = #filePath, line: UInt = #line) {
-        let back = app.buttons["backButton"]
-        if back.waitForExistence(timeout: 5), back.isHittable {
-            back.tap()
+        if app.buttons["backButton"].firstMatch.waitForExistence(timeout: 5) {
+            tapBack()
         }
         assertHomeHub(file: file, line: line)
+    }
+
+    /// Opens a recipe's detail view from the currently visible recipe grid.
+    /// Recipe cards are NavigationLinks with an attached contextMenu, a combo
+    /// that can swallow XCUITest's synthesized tap — so this escalates:
+    /// plain tap → coordinate tap → short press, verifying navigation after
+    /// each attempt via the detail view's "Malzemeler" tab.
+    func openRecipeDetail(title: String, file: StaticString = #filePath, line: UInt = #line) {
+        let cell = app.staticTexts[title].firstMatch
+        scrollTo(cell, file: file, line: line)
+
+        // The detail view's tab bar exposes its tabs as BUTTONS (the Button
+        // swallows its inner text), so query buttons — not staticTexts.
+        let detailMarker = app.buttons["Malzemeler"]
+        cell.tap()
+        if detailMarker.waitForExistence(timeout: 6) { return }
+
+        cell.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(detailMarker.waitForExistence(timeout: 10),
+                      "Detail view did not open for '\(title)'",
+                      file: file, line: line)
+    }
+
+    /// Swipes up until `element` is actually on screen and tappable.
+    /// `exists` alone is not enough: lazy grids report offscreen cells as
+    /// existing, and tapping them lands on whatever occupies their coordinates.
+    func scrollTo(_ element: XCUIElement, maxSwipes: Int = 8,
+                  file: StaticString = #filePath, line: UInt = #line) {
+        var swipes = 0
+        while (!element.exists || !element.isHittable) && swipes < maxSwipes {
+            app.swipeUp()
+            swipes += 1
+        }
+        XCTAssertTrue(element.exists && element.isHittable,
+                      "Element not reachable after \(maxSwipes) swipes", file: file, line: line)
     }
 
     /// Extracts the first integer appearing in an element's label.
