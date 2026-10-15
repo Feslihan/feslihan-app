@@ -413,10 +413,20 @@ enum APIService {
 
     /// Look up a user by friend code or exact email.
     static func lookupFriend(code: String? = nil, email: String? = nil) async -> SocialLookupDTO? {
-        var components = URLComponents(string: "\(baseURL)/social/lookup")
-        if let code { components?.queryItems = [URLQueryItem(name: "code", value: code)] }
-        else if let email { components?.queryItems = [URLQueryItem(name: "email", value: email)] }
-        guard let url = components?.url else { return nil }
+        // Percent-encode "+" explicitly: URLComponents leaves it raw in query
+        // strings, but the server decodes a raw "+" as a space — which breaks
+        // emails like "name+alias@example.com".
+        var allowed = CharacterSet.urlQueryAllowed
+        allowed.remove(charactersIn: "+&=?")
+        let query: String?
+        if let code {
+            query = code.addingPercentEncoding(withAllowedCharacters: allowed).map { "code=\($0)" }
+        } else if let email {
+            query = email.addingPercentEncoding(withAllowedCharacters: allowed).map { "email=\($0)" }
+        } else {
+            query = nil
+        }
+        guard let query, let url = URL(string: "\(baseURL)/social/lookup?\(query)") else { return nil }
         guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
               let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
         return try? JSONDecoder().decode(SocialLookupDTO.self, from: data)
