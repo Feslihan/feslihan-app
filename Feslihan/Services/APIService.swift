@@ -258,6 +258,16 @@ enum APIService {
         return try? JSONDecoder().decode(RecipeCostDTO.self, from: data)
     }
 
+    // MARK: - Meal Plans
+
+    /// Fetch the user's saved meal plans, most recent first.
+    static func fetchMealPlans(userId: String) async -> [SavedPlanItem] {
+        guard let url = URL(string: "\(baseURL)/users/\(userId)/meal-plans") else { return [] }
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
+        return (try? JSONDecoder().decode([SavedPlanItem].self, from: data)) ?? []
+    }
+
     // MARK: - Pantry
 
     /// Fetch the user's pantry items.

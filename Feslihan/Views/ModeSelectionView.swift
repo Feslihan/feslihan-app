@@ -21,6 +21,7 @@ struct ModeSelectionView: View {
     @State private var pantryCount = 0
     @State private var shoppingCount = 0
     @State private var recipeCount = 0
+    @State private var latestPlan: SavedPlanItem?
     @State private var showPantryGate = false
     @State private var pendingMode: AppMode?
     @State private var showOnboarding = false
@@ -53,6 +54,7 @@ struct ModeSelectionView: View {
         pantryCount = items.count
         let shoppingItems = await APIService.fetchShoppingList(userId: userId)
         shoppingCount = shoppingItems.filter { !$0.is_checked }.count
+        latestPlan = await APIService.fetchMealPlans(userId: userId).first
     }
 
     private func refreshCounts() async {
@@ -166,7 +168,7 @@ struct ModeSelectionView: View {
 
                         // Editorial mode list
                         VStack(spacing: 0) {
-                            FeaturedModeCard()
+                            FeaturedModeCard(plan: latestPlan)
                                 .opacity(cardsVisible ? 1 : 0)
                                 .offset(y: cardsVisible ? 0 : 20)
                                 .onTapGesture {
@@ -358,31 +360,70 @@ struct PlusBadge: View {
 // MARK: - Featured Mode (Haftalık Plan hero block)
 
 private struct FeaturedModeCard: View {
+    /// The user's most recent saved plan; nil while loading or when none exist.
+    let plan: SavedPlanItem?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .top) {
+            ZStack(alignment: .topLeading) {
                 LinearGradient(
                     colors: [Color(hex: 0x36A15E), Color(hex: 0x1E7A42)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                .frame(height: 112)
+                .frame(height: 148)
                 .clipShape(RoundedRectangle(cornerRadius: DS.radius))
 
-                HStack {
-                    Text("01")
-                        .font(.system(size: 12, weight: .regular))
-                        .monospacedDigit()
-                        .foregroundStyle(.white)
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Text("01")
+                            .font(.system(size: 12, weight: .regular))
+                            .monospacedDigit()
+                            .foregroundStyle(.white)
 
-                    Spacer()
+                        Spacer()
 
-                    Image(systemName: "calendar")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(.white)
+                        Image(systemName: "calendar")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(.white)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    if let plan {
+                        Text("SON PLANIN · \(plan.timeAgo.uppercased())")
+                            .font(.system(size: 11, weight: .semibold))
+                            .tracking(1.2)
+                            .foregroundStyle(.white.opacity(0.75))
+
+                        Text(plan.name)
+                            .font(.system(size: 21, weight: .semibold, design: .serif))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                            .padding(.top, 3)
+
+                        Text(summary(for: plan))
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.85))
+                            .padding(.top, 2)
+                    } else {
+                        Text("BU HAFTA")
+                            .font(.system(size: 11, weight: .semibold))
+                            .tracking(1.2)
+                            .foregroundStyle(.white.opacity(0.75))
+
+                        Text("Ne pişireceğini planla")
+                            .font(.system(size: 21, weight: .semibold, design: .serif))
+                            .foregroundStyle(.white)
+                            .padding(.top, 3)
+
+                        Text("Yapay zekâ ile 1 dakikada haftalık plan →")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.85))
+                            .padding(.top, 2)
+                    }
                 }
-                .padding(.horizontal, 14)
-                .padding(.top, 12)
+                .padding(14)
             }
 
             HStack(spacing: 10) {
@@ -394,7 +435,9 @@ private struct FeaturedModeCard: View {
             }
             .padding(.top, 14)
 
-            Text("Bir haftalık yemek planı hazırla")
+            Text(plan == nil
+                 ? "Bir haftalık yemek planı hazırla"
+                 : "Planını görüntüle veya yenisini hazırla")
                 .font(.system(size: 14))
                 .foregroundStyle(DS.smoke)
                 .padding(.top, 2)
@@ -407,6 +450,14 @@ private struct FeaturedModeCard: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
+    }
+
+    private func summary(for plan: SavedPlanItem) -> String {
+        var parts: [String] = []
+        if let days = plan.plan.days?.count, days > 0 { parts.append("\(days) gün") }
+        if plan.totalMeals > 0 { parts.append("\(plan.totalMeals) öğün") }
+        if plan.avgCalories > 0 { parts.append("~\(plan.avgCalories) kcal/gün") }
+        return parts.isEmpty ? "Dokun ve planını aç" : parts.joined(separator: " · ")
     }
 }
 

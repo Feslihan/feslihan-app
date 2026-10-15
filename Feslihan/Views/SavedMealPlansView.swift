@@ -95,18 +95,7 @@ struct SavedMealPlansView: View {
 
     private func loadPlans() async {
         guard let userId = Clerk.shared.user?.id else { return }
-        guard let url = URL(string: "\(APIService.baseURL)/users/\(userId)/meal-plans") else { return }
-
-        guard let (data, response) = try? await URLSession.shared.data(for: await APIService.authedGet(url)),
-              let http = response as? HTTPURLResponse,
-              http.statusCode == 200 else {
-            isLoading = false
-            return
-        }
-
-        if let decoded = try? JSONDecoder().decode([SavedPlanItem].self, from: data) {
-            plans = decoded
-        }
+        plans = await APIService.fetchMealPlans(userId: userId)
         isLoading = false
     }
 
