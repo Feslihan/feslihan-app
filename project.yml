@@ -55,15 +55,28 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.dilarahalavurt.feslihan.uitests
         TEST_TARGET_NAME: Feslihan
         GENERATE_INFOPLIST_FILE: YES
+  FeslihanTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - FeslihanTests
+    dependencies:
+      - target: Feslihan
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dilarahalavurt.feslihan.tests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   Feslihan:
     build:
       targets:
         Feslihan: all
         FeslihanUITests: [test]
+        FeslihanTests: [test]
     run:
       config: Debug
     test:
       config: Debug
       targets:
         - FeslihanUITests
+        - FeslihanTests
