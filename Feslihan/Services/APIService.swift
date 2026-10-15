@@ -400,6 +400,140 @@ enum APIService {
             _ = try? await URLSession.shared.data(for: await authed(request))
         }
     }
+
+    // MARK: - Social (friends & recipe shares)
+
+    /// My friend code plus pending-request/share counts for badges.
+    static func fetchSocialMe() async -> SocialMeDTO? {
+        guard let url = URL(string: "\(baseURL)/social/me") else { return nil }
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
+        return try? JSONDecoder().decode(SocialMeDTO.self, from: data)
+    }
+
+    /// Look up a user by friend code or exact email.
+    static func lookupFriend(code: String? = nil, email: String? = nil) async -> SocialLookupDTO? {
+        var components = URLComponents(string: "\(baseURL)/social/lookup")
+        if let code { components?.queryItems = [URLQueryItem(name: "code", value: code)] }
+        else if let email { components?.queryItems = [URLQueryItem(name: "email", value: email)] }
+        guard let url = components?.url else { return nil }
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
+        return try? JSONDecoder().decode(SocialLookupDTO.self, from: data)
+    }
+
+    /// Send a follow request. The backend auto-accepts if the other side
+    /// already requested us, so the returned status may be "accepted".
+    static func sendFriendRequest(to userId: String) async -> Bool {
+        guard let url = URL(string: "\(baseURL)/social/requests") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["to_user_id": userId])
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
+              let http = response as? HTTPURLResponse,
+              (200...201).contains(http.statusCode) else { return false }
+        return true
+    }
+
+    static func fetchFriendRequests() async -> FriendRequestsDTO? {
+        guard let url = URL(string: "\(baseURL)/social/requests") else { return nil }
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return nil }
+        return try? JSONDecoder().decode(FriendRequestsDTO.self, from: data)
+    }
+
+    static func acceptFriendRequest(id: String) async -> Bool {
+        guard let url = URL(string: "\(baseURL)/social/requests/\(id)/accept") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return false }
+        return true
+    }
+
+    /// Decline an incoming request or cancel an outgoing one.
+    static func deleteFriendRequest(id: String) async -> Bool {
+        guard let url = URL(string: "\(baseURL)/social/requests/\(id)") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
+              let http = response as? HTTPURLResponse, http.statusCode == 204 else { return false }
+        return true
+    }
+
+    static func fetchFriends() async -> [FriendDTO] {
+        guard let url = URL(string: "\(baseURL)/social/friends") else { return [] }
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
+        return (try? JSONDecoder().decode([FriendDTO].self, from: data)) ?? []
+    }
+
+    static func removeFriend(userId: String) async -> Bool {
+        guard let url = URL(string: "\(baseURL)/social/friends/\(userId)") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
+              let http = response as? HTTPURLResponse, http.statusCode == 204 else { return false }
+        return true
+    }
+
+    /// A friend's saved recipes (requires an accepted connection).
+    static func fetchFriendRecipes(userId: String) async -> [RecipeDTO] {
+        guard let url = URL(string: "\(baseURL)/social/friends/\(userId)/recipes") else { return [] }
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
+        return (try? JSONDecoder().decode([RecipeDTO].self, from: data)) ?? []
+    }
+
+    /// Send a recipe to a friend.
+    static func sendRecipe(recipeId: String, to userId: String, message: String?) async -> Bool {
+        guard let url = URL(string: "\(baseURL)/social/shares") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        var body: [String: Any] = ["to_user_id": userId, "recipe_id": recipeId]
+        if let message, !message.isEmpty { body["message"] = message }
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
+              let http = response as? HTTPURLResponse,
+              (200...201).contains(http.statusCode) else { return false }
+        return true
+    }
+
+    static func fetchShareInbox() async -> [ShareInboxItemDTO] {
+        guard let url = URL(string: "\(baseURL)/social/shares/inbox") else { return [] }
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
+        return (try? JSONDecoder().decode([ShareInboxItemDTO].self, from: data)) ?? []
+    }
+
+    /// Accept a shared recipe: the backend adds it to my library.
+    static func acceptShare(id: String) async -> Bool {
+        guard let url = URL(string: "\(baseURL)/social/shares/\(id)/accept") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return false }
+        return true
+    }
+
+    static func dismissShare(id: String) async -> Bool {
+        guard let url = URL(string: "\(baseURL)/social/shares/\(id)/dismiss") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return false }
+        return true
+    }
+
+    /// All reviews on a recipe (the public board), with author name/avatar.
+    static func fetchRecipeReviews(recipeId: String) async -> [UserReviewDTO] {
+        guard let url = URL(string: "\(baseURL)/recipes/\(recipeId)/reviews") else { return [] }
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(url)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return [] }
+        return (try? JSONDecoder().decode([UserReviewDTO].self, from: data)) ?? []
+    }
 }
 
 struct MissingPicCreator: Codable {
@@ -460,6 +594,9 @@ struct UserReviewDTO: Codable, Identifiable {
     let rating: Int
     let comment: String?
     let created_at: String
+    // Author info, present on the public reviews endpoint (joined server-side).
+    var user_name: String?
+    var user_avatar_url: String?
 }
 
 struct InstagramUserDTO: Codable {
@@ -672,6 +809,66 @@ struct ShoppingItemDTO: Codable, Identifiable {
     let is_checked: Bool
     let added_at: String
     let pantry_alternative: String?
+}
+
+// MARK: - Social DTOs
+
+struct SocialMeDTO: Codable {
+    let friend_code: String
+    let incoming_request_count: Int
+    let pending_share_count: Int
+}
+
+struct SocialUserDTO: Codable {
+    let clerk_id: String
+    let name: String?
+    let avatar_url: String?
+
+    /// Display name with a Turkish fallback for users without a synced profile.
+    var displayName: String {
+        let trimmed = name?.trimmingCharacters(in: .whitespaces) ?? ""
+        return trimmed.isEmpty ? "Feslihan kullanıcısı" : trimmed
+    }
+}
+
+struct SocialLookupDTO: Codable {
+    let user: SocialUserDTO
+    let relationship: String  // none | self | pending_outgoing | pending_incoming | friends
+}
+
+struct FriendRequestDTO: Codable, Identifiable {
+    let id: String
+    let user: SocialUserDTO
+    let created_at: String
+}
+
+struct FriendRequestsDTO: Codable {
+    let incoming: [FriendRequestDTO]
+    let outgoing: [FriendRequestDTO]
+}
+
+struct FriendDTO: Codable, Identifiable {
+    let user: SocialUserDTO
+    let connected_at: String?
+
+    var id: String { user.clerk_id }
+}
+
+struct SharedRecipeSummaryDTO: Codable {
+    let id: String
+    let title: String
+    let thumbnail_url: String?
+    let cooking_time_minutes: Int?
+    let platform: String?
+}
+
+struct ShareInboxItemDTO: Codable, Identifiable {
+    let id: String
+    let message: String?
+    let status: String
+    let created_at: String
+    let sender: SocialUserDTO
+    let recipe: SharedRecipeSummaryDTO
 }
 
 struct ScrapedRecipeIngredient: Codable {
