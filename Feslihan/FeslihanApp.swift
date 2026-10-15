@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import ClerkKit
+import UserNotifications
 
 @main
 struct FeslihanApp: App {
@@ -10,6 +11,8 @@ struct FeslihanApp: App {
         let c = Clerk.configure(publishableKey: "pk_test_d2FudGVkLWxpZ2VyLTQ3LmNsZXJrLmFjY291bnRzLmRldiQ")
         _clerk = State(initialValue: c)
         SubscriptionService.shared.configure()
+        // Local-notification taps (daily meal suggestions) are handled here.
+        UNUserNotificationCenter.current().delegate = NotificationService.shared
     }
 
     var body: some Scene {

@@ -4,12 +4,34 @@ import ClerkKit
 
 struct SettingsView: View {
     @ObservedObject private var subscription = SubscriptionService.shared
+    @Environment(\.modelContext) private var modelContext
 
     @State private var showSignOutConfirm = false
     @State private var showDeleteConfirm = false
     @State private var isWorking = false
     @State private var statusMessage: String?
     @State private var exportFile: ExportFile?
+
+    @AppStorage(NotificationService.enabledKey) private var dailySuggestionEnabled = false
+    @AppStorage(NotificationService.minutesKey) private var dailySuggestionMinutes = NotificationService.defaultMinutes
+    @State private var notificationPermissionDenied = false
+
+    /// DatePicker binding: minutes-after-midnight ↔ a Date on today.
+    private var suggestionTimeBinding: Binding<Date> {
+        Binding(
+            get: {
+                Calendar.current.date(
+                    bySettingHour: dailySuggestionMinutes / 60,
+                    minute: dailySuggestionMinutes % 60,
+                    second: 0, of: Date()
+                ) ?? Date()
+            },
+            set: { date in
+                let c = Calendar.current.dateComponents([.hour, .minute], from: date)
+                dailySuggestionMinutes = (c.hour ?? 20) * 60 + (c.minute ?? 0)
+            }
+        )
+    }
 
     private let supportEmail = "destek@feslihan.app"
 
@@ -32,6 +54,36 @@ struct SettingsView: View {
                     section(title: "Abonelik") {
                         SettingsRow(icon: "arrow.clockwise", title: "Satın Alımları Geri Yükle") {
                             restorePurchases()
+                        }
+                    }
+
+                    section(title: "Bildirimler") {
+                        SettingsToggleRow(
+                            icon: "bell",
+                            title: "Günlük yemek önerisi",
+                            subtitle: "Her akşam yarın için bir tarif önerelim",
+                            isOn: $dailySuggestionEnabled
+                        )
+                        .accessibilityIdentifier("settings.notificationsToggle")
+
+                        if dailySuggestionEnabled {
+                            SettingsTimeRow(
+                                icon: "clock",
+                                title: "Bildirim saati",
+                                selection: suggestionTimeBinding
+                            )
+                            .accessibilityIdentifier("settings.notificationsTimePicker")
+
+                            if notificationPermissionDenied {
+                                SettingsRow(icon: "exclamationmark.triangle",
+                                            title: "Bildirimlere izin verilmedi",
+                                            subtitle: "Ayarlar'dan açabilirsin") {
+                                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                                        UIApplication.shared.open(url)
+                                    }
+                                }
+                                .accessibilityIdentifier("settings.notificationsDeniedHint")
+                            }
                         }
                     }
 
@@ -98,6 +150,33 @@ struct SettingsView: View {
         }
         .sheet(item: $exportFile) { file in
             ActivityView(items: [file.url])
+        }
+        .task {
+            // Keep the denied hint accurate when returning from iOS Settings.
+            if dailySuggestionEnabled {
+                notificationPermissionDenied = await NotificationService.shared.authorizationStatus() == .denied
+            }
+        }
+        .onChange(of: dailySuggestionEnabled) { _, enabled in
+            Task {
+                if enabled {
+                    let granted = await NotificationService.shared.requestAuthorization()
+                    if granted {
+                        notificationPermissionDenied = false
+                        await NotificationService.shared.refreshIfEnabled(context: modelContext)
+                    } else {
+                        // Keep the toggle on so the hint row explains the
+                        // state; scheduling without permission is a no-op.
+                        notificationPermissionDenied = await NotificationService.shared.authorizationStatus() == .denied
+                    }
+                } else {
+                    notificationPermissionDenied = false
+                    await NotificationService.shared.cancelAll()
+                }
+            }
+        }
+        .onChange(of: dailySuggestionMinutes) { _, _ in
+            Task { await NotificationService.shared.refreshIfEnabled(context: modelContext) }
         }
     }
 
@@ -189,6 +268,75 @@ private struct ActivityView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+
+private struct SettingsToggleRow: View {
+    let icon: String
+    let title: String
+    var subtitle: String?
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(DS.ember)
+                .frame(width: 40, height: 40)
+                .background(DS.emberLight)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.cardTitle())
+                    .foregroundStyle(DS.ink)
+
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.label())
+                        .foregroundStyle(DS.smoke)
+                }
+            }
+
+            Spacer()
+
+            Toggle("", isOn: $isOn)
+                .labelsHidden()
+                .tint(DS.ember)
+        }
+        .padding(14)
+        .background(DS.sand)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+private struct SettingsTimeRow: View {
+    let icon: String
+    let title: String
+    @Binding var selection: Date
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(DS.ember)
+                .frame(width: 40, height: 40)
+                .background(DS.emberLight)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Text(title)
+                .font(.cardTitle())
+                .foregroundStyle(DS.ink)
+
+            Spacer()
+
+            DatePicker("", selection: $selection, displayedComponents: .hourAndMinute)
+                .labelsHidden()
+                .tint(DS.ember)
+        }
+        .padding(14)
+        .background(DS.sand)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
 }
 
 private struct SettingsRow: View {

@@ -20,6 +20,7 @@ struct ModeSelectionView: View {
     @State private var showAccountSheet = false
     @State private var showInboxSheet = false
     @State private var pendingShareCount = 0
+    @State private var notificationRecipe: Recipe?
     @State private var pantryCount = 0
     @State private var shoppingCount = 0
     @State private var recipeCount = 0
@@ -82,6 +83,7 @@ struct ModeSelectionView: View {
     }
 
     var body: some View {
+        Group {
         if let mode = selectedMode {
             Group {
                 switch mode {
@@ -372,6 +374,33 @@ struct ModeSelectionView: View {
                     }
                 )
             }
+        }
+        }
+        // Daily-suggestion notification tap → open the suggested recipe.
+        .task { openPendingNotificationRecipe() }
+        .onReceive(NotificationCenter.default.publisher(for: .feslihanOpenRecipe)) { _ in
+            openPendingNotificationRecipe()
+        }
+        .sheet(item: $notificationRecipe) { recipe in
+            NavigationStack { RecipeDetailView(recipe: recipe) }
+        }
+    }
+
+    /// Fetches and presents the recipe stashed by a notification tap.
+    /// Deleted/re-synced recipes just no-op.
+    private func openPendingNotificationRecipe() {
+        guard let id = NotificationService.shared.consumePendingRecipeId() else { return }
+        let descriptor = FetchDescriptor<Recipe>(predicate: #Predicate { $0.id == id })
+        guard let recipe = try? modelContext.fetch(descriptor).first else { return }
+
+        // The app may foreground with another sheet up (account, inbox) or a
+        // mode open; a second sheet can't present over them, so clear first
+        // and present after the dismiss animation settles.
+        showAccountSheet = false
+        showInboxSheet = false
+        withAnimation(.spring(response: 0.2)) { selectedMode = nil }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            notificationRecipe = recipe
         }
     }
 

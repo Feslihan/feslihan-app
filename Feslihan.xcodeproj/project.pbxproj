@@ -56,7 +56,9 @@
 		D404B0B331A6069B130B7711 /* SharedInboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A810C47996C2F2DEB94AF72F /* SharedInboxView.swift */; };
 		D762C1D7D692EC54896C1319 /* IngredientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFC53F41E73A7D8A00FB0D3 /* IngredientsView.swift */; };
 		DAFC48389CE373890268322C /* A05_ShoppingListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451660F6194008AF6224D83B /* A05_ShoppingListTests.swift */; };
+		DB7670E3BAF7ABE3B80DFA0B /* A15_NotificationSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29A4647E13A9C9E63C818AF4 /* A15_NotificationSettingsTests.swift */; };
 		E5E23B26E4CD74A71C311CCD /* A07_MealPlanAITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19711AE3936DB1CDFA4E01A3 /* A07_MealPlanAITests.swift */; };
+		E8FCBD250E49BB39C3AAD121 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D00B55A466B9878A372A3B /* NotificationService.swift */; };
 		EE99BC2B81A1CB38343818AE /* FriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E84BE2C8FB9A9C66E594FA /* FriendsView.swift */; };
 		F10BF86F961896576020DE68 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EE80C777D363E51DF793EF /* Config.swift */; };
 		F1643C452ADA825056C7E90A /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772199D387CB7CFE61C07D92 /* APIService.swift */; };
@@ -93,6 +95,7 @@
 		1D3CFA3F8D15C8C043FA7380 /* Recipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recipe.swift; sourceTree = "<group>"; };
 		25E84BE2C8FB9A9C66E594FA /* FriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsView.swift; sourceTree = "<group>"; };
 		280E29ED73235144D1D41621 /* CookingModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CookingModeView.swift; sourceTree = "<group>"; };
+		29A4647E13A9C9E63C818AF4 /* A15_NotificationSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A15_NotificationSettingsTests.swift; sourceTree = "<group>"; };
 		2AD07D41EA74F693F51CB4BF /* A11_FoldersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A11_FoldersTests.swift; sourceTree = "<group>"; };
 		2C106C18CA48DECC3172126F /* RecipeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeDetailView.swift; sourceTree = "<group>"; };
 		2E9DB24E10EE622EFE6C16CB /* A03_RecipeBrowseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A03_RecipeBrowseTests.swift; sourceTree = "<group>"; };
@@ -131,6 +134,7 @@
 		D9EE80C777D363E51DF793EF /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		DBA0FCD93FFE2DF41E5F50FB /* ShoppingListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingListView.swift; sourceTree = "<group>"; };
 		DDCB2ED1E9EBB185B78FFDCC /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		E3D00B55A466B9878A372A3B /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		E4E1F09C463219453E3EB2A1 /* AddRecipeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddRecipeView.swift; sourceTree = "<group>"; };
 		E9882072B8076E3596943AEB /* FriendPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendPickerSheet.swift; sourceTree = "<group>"; };
 		EA0476CE3A99851992669AF1 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
@@ -198,6 +202,7 @@
 				7BC2D60E19F246519FA87D14 /* CaptionService.swift */,
 				6E2D9D3DE94595547334FEC3 /* ClaudeService.swift */,
 				F264444AEBD92D4ECBFBD140 /* MealSuggestionPlanner.swift */,
+				E3D00B55A466B9878A372A3B /* NotificationService.swift */,
 				67C8FCE73D37CA447073D5AB /* SubscriptionService.swift */,
 			);
 			path = Services;
@@ -230,6 +235,7 @@
 				762D7538101E5CB80949F3F2 /* A12_ManualMealPlanTests.swift */,
 				D2BB6034A9064C5778CBA250 /* A13_AccountSettingsTests.swift */,
 				3B146C26190267CCBBC14A9D /* A14_OnboardingTests.swift */,
+				29A4647E13A9C9E63C818AF4 /* A15_NotificationSettingsTests.swift */,
 				56E094C6225BBF9375678767 /* FeslihanUITestCase.swift */,
 				614E5B5795F3BB4F0DE8789B /* SocialUITests.swift */,
 			);
@@ -427,6 +433,7 @@
 				B14FDF1FEED3DD23AF9E341B /* MealSuggestionPlanner.swift in Sources */,
 				788BA106E0E3C65E6216BBEB /* ModeSelectionView.swift in Sources */,
 				BFDE8A00D297EFAFEE20D2C7 /* Movie.swift in Sources */,
+				E8FCBD250E49BB39C3AAD121 /* NotificationService.swift in Sources */,
 				25428619EB5FC48EC7B610C2 /* OnboardingView.swift in Sources */,
 				CD1A58E8FC38DFFC25617098 /* PantryView.swift in Sources */,
 				23504B1FF1DC11A623EC73BC /* PaywallView.swift in Sources */,
@@ -463,6 +470,7 @@
 				43CF028FC72ECB0A2F578F30 /* A12_ManualMealPlanTests.swift in Sources */,
 				8857EF97344A569A53A87C73 /* A13_AccountSettingsTests.swift in Sources */,
 				CE24492E59E7B4E5B81EDE2C /* A14_OnboardingTests.swift in Sources */,
+				DB7670E3BAF7ABE3B80DFA0B /* A15_NotificationSettingsTests.swift in Sources */,
 				B03062B29F457FF918957A54 /* FeslihanUITestCase.swift in Sources */,
 				199136042C423C493B92B5B2 /* SocialUITests.swift in Sources */,
 			);
