@@ -77,9 +77,10 @@ struct RootView: View {
                         }
                         .accessibilityIdentifier("auth.signUpButton")
 
-                        Text("Devam ederek Kullanım Koşulları'nı\nkabul etmiş olursunuz.")
+                        Text("Devam ederek [Kullanım Koşulları](\(Legal.termsURL.absoluteString)) ve [Gizlilik Politikası](\(Legal.privacyURL.absoluteString))'nı kabul etmiş olursunuz.")
                             .font(.captionText())
                             .foregroundStyle(DS.dust)
+                            .tint(DS.ember)
                             .multilineTextAlignment(.center)
                             .padding(.top, 10)
                     }
