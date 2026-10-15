@@ -9,6 +9,7 @@ import {
   timestamp,
   pgEnum,
   boolean,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const subscriptionPlanEnum = pgEnum("subscription_plan", [
@@ -25,6 +26,7 @@ export const users = pgTable("users", {
   subscriptionPlan: subscriptionPlanEnum("subscription_plan").notNull().default("free"),
   recipesUsedThisMonth: integer("recipes_used_this_month").notNull().default(0),
   usageResetMonth: varchar("usage_reset_month", { length: 7 }),
+  friendCode: varchar("friend_code", { length: 12 }).unique(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -244,6 +246,63 @@ export const recipeReviews = pgTable("recipe_reviews", {
     .notNull()
     .defaultNow(),
 });
+
+// Mutual-follow connections. A row is a directed request (requester → addressee);
+// accepting flips status to "accepted" and the pair counts as friends in both
+// directions. Declining deletes the row so a fresh request is always possible.
+export const connectionStatusEnum = pgEnum("connection_status", [
+  "pending",
+  "accepted",
+]);
+
+export const connections = pgTable(
+  "connections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requesterId: varchar("requester_id", { length: 255 })
+      .notNull()
+      .references(() => users.clerkId),
+    addresseeId: varchar("addressee_id", { length: 255 })
+      .notNull()
+      .references(() => users.clerkId),
+    status: connectionStatusEnum("status").notNull().default("pending"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("connections_pair_uq").on(t.requesterId, t.addresseeId)]
+);
+
+export const shareStatusEnum = pgEnum("share_status", [
+  "pending",
+  "accepted",
+  "dismissed",
+]);
+
+// A recipe sent from one friend to another. Accepting inserts a user_recipes
+// row for the recipient (recipes themselves are global).
+export const recipeShares = pgTable("recipe_shares", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  senderId: varchar("sender_id", { length: 255 })
+    .notNull()
+    .references(() => users.clerkId),
+  recipientId: varchar("recipient_id", { length: 255 })
+    .notNull()
+    .references(() => users.clerkId),
+  recipeId: uuid("recipe_id")
+    .notNull()
+    .references(() => recipes.id),
+  message: text("message"),
+  status: shareStatusEnum("status").notNull().default("pending"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  respondedAt: timestamp("responded_at", { withTimezone: true }),
+});
+
+export type Connection = typeof connections.$inferSelect;
+export type RecipeShare = typeof recipeShares.$inferSelect;
 
 // Durable background-job queue. Rows survive process restarts / serverless
 // cold-starts so fire-and-forget work (classification, price fetches, bulk
