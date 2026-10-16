@@ -3,9 +3,9 @@ import Foundation
 /// Centralized links to the published legal documents, reused across onboarding,
 /// the paywall and Settings so the URLs never drift between screens.
 enum Legal {
-    static let termsURL = URL(string: "https://feslihan.app/kosullar")!
-    static let privacyURL = URL(string: "https://feslihan.app/gizlilik")!
-    static let kvkkURL = URL(string: "https://feslihan.app/kvkk")!
+    static let termsURL = URL(string: "https://api.feslihan.com.tr/kosullar")!
+    static let privacyURL = URL(string: "https://api.feslihan.com.tr/gizlilik")!
+    static let kvkkURL = URL(string: "https://api.feslihan.com.tr/kvkk")!
 
     /// Apple-required auto-renewable subscription disclosure (Turkish).
     static let subscriptionDisclosure = """

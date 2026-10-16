@@ -4,6 +4,7 @@ import https from "https";
 import { db } from "./db.js";
 import { recipes, ingredients, tags, platformCreators, userRecipes, userFolders, users, mealPlans, userPantry, userShoppingList, recipeReviews, connections, recipeShares, deviceTokens } from "./schema.js";
 import { createSocialRouter } from "./routes/social.js";
+import { createLegalRouter } from "./routes/legal.js";
 import { uploadImage, s3KeyFromUrl, getImage } from "./s3.js";
 import { analyzeRecipe, analyzeNutrition, generateMealPlan, classifyIngredients, classifyFreezerFriendly, findAlternativeIngredients } from "./ai.js";
 import { eq, desc, inArray, and, or, sql, isNull, lt } from "drizzle-orm";
@@ -88,11 +89,13 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Public routes that do not require authentication.
-// Only image serving is public: images are fetched by AsyncImage / plain GETs
-// that cannot carry a Bearer token, and expose S3 image bytes only.
+// Public routes that do not require authentication:
+// - image serving (fetched by AsyncImage / plain GETs that cannot carry a token)
+// - legal pages (linked from the sign-up screen and App Store listing)
 function isPublicRoute(req: express.Request): boolean {
-  return req.method === "GET" && /^\/images\/[^/]+\/[^/]+$/.test(req.path);
+  if (req.method !== "GET") return false;
+  if (/^\/images\/[^/]+\/[^/]+$/.test(req.path)) return true;
+  return ["/kosullar", "/gizlilik", "/kvkk"].includes(req.path);
 }
 
 // Global authentication gate: every request except the public allowlist must
@@ -108,6 +111,9 @@ app.use((req, res, next) => {
 // Social graph: friend codes, follow requests, friend recipes, recipe shares.
 // Mounted behind the global auth gate like every other route.
 app.use(createSocialRouter({ toSnake, enrichRecipes, rewriteThumbnail }));
+
+// Public legal pages (Kullanım Koşulları, Gizlilik, KVKK).
+app.use(createLegalRouter());
 
 function toSnake(obj: any): any {
   if (Array.isArray(obj)) return obj.map(toSnake);
