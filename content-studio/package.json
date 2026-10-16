@@ -1,0 +1,18 @@
+{
+  "name": "feslihan-content-studio",
+  "private": true,
+  "type": "module",
+  "description": "Feslihan Instagram içerik üretim hattı — marka kartları + caption taslakları",
+  "scripts": {
+    "generate": "node --import tsx src/generate.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.101.0",
+    "playwright": "^1.49.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}

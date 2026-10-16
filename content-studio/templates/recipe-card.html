@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1080px; height: 1350px;
+    background: #FFF8F0;
+    font-family: "Inter", sans-serif;
+    color: #2C1810;
+    display: flex; flex-direction: column;
+    padding: 72px 80px 56px;
+    position: relative; overflow: hidden;
+  }
+  .eyebrow {
+    font-size: 24px; font-weight: 600; letter-spacing: 5px;
+    color: #4A7C59; text-transform: uppercase;
+  }
+  h1 {
+    font-family: "Lora", Georgia, serif; font-weight: 700;
+    font-size: 88px; line-height: 1.12; margin-top: 28px;
+    letter-spacing: -1px;
+  }
+  .rule { height: 3px; width: 120px; background: #4A7C59; margin: 40px 0 36px; }
+  .chips { display: flex; gap: 18px; margin-bottom: 48px; }
+  .chip {
+    border: 2px solid #4A7C59; color: #2E4F38; border-radius: 999px;
+    padding: 12px 28px; font-size: 27px; font-weight: 500;
+  }
+  .section-title {
+    font-family: "Lora", serif; font-style: italic;
+    font-size: 34px; color: #6B5244; margin-bottom: 26px;
+  }
+  .ingredients {
+    columns: 2; column-gap: 64px;
+    font-size: 30px; line-height: 1.5;
+  }
+  .ingredients div {
+    break-inside: avoid; padding: 10px 0;
+    border-bottom: 1px solid #EDE0D0;
+    display: flex; justify-content: space-between; gap: 16px;
+  }
+  .ingredients .amount { color: #6B5244; white-space: nowrap; }
+  footer {
+    margin-top: auto; display: flex; align-items: center; justify-content: space-between;
+    border-top: 2px solid #EDE0D0; padding-top: 34px;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand svg { width: 40px; height: 40px; }
+  .brand-name { font-family: "Lora", serif; font-weight: 600; font-size: 36px; color: #2E4F38; }
+  .handle { font-size: 27px; color: #A89585; }
+  .watermark {
+    position: absolute; right: -60px; top: -40px; width: 420px; height: 420px;
+    opacity: 0.07;
+  }
+</style>
+</head>
+<body>
+  <svg class="watermark" viewBox="0 0 24 24" fill="#4A7C59"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/></svg>
+
+  <div class="eyebrow">Feslihan Tarif Defteri</div>
+  <h1>{{title}}</h1>
+  <div class="rule"></div>
+
+  <div class="chips">
+    <div class="chip">{{time}}</div>
+    <div class="chip">{{servings}} kişilik</div>
+    <div class="chip">{{calories}} kcal / porsiyon</div>
+  </div>
+
+  <div class="section-title">Malzemeler</div>
+  <div class="ingredients">{{{ingredients_html}}}</div>
+
+  <footer>
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="#4A7C59"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/></svg>
+      <span class="brand-name">Feslihan</span>
+    </div>
+    <div class="handle">Tarifin yapılışı uygulamada · {{handle}}</div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,87 @@
+name: Content Studio
+
+# Günlük Instagram taslağı üretir (görsel + caption) ve content-drafts
+# dalına commit'ler. Pazar günleri planlı içerik yok.
+on:
+  schedule:
+    - cron: "0 6 * * 1-6" # 09:00 TR
+  workflow_dispatch:
+    inputs:
+      type:
+        description: "İçerik türü (boş = günün planı)"
+        required: false
+        type: choice
+        options: ["", "recipe", "suggestion", "tip"]
+      count:
+        description: "Adet"
+        required: false
+        default: "1"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install content-studio
+        working-directory: content-studio
+        run: |
+          npm ci
+          npx playwright install chromium --with-deps
+
+      - name: Restore rotation state from drafts branch
+        run: |
+          git fetch origin content-drafts 2>/dev/null \
+            && git show FETCH_HEAD:state.json > content-studio/state.json \
+            && echo "state restored" \
+            || echo "no prior state (first run)"
+
+      - name: Generate drafts
+        working-directory: content-studio
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TZ: Europe/Istanbul
+        run: |
+          TYPE_ARG=""
+          if [ -n "${{ inputs.type }}" ]; then TYPE_ARG="--type ${{ inputs.type }}"; fi
+          node --import tsx src/generate.ts $TYPE_ARG --count "${{ inputs.count || '1' }}"
+
+      - name: Commit to content-drafts branch
+        run: |
+          if [ ! -d content-drafts ]; then
+            echo "Üretilen içerik yok (Pazar olabilir) — çıkılıyor."
+            exit 0
+          fi
+          git config user.name "content-studio"
+          git config user.email "noreply@feslihan.com.tr"
+          git fetch origin content-drafts 2>/dev/null \
+            && git worktree add /tmp/drafts content-drafts \
+            || { git branch content-drafts && git worktree add /tmp/drafts content-drafts; }
+          mkdir -p /tmp/drafts/content-drafts
+          cp -r content-drafts/* /tmp/drafts/content-drafts/
+          cp content-studio/state.json /tmp/drafts/state.json
+          cd /tmp/drafts
+          git add -A
+          git commit -m "content: $(date +%Y-%m-%d) taslakları"
+          git push origin content-drafts
+
+      - name: Job summary
+        run: |
+          {
+            echo "## Bugünün taslakları 📸"
+            for dir in content-drafts/*/; do
+              echo "### ${dir}"
+              echo '```'
+              cat "${dir}caption.txt"
+              echo '```'
+            done
+            echo "Görseller: content-drafts dalında."
+          } >> "$GITHUB_STEP_SUMMARY"

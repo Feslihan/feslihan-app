@@ -23,3 +23,8 @@ claude-design-*.png
 competitor-images/
 TestResults/
 build/
+
+# Content studio
+content-studio/node_modules/
+content-studio/state.json
+content-drafts/
