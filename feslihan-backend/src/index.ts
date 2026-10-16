@@ -970,12 +970,16 @@ app.get("/users/me/export", async (req, res) => {
 });
 
 // KVKK: permanently delete the authenticated user and all of their data.
-// Deletions run in FK-safe order (child rows before the users row). Shared
-// global content (recipes requested by the user) is retained, as it is no
-// longer tied to the user's identity after deletion.
+// Runs in a single transaction so the purge is all-or-nothing: a mid-sequence
+// failure never leaves a half-deleted account. Deletions run in FK-safe order
+// (child rows before the users row). Shared global content (recipes requested
+// by the user) is retained, as it is no longer tied to the user's identity
+// after deletion. The user's quota counter lives on the users row, so it is
+// removed with it.
 app.delete("/users/me", async (req, res) => {
   const clerk_id = req.auth!.userId;
 
+  await db.transaction(async (tx) => {
   // user_recipes references user_folders (folder_id), so it must go first.
   await db.delete(userRecipes).where(eq(userRecipes.userId, clerk_id));
   await db.delete(userFolders).where(eq(userFolders.userId, clerk_id));
@@ -991,6 +995,7 @@ app.delete("/users/me", async (req, res) => {
     .where(or(eq(recipeShares.senderId, clerk_id), eq(recipeShares.recipientId, clerk_id)));
   await db.delete(deviceTokens).where(eq(deviceTokens.userId, clerk_id));
   await db.delete(users).where(eq(users.clerkId, clerk_id));
+  });
 
   res.status(204).send();
 });
