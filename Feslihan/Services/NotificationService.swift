@@ -112,9 +112,22 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         let calendar = Calendar.current
         let center = UNUserNotificationCenter.current()
 
-        guard let startDate = calendar.date(
-            byAdding: .day, value: 1, to: calendar.startOfDay(for: Date())
-        ) else { return }
+        // The window starts TODAY while today's fire time is still ahead,
+        // otherwise tomorrow. Starting at tomorrow unconditionally meant any
+        // launch during the day cancelled and skipped that evening's
+        // notification — daily users would never receive one.
+        let now = Date()
+        let today = calendar.startOfDay(for: now)
+        let todayFire = calendar.date(
+            bySettingHour: fireMinutes / 60, minute: fireMinutes % 60, second: 0, of: now
+        ) ?? now
+        let startDate: Date
+        if now < todayFire {
+            startDate = today
+        } else {
+            guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) else { return }
+            startDate = tomorrow
+        }
 
         let history = prunedHistory(calendar: calendar)
         let recentIds = Set(history.values.compactMap(UUID.init))
@@ -147,7 +160,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
             content.userInfo = ["recipeId": suggestion.recipeId.uuidString]
 
             let dateKey = Self.dateKey(for: suggestion.date, calendar: calendar)
-            let trigger = Self.trigger(for: suggestion, hour: hour, minute: minute, calendar: calendar)
+            let isFirst = calendar.isDate(suggestion.date, inSameDayAs: startDate)
+            let trigger = Self.trigger(for: suggestion, isFirst: isFirst, hour: hour, minute: minute, calendar: calendar)
             try? await center.add(UNNotificationRequest(
                 identifier: Self.idPrefix + dateKey,
                 content: content,
@@ -231,14 +245,14 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
     private static func trigger(
         for suggestion: DailySuggestion,
+        isFirst: Bool,
         hour: Int, minute: Int,
         calendar: Calendar
     ) -> UNNotificationTrigger {
         #if DEBUG
-        // UI-test / manual-verification hook: fire the first suggestion ~30s
-        // after scheduling instead of waiting for 20:00 tomorrow.
-        if ProcessInfo.processInfo.arguments.contains("-notifTestFireSoon"),
-           calendar.isDate(suggestion.date, inSameDayAs: calendar.date(byAdding: .day, value: 1, to: Date()) ?? suggestion.date) {
+        // UI-test / manual-verification hook: fire the window's first
+        // suggestion ~30s after scheduling instead of waiting for fire time.
+        if isFirst, ProcessInfo.processInfo.arguments.contains("-notifTestFireSoon") {
             return UNTimeIntervalNotificationTrigger(timeInterval: 30, repeats: false)
         }
         #endif
