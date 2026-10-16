@@ -43,6 +43,27 @@
       "when": 1792078828346,
       "tag": "0005_dizzy_pete_wisdom",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792087259589,
+      "tag": "0006_cynical_thing",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792088066569,
+      "tag": "0007_closed_shadow_king",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792143073727,
+      "tag": "0008_clumsy_carlie_cooper",
+      "breakpoints": true
     }
   ]
 }

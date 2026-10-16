@@ -163,9 +163,46 @@ enum APIService {
         return try? JSONDecoder().decode(RecipeDTO.self, from: data)
     }
 
+    // MARK: - Quota
+
+    /// Server-side scan quota snapshot. Quota only meters new-to-catalog AI
+    /// scans; saving a recipe already in the catalog is always free.
+    struct QuotaStatus: Decodable {
+        let plan: String
+        let used: Int
+        /// nil = unlimited
+        let limit: Int?
+        /// nil = unlimited
+        let remaining: Int?
+        let meal_plans_used: Int
+        /// nil = unlimited
+        let meal_plan_limit: Int?
+        /// nil = unlimited
+        let meal_plans_remaining: Int?
+        let month: String
+    }
+
+    static func quotaStatus() async -> QuotaStatus? {
+        guard let requestURL = URL(string: "\(baseURL)/users/me/quota") else { return nil }
+        guard let (data, response) = try? await URLSession.shared.data(for: await authedGet(requestURL)),
+              let http = response as? HTTPURLResponse,
+              http.statusCode == 200 else {
+            return nil
+        }
+        return try? JSONDecoder().decode(QuotaStatus.self, from: data)
+    }
+
     // MARK: - Web Scraping
 
-    static func scrapeWebRecipe(url: String) async throws -> ScrapedRecipe {
+    enum ScrapeWebResult {
+        /// Freshly scraped + analyzed (consumed a scan credit server-side).
+        case scraped(ScrapedRecipe)
+        /// URL was already in the catalog — the backend returned the existing
+        /// recipe (and saved the user mapping) without an AI call or credit.
+        case cached(RecipeDTO)
+    }
+
+    static func scrapeWebRecipe(url: String) async throws -> ScrapeWebResult {
         guard let requestURL = URL(string: "\(baseURL)/recipes/scrape-web") else {
             throw FeslihanError.recipeParseFailed
         }
@@ -180,10 +217,20 @@ enum APIService {
         let (data, response) = try await URLSession.shared.data(for: await authed(request))
 
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            if let http = response as? HTTPURLResponse, http.statusCode == 402 {
+                throw FeslihanError.quotaExceeded
+            }
             throw FeslihanError.recipeParseFailed
         }
 
-        return try JSONDecoder().decode(ScrapedRecipe.self, from: data)
+        if let scraped = try? JSONDecoder().decode(ScrapedRecipe.self, from: data) {
+            return .scraped(scraped)
+        }
+        // Cache-hit shape: the enriched existing recipe with `cached: true`.
+        if let cached = try? JSONDecoder().decode(RecipeDTO.self, from: data) {
+            return .cached(cached)
+        }
+        throw FeslihanError.recipeParseFailed
     }
 
     // MARK: - Folders

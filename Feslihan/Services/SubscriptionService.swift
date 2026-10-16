@@ -2,14 +2,28 @@ import Foundation
 import RevenueCat
 
 enum FeslihanPlan: String, CaseIterable {
-    case free
-    case plus      // 30₺/month — 30 recipes + meal prep
-    case pro       // 100₺/month — unlimited + meal prep
+    case free      // 3 new-to-catalog AI scans/month; cached saves unlimited
+    case plus      // ₺79/ay — 20 scans + 2 meal plans/month
+    case pro       // ₺250/ay — unlimited scans + unlimited meal plans
 
+    // Monthly allowance of NEW-to-catalog AI scans. Saving a recipe that is
+    // already in the catalog (cache hit) is free and never counts. Mirrors
+    // PLAN_LIMITS in feslihan-backend/src/quota.ts — the server enforces;
+    // this copy only drives UI.
     var monthlyRecipeLimit: Int? {
         switch self {
-        case .free: return 10
-        case .plus: return 30
+        case .free: return 3
+        case .plus: return 20
+        case .pro: return nil // unlimited
+        }
+    }
+
+    // Monthly allowance of AI meal plan generations. Mirrors MEAL_PLAN_LIMITS
+    // in feslihan-backend/src/quota.ts — the server enforces; UI only.
+    var monthlyMealPlanLimit: Int? {
+        switch self {
+        case .free: return 0
+        case .plus: return 2
         case .pro: return nil // unlimited
         }
     }

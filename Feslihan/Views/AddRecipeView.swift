@@ -15,9 +15,15 @@ struct AddRecipeView: View {
     @State private var processingState: ProcessingState = .idle
     @State private var processedRecipe: ProcessedRecipe?
     @State private var errorMessage: String?
+    /// True when the recipe came from the catalog (no AI call, no credit).
+    @State private var wasCached = false
+    /// Scan credits left this month per the server; nil = unknown or unlimited.
+    @State private var quotaRemaining: Int?
 
     enum ProcessingState {
         case idle
+        /// New-to-catalog link: ask before spending a scan credit.
+        case confirmScan
         case fetchingCaption
         case analyzingRecipe
         case done
@@ -34,6 +40,8 @@ struct AddRecipeView: View {
                 switch processingState {
                 case .idle:
                     idleView
+                case .confirmScan:
+                    confirmScanView
                 case .fetchingCaption, .analyzingRecipe:
                     processingView
                 case .done:
@@ -56,7 +64,7 @@ struct AddRecipeView: View {
                 }
             }
             .sheet(isPresented: $showPaywall) {
-                PaywallView()
+                PaywallView(contextMessage: "Bu ay ücretsiz tarama hakkın doldu. Hazır tarifleri eklemek her zaman ücretsiz — bu tarif ise Feslihan için yeni.")
             }
         }
     }
@@ -161,6 +169,78 @@ struct AddRecipeView: View {
                     .padding(.horizontal, 20)
                 }
             }
+        }
+    }
+
+    // MARK: - Confirm Scan View
+
+    /// Shown when the link is new to the catalog: scanning it runs AI and
+    /// spends one of the month's scan credits, so ask before starting.
+    private var confirmScanView: some View {
+        ZStack {
+            DS.cream.ignoresSafeArea()
+
+            VStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Tarif Ekle")
+                        .font(.system(size: 26, weight: .semibold, design: .serif))
+                        .foregroundStyle(DS.ink)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(spacing: 14) {
+                    Image(systemName: "leaf.fill")
+                        .font(.system(size: 34, weight: .medium))
+                        .foregroundStyle(DS.ember)
+
+                    Text("Yeni bir tarif!")
+                        .font(.system(size: 20, weight: .semibold, design: .serif))
+                        .foregroundStyle(DS.ink)
+
+                    Text("Bunu Feslihan'a ilk sen ekliyorsun. Taramak 1 tarama hakkı kullanacak.")
+                        .font(.bodyText())
+                        .foregroundStyle(DS.smoke)
+                        .multilineTextAlignment(.center)
+
+                    if let remaining = quotaRemaining {
+                        Text("Bu ay \(remaining) tarama hakkın kaldı")
+                            .font(.captionText())
+                            .foregroundStyle(DS.dust)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+                .padding(.horizontal, 16)
+                .background(DS.emberLight)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.radius)
+                        .stroke(DS.stone, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: DS.radius))
+
+                Spacer()
+
+                Button(action: startScan) {
+                    Text("Tara ve Ekle")
+                        .font(.buttonFont())
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(DS.ember)
+                        .foregroundStyle(DS.flour)
+                        .clipShape(RoundedRectangle(cornerRadius: DS.radius))
+                }
+                .accessibilityIdentifier("addRecipe.confirmScanButton")
+
+                Button {
+                    processingState = .idle
+                } label: {
+                    Text("Vazgeç")
+                        .font(.buttonFont())
+                        .foregroundStyle(DS.smoke)
+                }
+                .accessibilityIdentifier("addRecipe.cancelScanButton")
+            }
+            .padding(20)
         }
     }
 
@@ -279,6 +359,24 @@ struct AddRecipeView: View {
             DS.cream.ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 8) {
+                        Image(systemName: wasCached ? "checkmark.circle.fill" : "leaf.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(wasCached ? "Bu tarif Feslihan'da hazır!" : "Bunu Feslihan'a ilk sen ekledin")
+                                .font(.system(size: 14, weight: .semibold))
+                            if wasCached {
+                                Text("Anında eklendi — tarama hakkından düşülmedi.")
+                                    .font(.captionText())
+                            }
+                        }
+                    }
+                    .foregroundStyle(DS.ember)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .background(DS.emberLight)
+                    .clipShape(RoundedRectangle(cornerRadius: DS.radius))
+
                     Text(recipe.title)
                         .font(.displayTitle())
                         .foregroundStyle(DS.ink)
@@ -420,34 +518,65 @@ struct AddRecipeView: View {
             return
         }
 
-        if !subscription.canAddRecipe {
-            showPaywall = true
-            return
-        }
-
         Task {
-            do {
-                processingState = .analyzingRecipe
-                if let cached = await APIService.lookup(url: trimmedURL) {
-                    // Create user-recipe mapping for existing recipe
-                    var dto = cached
-                    dto.user_id = Clerk.shared.user?.id
-                    _ = await APIService.save(recipe: dto)
+            processingState = .analyzingRecipe
+            wasCached = false
 
-                    processedRecipe = cached.toProcessedRecipe()
-                    subscription.recordRecipeAdded()
-                    processingState = .done
+            // Catalog check first: a known URL is added instantly, free, and
+            // without touching the scan quota.
+            if let cached = await APIService.lookup(url: trimmedURL) {
+                var dto = cached
+                dto.user_id = Clerk.shared.user?.id
+                _ = await APIService.save(recipe: dto)
+
+                processedRecipe = cached.toProcessedRecipe()
+                wasCached = true
+                processingState = .done
+                return
+            }
+
+            // New-to-catalog: this will spend a scan credit, so check the
+            // server quota and ask the user before starting.
+            if let status = await APIService.quotaStatus() {
+                quotaRemaining = status.remaining
+                if let remaining = status.remaining, remaining <= 0 {
+                    showPaywall = true
+                    processingState = .idle
                     return
                 }
+            } else {
+                // Quota endpoint unreachable — fall back to the local counter.
+                quotaRemaining = subscription.remainingRecipes
+                if !subscription.canAddRecipe {
+                    showPaywall = true
+                    processingState = .idle
+                    return
+                }
+            }
 
+            processingState = .confirmScan
+        }
+    }
+
+    /// Runs the actual AI scan after the user confirmed spending a credit.
+    private func startScan() {
+        Task {
+            do {
                 if isWebRecipe {
                     try await processWebRecipe()
                 } else {
                     try await processVideoRecipe()
                 }
 
-                subscription.recordRecipeAdded()
+                // Cache hits (race: someone scanned it first) are free.
+                if !wasCached {
+                    subscription.recordRecipeAdded()
+                }
                 processingState = .done
+            } catch FeslihanError.quotaExceeded {
+                // Server-side quota is the source of truth (402).
+                showPaywall = true
+                processingState = .idle
             } catch {
                 errorMessage = error.localizedDescription
                 processingState = .error
@@ -457,7 +586,18 @@ struct AddRecipeView: View {
 
     private func processWebRecipe() async throws {
         processingState = .fetchingCaption
-        let scraped = try await APIService.scrapeWebRecipe(url: trimmedURL)
+        let scrapeResult = try await APIService.scrapeWebRecipe(url: trimmedURL)
+
+        // Someone scanned this URL between our lookup and now — the backend
+        // returned the catalog copy (already mapped to us) at no cost.
+        if case .cached(let dto) = scrapeResult {
+            processedRecipe = dto.toProcessedRecipe()
+            wasCached = true
+            return
+        }
+        guard case .scraped(let scraped) = scrapeResult else {
+            throw FeslihanError.recipeParseFailed
+        }
 
         processingState = .analyzingRecipe
 

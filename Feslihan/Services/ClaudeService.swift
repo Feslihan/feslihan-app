@@ -54,6 +54,9 @@ enum ClaudeService {
             throw FeslihanError.recipeParseFailed
         }
 
+        if http.statusCode == 402 {
+            throw FeslihanError.quotaExceeded
+        }
         if http.statusCode != 200 {
             throw FeslihanError.recipeParseFailed
         }
@@ -145,6 +148,9 @@ enum ClaudeService {
             throw FeslihanError.recipeParseFailed
         }
 
+        if http.statusCode == 402 {
+            throw FeslihanError.mealPlanQuotaExceeded
+        }
         if http.statusCode != 200 {
             throw FeslihanError.recipeParseFailed
         }

@@ -2,16 +2,16 @@ import "dotenv/config";
 import express from "express";
 import https from "https";
 import { db } from "./db.js";
-import { recipes, ingredients, tags, platformCreators, userRecipes, userFolders, users, mealPlans, userPantry, userShoppingList, recipeReviews, connections, recipeShares } from "./schema.js";
+import { recipes, ingredients, tags, platformCreators, userRecipes, userFolders, users, mealPlans, userPantry, userShoppingList, recipeReviews, connections, recipeShares, deviceTokens } from "./schema.js";
 import { createSocialRouter } from "./routes/social.js";
 import { uploadImage, s3KeyFromUrl, getImage } from "./s3.js";
 import { analyzeRecipe, analyzeNutrition, generateMealPlan, classifyIngredients, classifyFreezerFriendly, findAlternativeIngredients } from "./ai.js";
-import { eq, desc, inArray, and, or, sql, isNull } from "drizzle-orm";
+import { eq, desc, inArray, and, or, sql, isNull, lt } from "drizzle-orm";
 import { seedPlatformRecipes, mapPlatformRecipesToUser } from "./seed-recipes.js";
 import { requireAuth, requireAdmin } from "./middleware/auth.js";
 import { safeFetchText, UrlNotAllowedError } from "./security/ssrf.js";
 import { rateLimit } from "./middleware/rate-limit.js";
-import { reserveRecipeQuota, refundRecipeQuota, requirePremiumPlan, QuotaError } from "./quota.js";
+import { reserveRecipeQuota, refundRecipeQuota, reserveMealPlanQuota, refundMealPlanQuota, getQuotaStatus, newUserTrialEnd, QuotaError } from "./quota.js";
 import { enqueueJob, registerJobHandler, startJobWorker } from "./jobs.js";
 import { fixTurkish, findBestMatch, splitAmountFromName } from "./ingredient-matching.js";
 
@@ -856,9 +856,11 @@ app.post("/users/sync", async (req, res) => {
   const isNewUser = existing.length === 0;
 
   if (isNewUser) {
+    // New users start with the unlimited trial (effective-pro for
+    // NEW_USER_UNLIMITED_DAYS, default 30).
     await db
       .insert(users)
-      .values({ clerkId: clerk_id, email, name, avatarUrl: avatar_url });
+      .values({ clerkId: clerk_id, email, name, avatarUrl: avatar_url, unlimitedUntil: newUserTrialEnd() });
   } else {
     await db
       .update(users)
@@ -875,6 +877,42 @@ app.post("/users/sync", async (req, res) => {
   }
 
   res.json({ ok: true });
+});
+
+// Register (or re-point) an APNs device token for the authenticated user.
+// Token is the PK: a device that switches accounts just moves to the new
+// user. environment picks the APNs host (sandbox = Xcode builds).
+app.post("/devices", async (req, res) => {
+  const userId = req.auth!.userId;
+  const { token, environment } = req.body ?? {};
+
+  if (!token || typeof token !== "string" || token.length > 200) {
+    res.status(400).json({ error: "token gerekli" });
+    return;
+  }
+  const env = environment === "sandbox" ? "sandbox" : "production";
+
+  await db
+    .insert(deviceTokens)
+    .values({ token, userId, environment: env })
+    .onConflictDoUpdate({
+      target: deviceTokens.token,
+      set: { userId, environment: env, updatedAt: new Date() },
+    });
+
+  res.json({ ok: true });
+});
+
+// Quota snapshot for the scan sheet / paywall: plan, scans used this month,
+// and what's left. Quota only meters new-to-catalog AI scans; cached saves
+// are always free and unlimited.
+app.get("/users/me/quota", async (req, res) => {
+  try {
+    res.json(await getQuotaStatus(req.auth!.userId));
+  } catch (err: any) {
+    console.error("[Quota] status failed:", err.message || err);
+    res.status(500).json({ error: "Failed to load quota" });
+  }
 });
 
 // KVKK: export all personal data held for the authenticated user as JSON.
@@ -951,6 +989,7 @@ app.delete("/users/me", async (req, res) => {
   await db
     .delete(recipeShares)
     .where(or(eq(recipeShares.senderId, clerk_id), eq(recipeShares.recipientId, clerk_id)));
+  await db.delete(deviceTokens).where(eq(deviceTokens.userId, clerk_id));
   await db.delete(users).where(eq(users.clerkId, clerk_id));
 
   res.status(204).send();
@@ -2351,6 +2390,23 @@ app.post("/recipes/scrape-web", aiRateLimit, async (req, res) => {
   const { url } = req.body;
   let reserved = false;
 
+  // Cache check BEFORE quota + Claude: a URL already in the catalog is served
+  // from the DB at zero AI cost and does not consume a scan credit. The client
+  // normally checks /recipes/lookup first, but enforcing it here guarantees a
+  // cache hit is free regardless of client behavior.
+  if (typeof url === "string" && url.length > 0) {
+    const cachedRows = await db
+      .select()
+      .from(recipes)
+      .where(eq(recipes.url, url))
+      .limit(1);
+    if (cachedRows.length > 0) {
+      await saveUserRecipe(userId, cachedRows[0].id);
+      res.json({ ...(await enrichRecipe(cachedRows[0])), cached: true });
+      return;
+    }
+  }
+
   let html: string;
   try {
     // SSRF guard: parse the URL, enforce the host allowlist, block
@@ -2590,13 +2646,15 @@ app.post("/ai/analyze", aiRateLimit, async (req, res) => {
 
 // Generate meal plan
 app.post("/ai/meal-plan", aiRateLimit, async (req, res) => {
+  // Identity comes from the verified token, never from the request body.
+  const authUserId = req.auth!.userId;
+  let reserved = false;
   try {
-    // Identity comes from the verified token, never from the request body.
-    const authUserId = req.auth!.userId;
-
-    // Meal planning is a premium feature (Feslihan+ / Pro). Enforce server-side
-    // rather than trusting the client, which is where cost-DoS came from.
-    await requirePremiumPlan(authUserId);
+    // Meal plans are metered per plan (free: none, plus: 2/month, pro:
+    // unlimited). Reserve BEFORE the expensive Claude call, server-side —
+    // trusting the client is where cost-DoS came from. Refunded on failure.
+    await reserveMealPlanQuota(authUserId);
+    reserved = true;
     // Fetch the user's recipes to seed the plan.
     let availableRecipes: any[] = [];
     // Build title→id map for resolving recipe names to IDs
@@ -2733,6 +2791,9 @@ app.post("/ai/meal-plan", aiRateLimit, async (req, res) => {
       recipe_ids: allRecipeIds,
     });
   } catch (err: any) {
+    // Give the slot back on any failure after it was reserved, so a failed
+    // generation doesn't burn one of the month's plans.
+    if (reserved) await refundMealPlanQuota(authUserId);
     if (err instanceof QuotaError) {
       res.status(err.statusCode).json({ error: err.message, code: err.code });
       return;
@@ -2740,6 +2801,46 @@ app.post("/ai/meal-plan", aiRateLimit, async (req, res) => {
     console.error("[AI MealPlan] ERROR:", err.stack || err.message || err);
     res.status(500).json({ error: "Meal plan generation failed", detail: err.message });
   }
+});
+
+// Grant one user unlimited (effective-pro) access for N days — comped
+// accounts, support gestures, re-running an expired trial.
+app.post("/admin/users/:clerkId/unlimited", requireAdmin, async (req, res) => {
+  const clerkId = String(req.params.clerkId);
+  const days = Number(req.body?.days ?? 30);
+  if (!Number.isFinite(days) || days <= 0 || days > 365) {
+    res.status(400).json({ error: "days must be between 1 and 365" });
+    return;
+  }
+
+  const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  await db
+    .insert(users)
+    .values({ clerkId, unlimitedUntil: until })
+    .onConflictDoUpdate({ target: users.clerkId, set: { unlimitedUntil: until } });
+
+  console.log(`[Admin] Granted unlimited to ${clerkId} until ${until.toISOString()}`);
+  res.json({ clerk_id: clerkId, unlimited_until: until.toISOString() });
+});
+
+// Grant ALL existing users unlimited access for N days (launch promo).
+// Only extends: users whose current grant already reaches further keep it.
+app.post("/admin/grant-unlimited-all", requireAdmin, async (req, res) => {
+  const days = Number(req.body?.days ?? 30);
+  if (!Number.isFinite(days) || days <= 0 || days > 365) {
+    res.status(400).json({ error: "days must be between 1 and 365" });
+    return;
+  }
+
+  const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  const updated = await db
+    .update(users)
+    .set({ unlimitedUntil: until })
+    .where(or(isNull(users.unlimitedUntil), lt(users.unlimitedUntil, until)))
+    .returning({ clerkId: users.clerkId });
+
+  console.log(`[Admin] Granted unlimited to ${updated.length} users until ${until.toISOString()}`);
+  res.json({ granted: updated.length, unlimited_until: until.toISOString() });
 });
 
 // Copy one user's recipes to all other users

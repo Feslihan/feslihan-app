@@ -1527,6 +1527,7 @@ struct MealPlanResultView: View {
     @State private var showShoppingList = false
     @State private var addingToDayId: String?
     @State private var editingMeal: MealPlanMeal?
+    @State private var showPaywall = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -1678,6 +1679,9 @@ struct MealPlanResultView: View {
             if let plan {
                 ShoppingListSheet(items: plan.shoppingList)
             }
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView(contextMessage: "Bu ay plan oluşturma hakkın doldu. Feslihan Pro ile sınırsız haftalık plan oluştur.")
         }
         .sheet(item: $swappingMeal) { meal in
             let mealName = meal.displayName(using: recipeById)
@@ -1835,6 +1839,11 @@ struct MealPlanResultView: View {
                 budget: budget.rawValue
             )
             isLoading = false
+        } catch FeslihanError.mealPlanQuotaExceeded {
+            // Server-side plan quota (402): upsell instead of a generic error.
+            isLoading = false
+            errorMessage = FeslihanError.mealPlanQuotaExceeded.localizedDescription
+            showPaywall = true
         } catch {
             isLoading = false
             errorMessage = error.localizedDescription

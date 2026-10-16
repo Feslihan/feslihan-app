@@ -77,12 +77,20 @@ final class A08_AddRecipeTests: FeslihanUITestCase {
         field.typeText(scrapeURL)
         app.buttons["addRecipe.submitButton"].tap()
 
-        // Processing checklist appears for the web path.
-        XCTAssertTrue(
-            app.staticTexts["Tarif bilgileri"].waitForExistence(timeout: 15)
-                || app.buttons["addRecipe.saveButton"].waitForExistence(timeout: 5),
-            "Web-recipe processing did not start"
-        )
+        // A new-to-catalog URL first shows the confirm step (scanning spends a
+        // credit). If the URL is already in the test backend's catalog, the
+        // flow skips straight to the result instead.
+        let confirm = app.buttons["addRecipe.confirmScanButton"]
+        if confirm.waitForExistence(timeout: 30) {
+            confirm.tap()
+
+            // Processing checklist appears for the web path.
+            XCTAssertTrue(
+                app.staticTexts["Tarif bilgileri"].waitForExistence(timeout: 15)
+                    || app.buttons["addRecipe.saveButton"].waitForExistence(timeout: 5),
+                "Web-recipe processing did not start"
+            )
+        }
 
         // Wait for the result (scrape + Claude can take a while).
         let save = app.buttons["addRecipe.saveButton"]
@@ -100,7 +108,8 @@ final class A08_AddRecipeTests: FeslihanUITestCase {
     }
 
     /// Adding the SAME URL again takes the cached-lookup fast path: the
-    /// backend returns the existing recipe without re-scraping.
+    /// backend returns the existing recipe without re-scraping, with NO
+    /// confirm step (cache hits are free and don't spend a scan credit).
     func test05_duplicateURLUsesCache() {
         let field = app.textFields["addRecipe.urlField"]
         assertExists(field, "URL field missing")
@@ -108,10 +117,14 @@ final class A08_AddRecipeTests: FeslihanUITestCase {
         field.typeText(scrapeURL)
         app.buttons["addRecipe.submitButton"].tap()
 
-        // The cached path should land on the result view much faster than a
-        // fresh scrape — but allow slack for CI.
+        // The cached path should land directly on the result view (no confirm
+        // step) much faster than a fresh scrape — but allow slack for CI.
         XCTAssertTrue(app.buttons["addRecipe.saveButton"].waitForExistence(timeout: 60),
                       "Cached recipe lookup did not produce a result")
+        XCTAssertFalse(app.buttons["addRecipe.confirmScanButton"].exists,
+                       "Cached recipe must not ask to spend a scan credit")
+        assertExists(app.staticTexts["Bu tarif Feslihan'da hazır!"], timeout: 5,
+                     "Cached-recipe banner missing from result view")
         app.buttons["addRecipe.saveButton"].tap()
         assertExists(app.staticTexts["Tüm Tarifler"], timeout: 15, "Did not return to recipe list")
     }
