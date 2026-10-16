@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "meal_plans_used_this_month" integer DEFAULT 0 NOT NULL;

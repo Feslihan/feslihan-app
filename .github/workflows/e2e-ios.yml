@@ -30,7 +30,7 @@ jobs:
   e2e:
     name: Backend + iOS simulator E2E
     runs-on: macos-15
-    timeout-minutes: 90
+    timeout-minutes: 150
 
     steps:
       - name: Checkout
@@ -127,6 +127,8 @@ jobs:
           TEST_RUNNER_FESLIHAN_API_URL: "http://127.0.0.1:3000"
           TEST_RUNNER_E2E_CLERK_EMAIL: ${{ secrets.E2E_CLERK_EMAIL }}
           TEST_RUNNER_E2E_CLERK_PASSWORD: ${{ secrets.E2E_CLERK_PASSWORD }}
+          # Optional override for the add-recipe scrape test's target URL.
+          TEST_RUNNER_E2E_SCRAPE_URL: ${{ vars.E2E_SCRAPE_URL }}
         run: |
           FILTER_ARG=""
           if [ -n "${{ github.event.inputs.test_filter }}" ]; then

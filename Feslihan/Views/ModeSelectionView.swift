@@ -18,6 +18,9 @@ struct ModeSelectionView: View {
     @State private var showPaywall = false
     @State private var showMealPrepWizard = false
     @State private var showAccountSheet = false
+    @State private var showInboxSheet = false
+    @State private var pendingShareCount = 0
+    @State private var notificationRecipe: Recipe?
     @State private var pantryCount = 0
     @State private var shoppingCount = 0
     @State private var recipeCount = 0
@@ -61,6 +64,11 @@ struct ModeSelectionView: View {
         await refreshPantryCount()
         let descriptor = FetchDescriptor<Recipe>()
         recipeCount = (try? modelContext.fetchCount(descriptor)) ?? 0
+        await refreshSocialCounts()
+    }
+
+    private func refreshSocialCounts() async {
+        pendingShareCount = await APIService.fetchSocialMe()?.pending_share_count ?? 0
     }
 
     private func navigateOrGate(_ mode: AppMode) {
@@ -75,6 +83,7 @@ struct ModeSelectionView: View {
     }
 
     var body: some View {
+        Group {
         if let mode = selectedMode {
             Group {
                 switch mode {
@@ -122,6 +131,31 @@ struct ModeSelectionView: View {
 
                             Spacer()
 
+                            // Inbox: recipes friends sent me, with unread badge
+                            Button { showInboxSheet = true } label: {
+                                ZStack(alignment: .topTrailing) {
+                                    Image(systemName: "tray")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundStyle(DS.ink)
+                                        .frame(width: 34, height: 34)
+                                        .background(DS.sand)
+                                        .clipShape(Circle())
+
+                                    if pendingShareCount > 0 {
+                                        Text("\(min(pendingShareCount, 9))")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundStyle(DS.flour)
+                                            .frame(width: 16, height: 16)
+                                            .background(DS.tomato)
+                                            .clipShape(Circle())
+                                            .offset(x: 4, y: -4)
+                                    }
+                                }
+                            }
+                            .accessibilityLabel("Benimle Paylaşılanlar")
+                            .accessibilityIdentifier("home.inboxButton")
+                            .padding(.trailing, 10)
+
                             Button { showAccountSheet = true } label: {
                                 if let url = Clerk.shared.user?.imageUrl,
                                    let imageURL = URL(string: url) {
@@ -168,17 +202,19 @@ struct ModeSelectionView: View {
 
                         // Editorial mode list
                         VStack(spacing: 0) {
-                            FeaturedModeCard(plan: latestPlan)
-                                .opacity(cardsVisible ? 1 : 0)
-                                .offset(y: cardsVisible ? 0 : 20)
-                                .onTapGesture {
-                                    if subscription.currentPlan.canMealPrep {
-                                        navigateOrGate(.mealPrep)
-                                    } else {
-                                        showPaywall = true
-                                    }
+                            Button {
+                                if subscription.currentPlan.canMealPrep {
+                                    navigateOrGate(.mealPrep)
+                                } else {
+                                    showPaywall = true
                                 }
-                                .accessibilityIdentifier("home.mode.mealPrep")
+                            } label: {
+                                FeaturedModeCard(plan: latestPlan)
+                            }
+                            .buttonStyle(.plain)
+                            .opacity(cardsVisible ? 1 : 0)
+                            .offset(y: cardsVisible ? 0 : 20)
+                            .accessibilityIdentifier("home.mode.mealPrep")
 
                             ModeRow(
                                 number: "02",
@@ -270,6 +306,13 @@ struct ModeSelectionView: View {
             .fullScreenCover(isPresented: $showMealPrepWizard) {
                 MealPrepView(onBack: { showMealPrepWizard = false })
             }
+            .sheet(isPresented: $showInboxSheet, onDismiss: {
+                Task { await refreshSocialCounts() }
+            }) {
+                SharedInboxView(onChange: {
+                    Task { await refreshSocialCounts() }
+                })
+            }
             .sheet(isPresented: $showAccountSheet) {
                 AccountSheet(onNavigate: { mode in
                     showAccountSheet = false
@@ -287,6 +330,13 @@ struct ModeSelectionView: View {
                 if !hasCompletedOnboarding {
                     showOnboarding = true
                 }
+                #if DEBUG
+                // UI-test hook: the hero card ignores synthesized taps in the
+                // simulator, so tests can enter meal prep via launch argument.
+                if ProcessInfo.processInfo.arguments.contains("-e2eStartMealPrep") {
+                    selectedMode = .mealPrep
+                }
+                #endif
             }
             .fullScreenCover(isPresented: $showOnboarding) {
                 OnboardingView(onComplete: {
@@ -304,6 +354,7 @@ struct ModeSelectionView: View {
                     let remote = await APIService.fetchUserRecipes(userId: userId)
                     recipeCount = remote.count
                 }
+                await refreshSocialCounts()
             }
             .fullScreenCover(isPresented: $showPantryGate) {
                 PantryGateView(
@@ -323,6 +374,48 @@ struct ModeSelectionView: View {
                     }
                 )
             }
+        }
+        }
+        // Daily-suggestion notification tap → open the suggested recipe.
+        .task { openPendingNotificationRecipe() }
+        .onReceive(NotificationCenter.default.publisher(for: .feslihanOpenRecipe)) { _ in
+            openPendingNotificationRecipe()
+        }
+        // Recipe-share push tap → open the inbox.
+        .task { openInboxIfPending() }
+        .onReceive(NotificationCenter.default.publisher(for: .feslihanOpenInbox)) { _ in
+            openInboxIfPending()
+        }
+        .sheet(item: $notificationRecipe) { recipe in
+            NavigationStack { RecipeDetailView(recipe: recipe) }
+        }
+    }
+
+    /// Opens the share inbox if a push tap flagged it.
+    private func openInboxIfPending() {
+        guard NotificationService.shared.consumePendingInbox() else { return }
+        showAccountSheet = false
+        withAnimation(.spring(response: 0.2)) { selectedMode = nil }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            showInboxSheet = true
+        }
+    }
+
+    /// Fetches and presents the recipe stashed by a notification tap.
+    /// Deleted/re-synced recipes just no-op.
+    private func openPendingNotificationRecipe() {
+        guard let id = NotificationService.shared.consumePendingRecipeId() else { return }
+        let descriptor = FetchDescriptor<Recipe>(predicate: #Predicate { $0.id == id })
+        guard let recipe = try? modelContext.fetch(descriptor).first else { return }
+
+        // The app may foreground with another sheet up (account, inbox) or a
+        // mode open; a second sheet can't present over them, so clear first
+        // and present after the dismiss animation settles.
+        showAccountSheet = false
+        showInboxSheet = false
+        withAnimation(.spring(response: 0.2)) { selectedMode = nil }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            notificationRecipe = recipe
         }
     }
 
@@ -592,6 +685,14 @@ private struct AccountSheet: View {
                     AccountRow(icon: "cart", title: "Alışveriş Listesi", subtitle: "Alması gerekenleri listele") {
                         onNavigate(.shoppingList)
                     }
+
+                    NavigationLink {
+                        FriendsView()
+                    } label: {
+                        AccountRowLabel(icon: "person.2", title: "Arkadaşlar", subtitle: "Arkadaş ekle, tarif paylaş")
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("account.friendsRow")
 
                     NavigationLink {
                         SettingsView()

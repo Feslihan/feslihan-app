@@ -40,8 +40,21 @@ final class A02_HomeHubTests: FeslihanUITestCase {
         )
     }
 
+    /// The Haftalık Plan hero card shows meaningful content: either the
+    /// latest saved plan's summary or the no-plan CTA — never just an empty
+    /// green block.
+    func test03_heroCardShowsPlanOrCTA() {
+        let hasPlan = app.staticTexts.matching(
+            NSPredicate(format: "label BEGINSWITH 'SON PLANIN'")
+        ).firstMatch.waitForExistence(timeout: 15)
+        let hasCTA = app.staticTexts["Ne pişireceğini planla"].exists
+
+        XCTAssertTrue(hasPlan || hasCTA,
+                      "Hero card shows neither a plan summary nor the empty-state CTA")
+    }
+
     /// The account sheet opens with profile info and navigation entries.
-    func test03_accountSheetOpens() {
+    func test04_accountSheetOpens() {
         tap(id: "home.accountButton", fallbackLabel: "Hesabım")
         assertExists(app.staticTexts["Hesabım"], "Account sheet title missing")
         assertExists(app.staticTexts["Ayarlar"], timeout: 5, "Settings row missing in account sheet")

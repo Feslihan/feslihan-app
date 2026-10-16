@@ -1,8 +1,16 @@
 import SwiftUI
 import ClerkKit
 
+/// How the detail screen was reached. Browsing a friend's recipe is read-only:
+/// no favorite/plan/review/send actions, just a "save to my library" button.
+enum DetailContext {
+    case library
+    case friendBrowse
+}
+
 struct RecipeDetailView: View {
     @Bindable var recipe: Recipe
+    var context: DetailContext = .library
     @State private var selectedTab = 0
     @State private var profilePicData: Data?
     @State private var servingMultiplier: Double = 1.0
@@ -14,6 +22,10 @@ struct RecipeDetailView: View {
     @State private var backendRecipeId: String?
     @State private var userReview: UserReviewDTO?
     @State private var showAddToPlan = false
+    @State private var publicReviews: [UserReviewDTO] = []
+    @State private var showSendSheet = false
+    @State private var isSavingToLibrary = false
+    @State private var savedToLibrary = false
 
     private let multiplierOptions: [(label: String, value: Double)] = [
         ("1/2x", 0.5), ("1x", 1.0), ("2x", 2.0), ("3x", 3.0), ("4x", 4.0), ("6x", 6.0)
@@ -176,6 +188,8 @@ struct RecipeDetailView: View {
                         default:
                             macrosView
                         }
+
+                        publicReviewsSection
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
@@ -200,6 +214,7 @@ struct RecipeDetailView: View {
                         .background(DS.ember)
                         .clipShape(RoundedRectangle(cornerRadius: DS.radius))
                     }
+                    .accessibilityIdentifier("detail.cookButton")
 
                     if let src = recipe.sourceURL, src.hasPrefix("http") {
                         Button { openVideo() } label: {
@@ -222,8 +237,11 @@ struct RecipeDetailView: View {
                     }
                 }
 
-                // User's review or "I cooked this" button
-                if let review = userReview {
+                // Browse mode: save to my library. Otherwise the user's
+                // review or the "I cooked this" button.
+                if context == .friendBrowse {
+                    saveToLibraryButton
+                } else if let review = userReview {
                     HStack(spacing: 10) {
                         HStack(spacing: 3) {
                             ForEach(1...5, id: \.self) { star in
@@ -266,6 +284,7 @@ struct RecipeDetailView: View {
                         .background(DS.emberLight)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
+                    .accessibilityIdentifier("detail.reviewButton")
                 }
             }
             .padding(.horizontal, 20)
@@ -286,7 +305,10 @@ struct RecipeDetailView: View {
             )
         }
         .sheet(isPresented: $showReview, onDismiss: {
-            Task { await loadUserReview() }
+            Task {
+                await loadUserReview()
+                await loadPublicReviews()
+            }
         }) {
             RecipeReviewSheet(recipeTitle: recipe.title, recipeId: backendRecipeId, sourceURL: recipe.sourceURL, existingReview: userReview, onDone: {
                 showReview = false
@@ -297,6 +319,11 @@ struct RecipeDetailView: View {
         .sheet(isPresented: $showAddToPlan) {
             AddToPlanSheet(info: AddToPlanInfo(title: recipe.title, sourceURL: recipe.sourceURL))
         }
+        .sheet(isPresented: $showSendSheet) {
+            if let recipeId = backendRecipeId {
+                FriendPickerSheet(recipeId: recipeId, recipeTitle: recipe.title)
+            }
+        }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -304,6 +331,20 @@ struct RecipeDetailView: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: 8) {
+                    if context == .library {
+                    Button { showSendSheet = true } label: {
+                        Image(systemName: "paperplane")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(backendRecipeId == nil ? DS.dust : DS.ink)
+                            .frame(width: 38, height: 38)
+                            .background(.white)
+                            .clipShape(Circle())
+                    }
+                    // Sending needs the backend recipe UUID, resolved by the
+                    // URL lookup in .task.
+                    .disabled(backendRecipeId == nil)
+                    .accessibilityIdentifier("detail.sendButton")
+
                     Button { showAddToPlan = true } label: {
                         Image(systemName: "calendar.badge.plus")
                             .font(.system(size: 16, weight: .medium))
@@ -312,6 +353,7 @@ struct RecipeDetailView: View {
                             .background(.white)
                             .clipShape(Circle())
                     }
+                    .accessibilityIdentifier("detail.addToPlanButton")
 
                     Button {
                         recipe.isFavorite.toggle()
@@ -328,6 +370,8 @@ struct RecipeDetailView: View {
                             .frame(width: 38, height: 38)
                             .background(.white)
                             .clipShape(Circle())
+                    }
+                    .accessibilityIdentifier("detail.favoriteButton")
                     }
                 }
             }
@@ -355,8 +399,10 @@ struct RecipeDetailView: View {
                 backendRecipeId = dto.id
             }
 
-            // Fetch user's review for this recipe
+            // Fetch user's review for this recipe, plus everyone's reviews
+            // for the public board (both need the backend recipe id).
             await loadUserReview()
+            await loadPublicReviews()
 
             // Fetch profile picture
             guard let username = recipe.platformUser, !username.isEmpty else { return }
@@ -366,6 +412,139 @@ struct RecipeDetailView: View {
                 profilePicData = await CaptionService.downloadImage(from: fullURL)
             }
         }
+    }
+
+    // MARK: - Public reviews ("Yorumlar" board)
+
+    private var publicReviewsSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("Yorumlar")
+                    .font(.system(size: 22, weight: .semibold, design: .serif))
+                    .foregroundStyle(DS.ink)
+                if !publicReviews.isEmpty {
+                    Text("\(publicReviews.count)")
+                        .font(.captionText())
+                        .foregroundStyle(DS.dust)
+                }
+            }
+            .padding(.top, 8)
+
+            if publicReviews.isEmpty {
+                Text("Henüz yorum yok — ilk yorumu sen yaz!")
+                    .font(.label())
+                    .foregroundStyle(DS.smoke)
+                    .padding(.vertical, 8)
+            } else {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(publicReviews) { review in
+                        publicReviewRow(review)
+                        if review.id != publicReviews.last?.id {
+                            Rectangle().fill(DS.stone).frame(height: 1)
+                        }
+                    }
+                }
+                .accessibilityIdentifier("detail.reviewsList")
+            }
+        }
+    }
+
+    private func publicReviewRow(_ review: UserReviewDTO) -> some View {
+        let isMine = review.user_id == Clerk.shared.user?.id
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                AvatarView(urlString: review.user_avatar_url, name: review.user_name, size: 24)
+
+                Text(isMine ? "Sen" : (review.user_name?.isEmpty == false ? review.user_name! : "Feslihan kullanıcısı"))
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(isMine ? DS.ember : DS.ink)
+
+                HStack(spacing: 2) {
+                    ForEach(1...5, id: \.self) { star in
+                        Image(systemName: star <= review.rating ? "star.fill" : "star")
+                            .font(.system(size: 11))
+                            .foregroundStyle(star <= review.rating ? DS.honey : DS.stone)
+                    }
+                }
+
+                Spacer()
+
+                if let when = SocialFormat.relativeDate(review.created_at) {
+                    Text(when)
+                        .font(.captionText())
+                        .foregroundStyle(DS.dust)
+                }
+            }
+
+            if let comment = review.comment, !comment.isEmpty {
+                Text(comment)
+                    .font(.system(size: 14, design: .serif))
+                    .italic()
+                    .foregroundStyle(DS.smoke)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, 12)
+    }
+
+    private func loadPublicReviews() async {
+        guard let recipeId = backendRecipeId else { return }
+        publicReviews = await APIService.fetchRecipeReviews(recipeId: recipeId)
+    }
+
+    // MARK: - Save a friend's recipe to my library
+
+    private var saveToLibraryButton: some View {
+        Button {
+            Task { await saveToLibrary() }
+        } label: {
+            HStack(spacing: 8) {
+                if isSavingToLibrary {
+                    ProgressView()
+                        .tint(DS.ember)
+                } else {
+                    Image(systemName: savedToLibrary ? "checkmark.circle.fill" : "plus.circle.fill")
+                        .font(.system(size: 15))
+                    Text(savedToLibrary ? "Kitaplığına eklendi" : "Kitaplığıma Ekle")
+                        .font(.system(size: 14, weight: .semibold))
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 40)
+            .foregroundStyle(DS.ember)
+            .background(DS.emberLight)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .disabled(isSavingToLibrary || savedToLibrary)
+        .accessibilityIdentifier("detail.saveToLibraryButton")
+    }
+
+    /// The recipe already exists globally — POST /recipes dedupes by URL and
+    /// just adds the user mapping, so a minimal DTO is enough.
+    private func saveToLibrary() async {
+        guard let url = recipe.sourceURL, let userId = Clerk.shared.user?.id else { return }
+        isSavingToLibrary = true
+
+        let dto = RecipeDTO(
+            platform: recipe.platform ?? "other",
+            platform_user: recipe.platformUser,
+            url: url,
+            title: recipe.title,
+            description: recipe.instructions,
+            ingredients_with_measures: recipe.ingredients.map { ingredient in
+                var dict = ["name": ingredient.name, "amount": ingredient.amount]
+                if let section = ingredient.section { dict["section"] = section }
+                return dict
+            },
+            ingredients_without_measures: recipe.ingredients.compactMap { $0.baseName },
+            requested_by: userId
+        )
+
+        if await APIService.save(recipe: dto) != nil {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            savedToLibrary = true
+        }
+        isSavingToLibrary = false
     }
 
     @Environment(\.dismiss) private var dismiss

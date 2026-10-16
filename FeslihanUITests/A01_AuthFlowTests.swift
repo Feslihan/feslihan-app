@@ -25,10 +25,11 @@ final class A01_AuthFlowTests: FeslihanUITestCase {
         }
 
         app.buttons["auth.signInButton"].tap()
-        XCTAssertTrue(app.textFields.firstMatch.waitForExistence(timeout: 20),
-                      "Clerk AuthView did not present an email field")
+        XCTAssertTrue(clerkInput(labelContains: ["email", "e-posta"]).waitForExistence(timeout: 20),
+                      "Clerk AuthView did not present an email input")
         // Close the sheet again so test03 starts from the landing screen.
-        app.swipeDown(velocity: .fast)
+        let close = app.buttons["Close"]
+        if close.exists && close.isHittable { close.tap() } else { app.swipeDown(velocity: .fast) }
     }
 
     /// Full sign-in with the Clerk test account, ending on the home hub.

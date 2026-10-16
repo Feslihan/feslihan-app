@@ -7,32 +7,44 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0723148ECD2EE30D3743C1CC /* FriendRecipesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6851B998839FF2258E5975B /* FriendRecipesView.swift */; };
+		0C2AA7307C7F72FC6C40B404 /* A10_CookingModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B62517E51F2AF8F4A7F935E /* A10_CookingModeTests.swift */; };
 		0F25309DFF76509CC05669EF /* CaptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BC2D60E19F246519FA87D14 /* CaptionService.swift */; };
 		1566ABD22AD559DEF79CDC06 /* AddRecipeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4E1F09C463219453E3EB2A1 /* AddRecipeView.swift */; };
 		16BAE34B9B74D9EAF2DE36C2 /* RecipeDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C106C18CA48DECC3172126F /* RecipeDetailView.swift */; };
+		199136042C423C493B92B5B2 /* SocialUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614E5B5795F3BB4F0DE8789B /* SocialUITests.swift */; };
 		2131670AB7DC32892D6618F0 /* WhatToEatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DBA950AF8742A25F6D2F326 /* WhatToEatView.swift */; };
 		23504B1FF1DC11A623EC73BC /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F992BF94307474C2BFF7C205 /* PaywallView.swift */; };
 		25428619EB5FC48EC7B610C2 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D71FAFA8851D7414D65263A6 /* OnboardingView.swift */; };
+		30A3544ED2F2C6CB6CD9DE5D /* MealSuggestionPlannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE75CB18768D28640FCA1EE7 /* MealSuggestionPlannerTests.swift */; };
 		3880E5B28454F64DDABD964E /* A06_WhatToEatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF1A15FC2D940D205985E29C /* A06_WhatToEatTests.swift */; };
+		3989403CF5A3ADBC744AF5A6 /* A11_FoldersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD07D41EA74F693F51CB4BF /* A11_FoldersTests.swift */; };
 		3A7C6E58826E07BEC2FA782D /* MealEditSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05085FE6F97FB2C1E7E27A3A /* MealEditSheet.swift */; };
 		3C189F320DF6FE39594C462F /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0476CE3A99851992669AF1 /* SplashView.swift */; };
 		40E227C1E1FEF54AA042733E /* FeslihanApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A43D2288E882550ECF0B51 /* FeslihanApp.swift */; };
+		43CF028FC72ECB0A2F578F30 /* A12_ManualMealPlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 762D7538101E5CB80949F3F2 /* A12_ManualMealPlanTests.swift */; };
 		4EC33B80D45F6E9F3A172A03 /* ShoppingListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBA0FCD93FFE2DF41E5F50FB /* ShoppingListView.swift */; };
 		571F235585E3576A29BF635D /* ClaudeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E2D9D3DE94595547334FEC3 /* ClaudeService.swift */; };
 		602A2C537347B21AB37A2066 /* CookingModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 280E29ED73235144D1D41621 /* CookingModeView.swift */; };
 		6350E98712F1A658086F07D8 /* SavedMealPlansView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A798F2EB0F1CF7C9232C30E /* SavedMealPlansView.swift */; };
 		69927C502E5209312F0BB057 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9CA009784BB90E49A89A1526 /* Assets.xcassets */; };
+		6F5ECA0E0EF9FFD8A7A8EBAC /* A08_AddRecipeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB4773097C3B212B80F98A35 /* A08_AddRecipeTests.swift */; };
+		7108283B45E7CA2625EECE73 /* Legal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 146AD5CB21C7CC04452C296A /* Legal.swift */; };
 		788BA106E0E3C65E6216BBEB /* ModeSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 691687B0715514978BE8BBB1 /* ModeSelectionView.swift */; };
 		7CDAAFFF5066F0AC278E13E3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCB2ED1E9EBB185B78FFDCC /* RootView.swift */; };
 		805E8B6A68BCAE104CB89DF4 /* SubscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C8FCE73D37CA447073D5AB /* SubscriptionService.swift */; };
 		85AB5718008B483295110CCD /* FeslihanError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CB25DF3D77ECB2C7BBCC1A7 /* FeslihanError.swift */; };
+		8857EF97344A569A53A87C73 /* A13_AccountSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2BB6034A9064C5778CBA250 /* A13_AccountSettingsTests.swift */; };
 		89B3B38B345BF8503C98B2DC /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 1BE12820378971B316AFACA3 /* RevenueCat */; };
 		8DBA14AC4D7055985FB8E6E7 /* A02_HomeHubTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC743C05E9BBDD35A1F9C8E /* A02_HomeHubTests.swift */; };
 		9609AC5BA7CB79262C849D04 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 994D3AC1A1B55628ECC7CD4A /* SettingsView.swift */; };
 		96D9B5A5FD790789DDE05DE4 /* RecipeListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ECE372FF4A6F953E2416621 /* RecipeListView.swift */; };
 		9CF01B5C2A87962211CDB203 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0CB9AA850E33E2C435B15A65 /* ClerkKit */; };
+		9F906E5F4DEEACFFB510AACE /* FriendPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9882072B8076E3596943AEB /* FriendPickerSheet.swift */; };
 		AA759DF2A392EB88E1B9E373 /* Recipe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D3CFA3F8D15C8C043FA7380 /* Recipe.swift */; };
+		AB34590D76DBCBB050AB76A4 /* A09_RecipeDetailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4877ABEECBD8C7467ED2DFE /* A09_RecipeDetailTests.swift */; };
 		B03062B29F457FF918957A54 /* FeslihanUITestCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56E094C6225BBF9375678767 /* FeslihanUITestCase.swift */; };
+		B14FDF1FEED3DD23AF9E341B /* MealSuggestionPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F264444AEBD92D4ECBFBD140 /* MealSuggestionPlanner.swift */; };
 		B47297C2AFD8D248C21FD1D3 /* MealPrepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C78BB5E44642C36A066EAA62 /* MealPrepView.swift */; };
 		BF5066C53E792D24B90366C6 /* ClerkKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = 7F847E9329A2F9EA80B49E77 /* ClerkKitUI */; };
 		BFDE8A00D297EFAFEE20D2C7 /* Movie.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDB0AB1202DBDD7D683D7EB4 /* Movie.swift */; };
@@ -40,11 +52,17 @@
 		C9D20873895BC61C9D616591 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C775F76984A72AE6DB00F07 /* ContentView.swift */; };
 		CBD0D16D0F8BC81610D1FA5F /* A04_PantryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C781086ED48EF398F9F0C5 /* A04_PantryTests.swift */; };
 		CD1A58E8FC38DFFC25617098 /* PantryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62C7AA501F8C53F4B7E4FF09 /* PantryView.swift */; };
+		CE24492E59E7B4E5B81EDE2C /* A14_OnboardingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B146C26190267CCBBC14A9D /* A14_OnboardingTests.swift */; };
+		D404B0B331A6069B130B7711 /* SharedInboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A810C47996C2F2DEB94AF72F /* SharedInboxView.swift */; };
 		D762C1D7D692EC54896C1319 /* IngredientsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFC53F41E73A7D8A00FB0D3 /* IngredientsView.swift */; };
 		DAFC48389CE373890268322C /* A05_ShoppingListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 451660F6194008AF6224D83B /* A05_ShoppingListTests.swift */; };
+		DB7670E3BAF7ABE3B80DFA0B /* A15_NotificationSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29A4647E13A9C9E63C818AF4 /* A15_NotificationSettingsTests.swift */; };
 		E5E23B26E4CD74A71C311CCD /* A07_MealPlanAITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19711AE3936DB1CDFA4E01A3 /* A07_MealPlanAITests.swift */; };
+		E8FCBD250E49BB39C3AAD121 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3D00B55A466B9878A372A3B /* NotificationService.swift */; };
+		EE99BC2B81A1CB38343818AE /* FriendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E84BE2C8FB9A9C66E594FA /* FriendsView.swift */; };
 		F10BF86F961896576020DE68 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EE80C777D363E51DF793EF /* Config.swift */; };
 		F1643C452ADA825056C7E90A /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772199D387CB7CFE61C07D92 /* APIService.swift */; };
+		F3CFB807FF36C2C0AB348BEB /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 030DF60D20841DB1B7888701 /* AvatarView.swift */; };
 		F457A8AFF084FC551264F3B7 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3794EBFB0A815B05B46B7F87 /* Theme.swift */; };
 		F986CA244B37A0A83EFFED83 /* A01_AuthFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7D581BEA080F25BC6362785 /* A01_AuthFlowTests.swift */; };
 /* End PBXBuildFile section */
@@ -57,48 +75,75 @@
 			remoteGlobalIDString = 07E53EB43151C57EDE1D83F8;
 			remoteInfo = Feslihan;
 		};
+		D492168E127BB00C710890B6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 06D53CFE5F457FBD076F9487 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 07E53EB43151C57EDE1D83F8;
+			remoteInfo = Feslihan;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		030DF60D20841DB1B7888701 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
 		05085FE6F97FB2C1E7E27A3A /* MealEditSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealEditSheet.swift; sourceTree = "<group>"; };
 		05A43D2288E882550ECF0B51 /* FeslihanApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeslihanApp.swift; sourceTree = "<group>"; };
+		146AD5CB21C7CC04452C296A /* Legal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Legal.swift; sourceTree = "<group>"; };
 		19711AE3936DB1CDFA4E01A3 /* A07_MealPlanAITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A07_MealPlanAITests.swift; sourceTree = "<group>"; };
 		1A798F2EB0F1CF7C9232C30E /* SavedMealPlansView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedMealPlansView.swift; sourceTree = "<group>"; };
 		1CB25DF3D77ECB2C7BBCC1A7 /* FeslihanError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeslihanError.swift; sourceTree = "<group>"; };
 		1D3CFA3F8D15C8C043FA7380 /* Recipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recipe.swift; sourceTree = "<group>"; };
+		25E84BE2C8FB9A9C66E594FA /* FriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsView.swift; sourceTree = "<group>"; };
 		280E29ED73235144D1D41621 /* CookingModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CookingModeView.swift; sourceTree = "<group>"; };
+		284838D5346EE3B4B8871896 /* Feslihan.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Feslihan.entitlements; sourceTree = "<group>"; };
+		29A4647E13A9C9E63C818AF4 /* A15_NotificationSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A15_NotificationSettingsTests.swift; sourceTree = "<group>"; };
+		2AD07D41EA74F693F51CB4BF /* A11_FoldersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A11_FoldersTests.swift; sourceTree = "<group>"; };
 		2C106C18CA48DECC3172126F /* RecipeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeDetailView.swift; sourceTree = "<group>"; };
 		2E9DB24E10EE622EFE6C16CB /* A03_RecipeBrowseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A03_RecipeBrowseTests.swift; sourceTree = "<group>"; };
 		3794EBFB0A815B05B46B7F87 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		3B146C26190267CCBBC14A9D /* A14_OnboardingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A14_OnboardingTests.swift; sourceTree = "<group>"; };
 		3ECE372FF4A6F953E2416621 /* RecipeListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeListView.swift; sourceTree = "<group>"; };
 		451660F6194008AF6224D83B /* A05_ShoppingListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A05_ShoppingListTests.swift; sourceTree = "<group>"; };
 		4C775F76984A72AE6DB00F07 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		4CFC53F41E73A7D8A00FB0D3 /* IngredientsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientsView.swift; sourceTree = "<group>"; };
 		56E094C6225BBF9375678767 /* FeslihanUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeslihanUITestCase.swift; sourceTree = "<group>"; };
+		57E9343E93F2C1DBEE9C5DB7 /* FeslihanTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FeslihanTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5DBA950AF8742A25F6D2F326 /* WhatToEatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatToEatView.swift; sourceTree = "<group>"; };
+		614E5B5795F3BB4F0DE8789B /* SocialUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialUITests.swift; sourceTree = "<group>"; };
 		61A77A661A1D0EFE85F7EB23 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		62C7AA501F8C53F4B7E4FF09 /* PantryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PantryView.swift; sourceTree = "<group>"; };
 		67C8FCE73D37CA447073D5AB /* SubscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionService.swift; sourceTree = "<group>"; };
 		691687B0715514978BE8BBB1 /* ModeSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeSelectionView.swift; sourceTree = "<group>"; };
 		6E2D9D3DE94595547334FEC3 /* ClaudeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeService.swift; sourceTree = "<group>"; };
+		762D7538101E5CB80949F3F2 /* A12_ManualMealPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A12_ManualMealPlanTests.swift; sourceTree = "<group>"; };
 		772199D387CB7CFE61C07D92 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		7BC2D60E19F246519FA87D14 /* CaptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionService.swift; sourceTree = "<group>"; };
 		7F5C6517B4D2B0B5B891B424 /* FeslihanUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FeslihanUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		994D3AC1A1B55628ECC7CD4A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		9B62517E51F2AF8F4A7F935E /* A10_CookingModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A10_CookingModeTests.swift; sourceTree = "<group>"; };
 		9CA009784BB90E49A89A1526 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A4877ABEECBD8C7467ED2DFE /* A09_RecipeDetailTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A09_RecipeDetailTests.swift; sourceTree = "<group>"; };
+		A810C47996C2F2DEB94AF72F /* SharedInboxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedInboxView.swift; sourceTree = "<group>"; };
+		AB4773097C3B212B80F98A35 /* A08_AddRecipeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A08_AddRecipeTests.swift; sourceTree = "<group>"; };
 		B7D581BEA080F25BC6362785 /* A01_AuthFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A01_AuthFlowTests.swift; sourceTree = "<group>"; };
 		BDB0AB1202DBDD7D683D7EB4 /* Movie.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Movie.swift; sourceTree = "<group>"; };
 		BF1A15FC2D940D205985E29C /* A06_WhatToEatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A06_WhatToEatTests.swift; sourceTree = "<group>"; };
 		C6C781086ED48EF398F9F0C5 /* A04_PantryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A04_PantryTests.swift; sourceTree = "<group>"; };
 		C78BB5E44642C36A066EAA62 /* MealPrepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealPrepView.swift; sourceTree = "<group>"; };
+		D2BB6034A9064C5778CBA250 /* A13_AccountSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A13_AccountSettingsTests.swift; sourceTree = "<group>"; };
 		D71FAFA8851D7414D65263A6 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		D9EE80C777D363E51DF793EF /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		DBA0FCD93FFE2DF41E5F50FB /* ShoppingListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShoppingListView.swift; sourceTree = "<group>"; };
 		DDCB2ED1E9EBB185B78FFDCC /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		E3D00B55A466B9878A372A3B /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		E4E1F09C463219453E3EB2A1 /* AddRecipeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddRecipeView.swift; sourceTree = "<group>"; };
+		E9882072B8076E3596943AEB /* FriendPickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendPickerSheet.swift; sourceTree = "<group>"; };
 		EA0476CE3A99851992669AF1 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		EDC743C05E9BBDD35A1F9C8E /* A02_HomeHubTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A02_HomeHubTests.swift; sourceTree = "<group>"; };
+		EE75CB18768D28640FCA1EE7 /* MealSuggestionPlannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealSuggestionPlannerTests.swift; sourceTree = "<group>"; };
+		F264444AEBD92D4ECBFBD140 /* MealSuggestionPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MealSuggestionPlanner.swift; sourceTree = "<group>"; };
 		F67A09C9F999DAD1D924581F /* Feslihan.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Feslihan.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F6851B998839FF2258E5975B /* FriendRecipesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendRecipesView.swift; sourceTree = "<group>"; };
 		F992BF94307474C2BFF7C205 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -120,9 +165,18 @@
 			isa = PBXGroup;
 			children = (
 				F67A09C9F999DAD1D924581F /* Feslihan.app */,
+				57E9343E93F2C1DBEE9C5DB7 /* FeslihanTests.xctest */,
 				7F5C6517B4D2B0B5B891B424 /* FeslihanUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		19CF09C8719F48790508E0E4 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				030DF60D20841DB1B7888701 /* AvatarView.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		3B0AAA22441A04CC500D27DC /* Feslihan */ = {
@@ -130,9 +184,11 @@
 			children = (
 				9CA009784BB90E49A89A1526 /* Assets.xcassets */,
 				D9EE80C777D363E51DF793EF /* Config.swift */,
+				284838D5346EE3B4B8871896 /* Feslihan.entitlements */,
 				05A43D2288E882550ECF0B51 /* FeslihanApp.swift */,
 				1CB25DF3D77ECB2C7BBCC1A7 /* FeslihanError.swift */,
 				61A77A661A1D0EFE85F7EB23 /* Info.plist */,
+				146AD5CB21C7CC04452C296A /* Legal.swift */,
 				3794EBFB0A815B05B46B7F87 /* Theme.swift */,
 				BB701E392478346F797E16FA /* Models */,
 				4038213EB22840351DBC3A15 /* Services */,
@@ -147,6 +203,8 @@
 				772199D387CB7CFE61C07D92 /* APIService.swift */,
 				7BC2D60E19F246519FA87D14 /* CaptionService.swift */,
 				6E2D9D3DE94595547334FEC3 /* ClaudeService.swift */,
+				F264444AEBD92D4ECBFBD140 /* MealSuggestionPlanner.swift */,
+				E3D00B55A466B9878A372A3B /* NotificationService.swift */,
 				67C8FCE73D37CA447073D5AB /* SubscriptionService.swift */,
 			);
 			path = Services;
@@ -156,6 +214,7 @@
 			isa = PBXGroup;
 			children = (
 				3B0AAA22441A04CC500D27DC /* Feslihan */,
+				D4CE2BF39114F9010ACDADB0 /* FeslihanTests */,
 				71FCADF0A934902E228AD628 /* FeslihanUITests */,
 				0DB4C039901DDB96F6EAA657 /* Products */,
 			);
@@ -171,7 +230,16 @@
 				451660F6194008AF6224D83B /* A05_ShoppingListTests.swift */,
 				BF1A15FC2D940D205985E29C /* A06_WhatToEatTests.swift */,
 				19711AE3936DB1CDFA4E01A3 /* A07_MealPlanAITests.swift */,
+				AB4773097C3B212B80F98A35 /* A08_AddRecipeTests.swift */,
+				A4877ABEECBD8C7467ED2DFE /* A09_RecipeDetailTests.swift */,
+				9B62517E51F2AF8F4A7F935E /* A10_CookingModeTests.swift */,
+				2AD07D41EA74F693F51CB4BF /* A11_FoldersTests.swift */,
+				762D7538101E5CB80949F3F2 /* A12_ManualMealPlanTests.swift */,
+				D2BB6034A9064C5778CBA250 /* A13_AccountSettingsTests.swift */,
+				3B146C26190267CCBBC14A9D /* A14_OnboardingTests.swift */,
+				29A4647E13A9C9E63C818AF4 /* A15_NotificationSettingsTests.swift */,
 				56E094C6225BBF9375678767 /* FeslihanUITestCase.swift */,
+				614E5B5795F3BB4F0DE8789B /* SocialUITests.swift */,
 			);
 			path = FeslihanUITests;
 			sourceTree = "<group>";
@@ -182,6 +250,9 @@
 				E4E1F09C463219453E3EB2A1 /* AddRecipeView.swift */,
 				4C775F76984A72AE6DB00F07 /* ContentView.swift */,
 				280E29ED73235144D1D41621 /* CookingModeView.swift */,
+				E9882072B8076E3596943AEB /* FriendPickerSheet.swift */,
+				F6851B998839FF2258E5975B /* FriendRecipesView.swift */,
+				25E84BE2C8FB9A9C66E594FA /* FriendsView.swift */,
 				4CFC53F41E73A7D8A00FB0D3 /* IngredientsView.swift */,
 				05085FE6F97FB2C1E7E27A3A /* MealEditSheet.swift */,
 				C78BB5E44642C36A066EAA62 /* MealPrepView.swift */,
@@ -194,9 +265,11 @@
 				DDCB2ED1E9EBB185B78FFDCC /* RootView.swift */,
 				1A798F2EB0F1CF7C9232C30E /* SavedMealPlansView.swift */,
 				994D3AC1A1B55628ECC7CD4A /* SettingsView.swift */,
+				A810C47996C2F2DEB94AF72F /* SharedInboxView.swift */,
 				DBA0FCD93FFE2DF41E5F50FB /* ShoppingListView.swift */,
 				EA0476CE3A99851992669AF1 /* SplashView.swift */,
 				5DBA950AF8742A25F6D2F326 /* WhatToEatView.swift */,
+				19CF09C8719F48790508E0E4 /* Components */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -208,6 +281,14 @@
 				1D3CFA3F8D15C8C043FA7380 /* Recipe.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		D4CE2BF39114F9010ACDADB0 /* FeslihanTests */ = {
+			isa = PBXGroup;
+			children = (
+				EE75CB18768D28640FCA1EE7 /* MealSuggestionPlannerTests.swift */,
+			);
+			path = FeslihanTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -234,6 +315,24 @@
 			productName = Feslihan;
 			productReference = F67A09C9F999DAD1D924581F /* Feslihan.app */;
 			productType = "com.apple.product-type.application";
+		};
+		29C6CD70CE3D13ABA0379503 /* FeslihanTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7AD75A5CDE656E175F17F82A /* Build configuration list for PBXNativeTarget "FeslihanTests" */;
+			buildPhases = (
+				82C89D58A567CA64AC62E248 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				311DD67A1B4355FD7482ECFC /* PBXTargetDependency */,
+			);
+			name = FeslihanTests;
+			packageProductDependencies = (
+			);
+			productName = FeslihanTests;
+			productReference = 57E9343E93F2C1DBEE9C5DB7 /* FeslihanTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 		AA2FEB3A85BD9B91EED63D68 /* FeslihanUITests */ = {
 			isa = PBXNativeTarget;
@@ -286,6 +385,7 @@
 			projectRoot = "";
 			targets = (
 				07E53EB43151C57EDE1D83F8 /* Feslihan */,
+				29C6CD70CE3D13ABA0379503 /* FeslihanTests */,
 				AA2FEB3A85BD9B91EED63D68 /* FeslihanUITests */,
 			);
 		};
@@ -303,12 +403,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		82C89D58A567CA64AC62E248 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				30A3544ED2F2C6CB6CD9DE5D /* MealSuggestionPlannerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9DE5C985329263BAD9193410 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				F1643C452ADA825056C7E90A /* APIService.swift in Sources */,
 				1566ABD22AD559DEF79CDC06 /* AddRecipeView.swift in Sources */,
+				F3CFB807FF36C2C0AB348BEB /* AvatarView.swift in Sources */,
 				0F25309DFF76509CC05669EF /* CaptionService.swift in Sources */,
 				571F235585E3576A29BF635D /* ClaudeService.swift in Sources */,
 				F10BF86F961896576020DE68 /* Config.swift in Sources */,
@@ -316,11 +425,17 @@
 				602A2C537347B21AB37A2066 /* CookingModeView.swift in Sources */,
 				40E227C1E1FEF54AA042733E /* FeslihanApp.swift in Sources */,
 				85AB5718008B483295110CCD /* FeslihanError.swift in Sources */,
+				9F906E5F4DEEACFFB510AACE /* FriendPickerSheet.swift in Sources */,
+				0723148ECD2EE30D3743C1CC /* FriendRecipesView.swift in Sources */,
+				EE99BC2B81A1CB38343818AE /* FriendsView.swift in Sources */,
 				D762C1D7D692EC54896C1319 /* IngredientsView.swift in Sources */,
+				7108283B45E7CA2625EECE73 /* Legal.swift in Sources */,
 				3A7C6E58826E07BEC2FA782D /* MealEditSheet.swift in Sources */,
 				B47297C2AFD8D248C21FD1D3 /* MealPrepView.swift in Sources */,
+				B14FDF1FEED3DD23AF9E341B /* MealSuggestionPlanner.swift in Sources */,
 				788BA106E0E3C65E6216BBEB /* ModeSelectionView.swift in Sources */,
 				BFDE8A00D297EFAFEE20D2C7 /* Movie.swift in Sources */,
+				E8FCBD250E49BB39C3AAD121 /* NotificationService.swift in Sources */,
 				25428619EB5FC48EC7B610C2 /* OnboardingView.swift in Sources */,
 				CD1A58E8FC38DFFC25617098 /* PantryView.swift in Sources */,
 				23504B1FF1DC11A623EC73BC /* PaywallView.swift in Sources */,
@@ -330,6 +445,7 @@
 				7CDAAFFF5066F0AC278E13E3 /* RootView.swift in Sources */,
 				6350E98712F1A658086F07D8 /* SavedMealPlansView.swift in Sources */,
 				9609AC5BA7CB79262C849D04 /* SettingsView.swift in Sources */,
+				D404B0B331A6069B130B7711 /* SharedInboxView.swift in Sources */,
 				4EC33B80D45F6E9F3A172A03 /* ShoppingListView.swift in Sources */,
 				3C189F320DF6FE39594C462F /* SplashView.swift in Sources */,
 				805E8B6A68BCAE104CB89DF4 /* SubscriptionService.swift in Sources */,
@@ -349,13 +465,27 @@
 				DAFC48389CE373890268322C /* A05_ShoppingListTests.swift in Sources */,
 				3880E5B28454F64DDABD964E /* A06_WhatToEatTests.swift in Sources */,
 				E5E23B26E4CD74A71C311CCD /* A07_MealPlanAITests.swift in Sources */,
+				6F5ECA0E0EF9FFD8A7A8EBAC /* A08_AddRecipeTests.swift in Sources */,
+				AB34590D76DBCBB050AB76A4 /* A09_RecipeDetailTests.swift in Sources */,
+				0C2AA7307C7F72FC6C40B404 /* A10_CookingModeTests.swift in Sources */,
+				3989403CF5A3ADBC744AF5A6 /* A11_FoldersTests.swift in Sources */,
+				43CF028FC72ECB0A2F578F30 /* A12_ManualMealPlanTests.swift in Sources */,
+				8857EF97344A569A53A87C73 /* A13_AccountSettingsTests.swift in Sources */,
+				CE24492E59E7B4E5B81EDE2C /* A14_OnboardingTests.swift in Sources */,
+				DB7670E3BAF7ABE3B80DFA0B /* A15_NotificationSettingsTests.swift in Sources */,
 				B03062B29F457FF918957A54 /* FeslihanUITestCase.swift in Sources */,
+				199136042C423C493B92B5B2 /* SocialUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		311DD67A1B4355FD7482ECFC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 07E53EB43151C57EDE1D83F8 /* Feslihan */;
+			targetProxy = D492168E127BB00C710890B6 /* PBXContainerItemProxy */;
+		};
 		EF84C8B2A6F10EAF4D8A105E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 07E53EB43151C57EDE1D83F8 /* Feslihan */;
@@ -369,6 +499,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Feslihan/Feslihan.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Feslihan/Info.plist;
@@ -438,6 +569,23 @@
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
+		};
+		1ACDEF58C6F02DF6411EC692 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dilarahalavurt.feslihan.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Feslihan.app/Feslihan";
+			};
+			name = Debug;
 		};
 		2591E6DD76E2682974F0C48C /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -519,11 +667,29 @@
 			};
 			name = Debug;
 		};
+		4328D662A74821B307B269BC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.dilarahalavurt.feslihan.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Feslihan.app/Feslihan";
+			};
+			name = Release;
+		};
 		B3D0CF413E72B496A17ABBCB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Feslihan/Feslihan.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Feslihan/Info.plist;
@@ -563,6 +729,15 @@
 			buildConfigurations = (
 				2591E6DD76E2682974F0C48C /* Debug */,
 				F489CC1619752F47EE48B6EB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7AD75A5CDE656E175F17F82A /* Build configuration list for PBXNativeTarget "FeslihanTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1ACDEF58C6F02DF6411EC692 /* Debug */,
+				4328D662A74821B307B269BC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

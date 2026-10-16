@@ -5,6 +5,7 @@ import ClerkKitUI
 struct RootView: View {
     @State private var authIsPresented = false
     @Bindable private var clerk = Clerk.shared
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         if let user = clerk.user {
@@ -19,6 +20,16 @@ struct RootView: View {
                 .task {
                     // Backfill missing creator profile pictures from this device
                     await APIService.backfillCreatorPictures()
+                }
+                .task {
+                    // Refresh the 7-day window of daily meal-suggestion
+                    // notifications (no-op when the feature is off).
+                    await NotificationService.shared.refreshIfEnabled(context: modelContext)
+                }
+                .task {
+                    // Social pushes: one-time permission ask, then (re)register
+                    // the APNs device token on every signed-in launch.
+                    await NotificationService.shared.askPushPermissionOnce()
                 }
         } else {
             ZStack {

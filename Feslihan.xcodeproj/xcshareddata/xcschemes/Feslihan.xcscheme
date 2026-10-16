@@ -29,6 +29,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "29C6CD70CE3D13ABA0379503"
+               BuildableName = "FeslihanTests.xctest"
+               BlueprintName = "FeslihanTests"
+               ReferencedContainer = "container:Feslihan.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "AA2FEB3A85BD9B91EED63D68"
                BuildableName = "FeslihanUITests.xctest"
                BlueprintName = "FeslihanUITests"
@@ -61,6 +75,17 @@
                BlueprintIdentifier = "AA2FEB3A85BD9B91EED63D68"
                BuildableName = "FeslihanUITests.xctest"
                BlueprintName = "FeslihanUITests"
+               ReferencedContainer = "container:Feslihan.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "29C6CD70CE3D13ABA0379503"
+               BuildableName = "FeslihanTests.xctest"
+               BlueprintName = "FeslihanTests"
                ReferencedContainer = "container:Feslihan.xcodeproj">
             </BuildableReference>
          </TestableReference>

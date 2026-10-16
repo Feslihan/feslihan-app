@@ -23,13 +23,15 @@ targets:
         product: ClerkKitUI
       - package: RevenueCat
         product: RevenueCat
+    entitlements:
+      path: Feslihan/Feslihan.entitlements
+      properties:
+        aps-environment: development
     info:
       path: Feslihan/Info.plist
       properties:
         UILaunchScreen: {}
         NSPhotoLibraryUsageDescription: "Yemek videolarını içe aktarmak için fotoğraf kitaplığı erişimi gereklidir"
-        NSAppTransportSecurity:
-          NSAllowsLocalNetworking: true
         UIRequiresFullScreen: true
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -55,15 +57,28 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.dilarahalavurt.feslihan.uitests
         TEST_TARGET_NAME: Feslihan
         GENERATE_INFOPLIST_FILE: YES
+  FeslihanTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - FeslihanTests
+    dependencies:
+      - target: Feslihan
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dilarahalavurt.feslihan.tests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   Feslihan:
     build:
       targets:
         Feslihan: all
         FeslihanUITests: [test]
+        FeslihanTests: [test]
     run:
       config: Debug
     test:
       config: Debug
       targets:
         - FeslihanUITests
+        - FeslihanTests

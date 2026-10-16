@@ -114,6 +114,7 @@ struct CookingModeView: View {
                             .background(.white.opacity(0.12))
                             .clipShape(Circle())
                     }
+                    .accessibilityIdentifier("cooking.closeButton")
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
@@ -329,6 +330,7 @@ struct RecipeReviewSheet: View {
                             .font(.system(size: 36))
                             .foregroundStyle(star <= rating ? DS.honey : DS.stone)
                     }
+                    .accessibilityIdentifier("review.star.\(star)")
                 }
             }
 
@@ -364,6 +366,7 @@ struct RecipeReviewSheet: View {
                     .background(rating > 0 ? DS.ember : DS.sand)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
+                .accessibilityIdentifier("review.submitButton")
                 .disabled(rating == 0 || isSaving)
 
                 if existingReview != nil {

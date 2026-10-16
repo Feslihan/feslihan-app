@@ -4,6 +4,9 @@ import RevenueCat
 struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var subscription = SubscriptionService.shared
+    /// Optional line explaining why the paywall appeared (e.g. scan credits
+    /// used up). Shown under the subtitle.
+    var contextMessage: String?
     @State private var offerings: Offerings?
     @State private var selectedPackage: Package?
     @State private var isPurchasing = false
@@ -30,6 +33,17 @@ struct PaywallView: View {
                                 .font(.system(size: 15))
                                 .foregroundStyle(DS.smoke)
                                 .multilineTextAlignment(.center)
+
+                            if let contextMessage {
+                                Text(contextMessage)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(DS.ink)
+                                    .multilineTextAlignment(.center)
+                                    .padding(10)
+                                    .background(DS.emberLight)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    .padding(.top, 4)
+                            }
                         }
                         .padding(.top, 20)
 
@@ -47,10 +61,10 @@ struct PaywallView: View {
                         VStack(spacing: 12) {
                             planCard(
                                 name: "Feslihan+",
-                                price: "₺30/ay",
+                                price: "₺79/ay",
                                 features: [
-                                    "Ayda 30 tarif ekle",
-                                    "Haftalık yemek planı",
+                                    "Ayda 20 yeni tarif tarat",
+                                    "Ayda 2 haftalık plan",
                                     "Ne Yesem? önerisi",
                                 ],
                                 entitlement: "feslihan_plus",
@@ -59,10 +73,10 @@ struct PaywallView: View {
 
                             planCard(
                                 name: "Feslihan Pro",
-                                price: "₺100/ay",
+                                price: "₺250/ay",
                                 features: [
-                                    "Sınırsız tarif ekle",
-                                    "Haftalık yemek planı",
+                                    "Sınırsız yeni tarif tarat",
+                                    "Sınırsız haftalık plan",
                                     "Ne Yesem? önerisi",
                                     "Öncelikli destek",
                                 ],

@@ -48,15 +48,24 @@ struct SavedMealPlansView: View {
                                 .fill(DS.stone)
                                 .frame(height: 1)
 
+                            // Not a Button: the card hosts its own interactive
+                            // Menu (ellipsis), and nesting it inside a Button
+                            // makes the outer button swallow the menu's taps.
                             ForEach(plans) { plan in
-                                Button {
+                                SavedPlanCard(plan: plan, onDelete: {
+                                    Task { await deletePlan(plan) }
+                                })
+                                .contentShape(Rectangle())
+                                .onTapGesture {
                                     selectedPlan = plan
-                                } label: {
-                                    SavedPlanCard(plan: plan, onDelete: {
-                                        Task { await deletePlan(plan) }
-                                    })
                                 }
-                                .buttonStyle(.plain)
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        Task { await deletePlan(plan) }
+                                    } label: {
+                                        Label("Sil", systemImage: "trash")
+                                    }
+                                }
                             }
                         }
                         .padding(.horizontal, 20)
@@ -240,6 +249,7 @@ private struct SavedPlanCard: View {
                     .foregroundStyle(DS.dust)
                     .frame(width: 28, height: 28)
             }
+            .accessibilityIdentifier("planCard.menu.\(plan.name)")
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .medium))

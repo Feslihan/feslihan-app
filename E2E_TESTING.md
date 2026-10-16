@@ -10,14 +10,29 @@ real Anthropic API). Runs on demand in GitHub Actions via the
 | Suite | Flow | Backend endpoints exercised |
 |---|---|---|
 | `A01_AuthFlowTests` | Landing screen, Clerk sign-in sheet, full test-account sign-in | `POST /users/sync` (via sign-in) |
-| `A02_HomeHubTests` | 5-mode hub, live pantry counter, account sheet | `GET /users/:id/pantry`, `GET /users/:id/shopping-list` |
-| `A03_RecipeBrowseTests` | Tariflerim list, search, recipe detail tabs | `GET /users/:id/recipes` |
-| `A04_PantryTests` | Seeded pantry, search, add via picker, delete via context menu | `GET/POST/DELETE /users/:id/pantry`, `GET /ingredients` |
-| `A05_ShoppingListTests` | Add, check off, "Kilere Ekle", delete | `GET/POST/PUT/DELETE /users/:id/shopping-list` |
-| `A06_WhatToEatTests` | 4-step wizard, suggestion cards, save/skip | `GET /users/:id/recipes`, `GET /users/:id/pantry` |
+| `A02_HomeHubTests` | 5-mode hub, live pantry counter, hero card (plan özeti/CTA), account sheet | `GET /users/:id/pantry`, `GET /users/:id/shopping-list`, `GET /users/:id/meal-plans` |
+| `A03_RecipeBrowseTests` | Tariflerim list, search, Denediklerim/Beğendiklerim chips, filter sheet, detail tabs | `GET /users/:id/recipes`, `GET /users/:id/reviews` |
+| `A04_PantryTests` | Seeded pantry, search (+no-result), add via picker, delete, move-to-shopping, bubble sheet | `GET/POST/DELETE /users/:id/pantry`, `GET /ingredients` |
+| `A05_ShoppingListTests` | Add, check/uncheck, "Kilere Ekle", delete, bubble sheet | `GET/POST/PUT/DELETE /users/:id/shopping-list` |
+| `A06_WhatToEatTests` | 4-step wizard (noLimit + pantryOnly), save/skip, deck sonu, boş durum | `GET /users/:id/recipes`, `GET /users/:id/pantry` |
 | `A07_MealPlanAITests` | **Real Claude** meal-plan generation, save, saved-plans list | `POST /ai/meal-plan`, `POST /meal-plans`, `GET /users/:id/meal-plans` |
+| `A08_AddRecipeTests` | Tarif ekleme: boş/geçersiz/desteklenmeyen link hataları, **gerçek web scrape** (nefisyemektarifleri + Claude), duplicate-URL cache yolu | `POST /recipes/scrape-web`, `POST /recipes`, `GET /recipes/lookup` |
+| `A09_RecipeDetailTests` | Favori ekle/çıkar, porsiyon çarpanı, Besin sekmesi, yorum ekle/sil, Plana Ekle sayfası | `PUT …/favorite`, `POST/DELETE reviews`, `GET /users/:id/reviews` |
+| `A10_CookingModeTests` | Pişirme modu: tüm adımlar, geri/ileri, Tamamlandı → yorum, kapatma | — (yerel akış + review lookup) |
+| `A11_FoldersTests` | Klasör oluştur, tarif taşı, klasörden çıkar, klasör sil | `POST/DELETE /folders`, `PUT …/folder`, `GET /users/:id/folders` |
+| `A12_ManualMealPlanTests` | Manuel plan: ad + gün sayısı + öğün/tarif ekleme, kaydet, detay sekmeleri, sil | `POST/DELETE /meal-plans`, `GET /users/:id/meal-plans` |
+| `A13_AccountSettingsTests` | Hesap sayfası kısayolları, Ayarlar bölümleri (çıkış/silmeye dokunmaz) | — |
+| `A14_OnboardingTests` | `-hasCompletedOnboarding NO` ile zorlanan onboarding: iki adım + CTA sheet'leri | — |
 
-Suites are ordered (`A01`…`A07`): the auth suite runs first and the Clerk
+Bilinçli olarak otomatize edilmeyenler: video (Instagram/TikTok) tarif ekleme
+mutlu yolu (oEmbed uçları CI IP'lerini engeller — validasyon hataları
+kapsanıyor), bubble oyununda balon patlatma (hedefler sürekli hareket ediyor —
+liste picker'ı deterministik ekleme yolunu kapsıyor), paywall (Debug build'de
+plan `pro`'ya sabit), pantry gate (seed 35 malzeme ile gate'i geçiyor; gate
+UI'ı PantryGateView'da identifier'lı, <30 malzemeli bir kullanıcı gerektirir),
+Çıkış Yap / Hesabı Sil (oturumu/hesabı bozar).
+
+Suites are ordered (`A01`…`A14`): the auth suite runs first and the Clerk
 session persists in the simulator keychain for the rest of the run. Every other
 suite still calls `ensureSignedInAtHome()`, so individual suites can also run
 alone via the workflow's `test_filter` input
@@ -118,11 +133,47 @@ xcodebuild test -project Feslihan.xcodeproj -scheme Feslihan \
   (`auth.*`, `home.mode.*`, `pantry.*`, `shopping.*`, `whatToEat.*`,
   `mealPrep.*`, `mealPlans.*`, `onboarding.*`, `backButton`). If you rename or
   restructure a screen, keep the identifier on the equivalent control.
-- The Clerk auth sheet is ClerkKitUI's prebuilt component — its labels depend
-  on the ClerkKit version/locale. `performClerkSignIn()` tries several
-  continue-button labels; if a ClerkKit upgrade breaks sign-in, start there.
+- The Clerk auth sheet is ClerkKitUI's prebuilt component and is HOSTILE to
+  naive XCUITest queries. Hard-won facts baked into `performClerkSignIn()`:
+  - Its inputs are **not** exposed as `textFields`/`secureTextFields` — the
+    whole sheet reports zero of each. The placeholders surface as
+    `StaticText`; tap their frame, then type into the app's first responder.
+  - Typing can silently no-op if the software keyboard isn't up yet; the
+    helper waits for `app.keyboards` and verifies via Continue's
+    enabled-state (it stays disabled while the field is empty), retrying.
+  - Clerk **persists half-finished sign-in attempts** in the keychain and
+    pre-fills the identifier on relaunch — always clear before typing
+    (`clearAndType`). Tap the field body at ~35% width: password fields have
+    a show/hide icon at the right edge that swallows edge taps.
+  - Clerk remembers the last-used second factor and may show "Enter password"
+    instead of the code screen. The helper always switches to the EMAIL CODE
+    path ("Use another method" → email code): that screen auto-focuses its
+    boxes with the keyboard up, and test mode accepts 424242.
+  - The Clerk dev instance must have **test mode enabled**
+    (`PATCH https://api.clerk.com/v1/instance {"test_mode": true}`), or
+    424242 is rejected and a real email is sent.
 - Tests assume the seeded platform recipes exist (e.g. "Mercimek Çorbası" from
   `feslihan-backend/src/seed-recipes.ts`). If seed recipes change, update
   `A03_RecipeBrowseTests`.
+- **SwiftUI element-type traps** (cost a full debugging day — read before
+  touching the tests):
+  - Underlined tab bars (`RecipeDetailView`, `SavedPlanDetailSheet`) expose
+    their tabs as **buttons**, not staticTexts — the Button swallows its
+    inner Text. `app.staticTexts["Malzemeler"]` never matches on those
+    screens; use `app.buttons[...]`.
+  - The home hero card (Haftalık Plan) **ignores synthesized taps** in the
+    simulator (real finger taps work). Tests enter the saved-plans screen via
+    the DEBUG-only `-e2eStartMealPrep` launch argument
+    (`relaunchIntoMealPrep()` helper) after two tap attempts.
+  - Never nest an interactive `Menu` inside a `Button`'s label — the outer
+    button swallows the menu's taps (fixed in `SavedMealPlansView`; plan
+    cards now use `onTapGesture` + `contextMenu`). Long-press context menus
+    are the reliable deletion pattern under XCUITest.
+  - After returning to the hub, wait for the pantry counter (>= 30) before
+    tapping gated modes — `assertHomeHub()` does this — or the 30-item
+    pantry gate swallows the navigation.
+  - `scrollTo(_:)` before tapping grid cells: lazy grids report offscreen
+    cells as `exists == true`, and tapping one lands on whatever occupies
+    those coordinates.
 - Each run starts from a **fresh database**, so test data never pollutes
   production. The simulator keychain persists within one workflow run only.
