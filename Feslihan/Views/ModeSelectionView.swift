@@ -31,6 +31,7 @@ struct ModeSelectionView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @EnvironmentObject var subscription: SubscriptionService
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
 
     private let minPantryCount = 30
 
@@ -296,6 +297,9 @@ struct ModeSelectionView: View {
                         .padding(.bottom, 60)
                     }
                 }
+                // No scrolling/bouncing while everything fits the screen;
+                // only small devices where the mode list overflows can scroll.
+                .scrollBounceBehavior(.basedOnSize)
             }
             .sheet(isPresented: $showAddRecipe) {
                 AddRecipeView()
@@ -376,19 +380,28 @@ struct ModeSelectionView: View {
             }
         }
         }
-        // Daily-suggestion notification tap → open the suggested recipe.
-        .task { openPendingNotificationRecipe() }
+        // Notification taps → open the recipe / share inbox. Cold starts are
+        // covered by .task; warm foreground taps by the posted signals; taps
+        // that ACTIVATE the app by the scenePhase transition (mutating UI
+        // before the app is active crashes in UIKit's snapshot machinery).
+        .task { consumePendingNotificationIntents() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { consumePendingNotificationIntents() }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .feslihanOpenRecipe)) { _ in
             openPendingNotificationRecipe()
         }
-        // Recipe-share push tap → open the inbox.
-        .task { openInboxIfPending() }
         .onReceive(NotificationCenter.default.publisher(for: .feslihanOpenInbox)) { _ in
             openInboxIfPending()
         }
         .sheet(item: $notificationRecipe) { recipe in
             NavigationStack { RecipeDetailView(recipe: recipe) }
         }
+    }
+
+    private func consumePendingNotificationIntents() {
+        openPendingNotificationRecipe()
+        openInboxIfPending()
     }
 
     /// Opens the share inbox if a push tap flagged it.

@@ -172,6 +172,11 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
     // MARK: - Delegate (foreground display + tap handling)
 
+    // Both delegate methods are pinned to the main actor: Swift's async
+    // delegate bridging otherwise resumes UIKit's completion handler on a
+    // background thread, and UIKit's snapshot machinery asserts (SIGABRT in
+    // _performBlockAfterCATransactionCommitSynchronizes) when touched off-main.
+    @MainActor
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
@@ -179,30 +184,33 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         [.banner, .sound]
     }
 
+    @MainActor
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
         let userInfo = response.notification.request.content.userInfo
 
-        // Note: the in-app signals below are delayed until the background→
-        // foreground transition settles — mutating UI state mid-transition
-        // trips UIKit's snapshot assertion (SIGABRT in
-        // _updateStateRestorationArchiveForBackgroundEvent).
+        // Stash the intent; the UI is only mutated once the app is actually
+        // ACTIVE. Posting while the app is still transitioning out of the
+        // background trips UIKit's snapshot assertion (SIGABRT in
+        // _updateStateRestorationArchiveForBackgroundEvent) — a time delay is
+        // a race, the application-state check is deterministic. When the app
+        // is not yet active, ModeSelectionView's scenePhase observer consumes
+        // the stashed intent on activation instead.
+        var signal: Notification.Name?
         if let recipeId = userInfo["recipeId"] as? String {
-            // Daily suggestion → open the recipe.
             defaults.set(recipeId, forKey: Self.pendingRecipeKey)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                NotificationCenter.default.post(name: .feslihanOpenRecipe, object: nil)
-            }
+            signal = .feslihanOpenRecipe
         } else if (userInfo["type"] as? String) == "share" {
-            // Recipe-share push → open the inbox.
             defaults.set(true, forKey: Self.pendingInboxKey)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                NotificationCenter.default.post(name: .feslihanOpenInbox, object: nil)
-            }
+            signal = .feslihanOpenInbox
         }
         // friend_request / friend_accept pushes just open the app (v1).
+
+        if let signal, UIApplication.shared.applicationState == .active {
+            NotificationCenter.default.post(name: signal, object: nil)
+        }
     }
 
     /// Reads and clears the recipe id stashed by a notification tap.
