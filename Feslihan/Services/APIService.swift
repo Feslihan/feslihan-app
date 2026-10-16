@@ -9,7 +9,7 @@ enum APIService {
            !override.isEmpty {
             return override
         }
-        return "https://feslihan-app.vercel.app"
+        return "https://api.feslihan.com.tr"
     }()
 
     // MARK: - Auth
