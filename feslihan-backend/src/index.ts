@@ -12,7 +12,7 @@ import { seedPlatformRecipes, mapPlatformRecipesToUser } from "./seed-recipes.js
 import { requireAuth, requireAdmin } from "./middleware/auth.js";
 import { safeFetchText, UrlNotAllowedError } from "./security/ssrf.js";
 import { rateLimit } from "./middleware/rate-limit.js";
-import { reserveRecipeQuota, refundRecipeQuota, reserveMealPlanQuota, refundMealPlanQuota, getQuotaStatus, newUserTrialEnd, QuotaError } from "./quota.js";
+import { reserveRecipeQuota, refundRecipeQuota, reserveMealPlanQuota, refundMealPlanQuota, getQuotaStatus, newUserTrialEnd, PLAN_LIMITS, MEAL_PLAN_LIMITS, QuotaError } from "./quota.js";
 import { enqueueJob, registerJobHandler, startJobWorker } from "./jobs.js";
 import { fixTurkish, findBestMatch, splitAmountFromName } from "./ingredient-matching.js";
 
@@ -97,6 +97,34 @@ function isPublicRoute(req: express.Request): boolean {
   if (/^\/images\/[^/]+\/[^/]+$/.test(req.path)) return true;
   return ["/kosullar", "/gizlilik", "/kvkk"].includes(req.path);
 }
+
+// CORS for the browser-based admin panel ONLY. The iOS app never needs CORS;
+// no other web origin is allowed. Must run before the auth gate because
+// preflight OPTIONS requests carry no bearer token.
+const ALLOWED_WEB_ORIGINS = new Set(
+  [
+    "https://admin.feslihan.com.tr",
+    "https://feslihan-admin.vercel.app", // canonical Vercel URL (pre-DNS fallback)
+    "http://localhost:3000", // admin panel local dev
+    ...(process.env.ADMIN_CORS_ORIGINS || "").split(",").map((s) => s.trim()),
+  ].filter(Boolean)
+);
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_WEB_ORIGINS.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Max-Age", "86400");
+  }
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+  next();
+});
 
 // Global authentication gate: every request except the public allowlist must
 // carry a valid Clerk session JWT. Identity is derived from the token (req.auth).
@@ -2812,6 +2840,43 @@ app.post("/ai/meal-plan", aiRateLimit, async (req, res) => {
     console.error("[AI MealPlan] ERROR:", err.stack || err.message || err);
     res.status(500).json({ error: "Meal plan generation failed", detail: err.message });
   }
+});
+
+// Quota overview for the admin panel: every user with their effective plan
+// and this month's scan / meal-plan usage.
+app.get("/admin/users/quota", requireAdmin, async (_req, res) => {
+  const rows = await db.select().from(users).orderBy(desc(users.createdAt));
+  const month = new Date().toISOString().slice(0, 7);
+  const now = Date.now();
+
+  res.json(
+    rows.map((u) => {
+      const unlimitedActive = u.unlimitedUntil != null && u.unlimitedUntil.getTime() > now;
+      const plan = unlimitedActive ? "pro" : u.subscriptionPlan;
+      const scanLimit = plan in PLAN_LIMITS ? PLAN_LIMITS[plan] : PLAN_LIMITS.free;
+      const mealPlanLimit = plan in MEAL_PLAN_LIMITS ? MEAL_PLAN_LIMITS[plan] : MEAL_PLAN_LIMITS.free;
+      // A stale reset month means the user simply hasn't used anything this month.
+      const sameMonth = u.usageResetMonth === month;
+      const scansUsed = sameMonth ? u.recipesUsedThisMonth : 0;
+      const mealPlansUsed = sameMonth ? u.mealPlansUsedThisMonth : 0;
+      return {
+        clerk_id: u.clerkId,
+        email: u.email,
+        name: u.name,
+        plan: u.subscriptionPlan,
+        effective_plan: plan,
+        unlimited_until: unlimitedActive ? u.unlimitedUntil!.toISOString() : null,
+        scans_used: scansUsed,
+        scan_limit: scanLimit,
+        scans_remaining: scanLimit === null ? null : Math.max(0, scanLimit - scansUsed),
+        meal_plans_used: mealPlansUsed,
+        meal_plan_limit: mealPlanLimit,
+        meal_plans_remaining:
+          mealPlanLimit === null ? null : Math.max(0, mealPlanLimit - mealPlansUsed),
+        created_at: u.createdAt.toISOString(),
+      };
+    })
+  );
 });
 
 // Grant one user unlimited (effective-pro) access for N days — comped
