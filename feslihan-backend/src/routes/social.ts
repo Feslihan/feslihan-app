@@ -9,6 +9,7 @@ import {
 } from "../schema.js";
 import { eq, and, or, desc, sql } from "drizzle-orm";
 import { rateLimit } from "../middleware/rate-limit.js";
+import { sendPushToUser } from "../apns.js";
 
 // Social graph routes: friend codes, mutual-follow requests, friend recipe
 // browsing, and friend-to-friend recipe shares. These are the only routes that
@@ -56,6 +57,17 @@ async function findConnection(a: string, b: string) {
 async function areFriends(a: string, b: string): Promise<boolean> {
   const row = await findConnection(a, b);
   return row?.status === "accepted";
+}
+
+/** Display name for push texts; falls back for profiles that never synced. */
+async function displayName(userId: string): Promise<string> {
+  const [row] = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.clerkId, userId))
+    .limit(1);
+  const trimmed = row?.name?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : "Feslihan kullanıcısı";
 }
 
 export function createSocialRouter(deps: SocialDeps): express.Router {
@@ -202,6 +214,11 @@ export function createSocialRouter(deps: SocialDeps): express.Router {
         .set({ status: "accepted", respondedAt: new Date() })
         .where(eq(connections.id, existing.id))
         .returning();
+      await sendPushToUser(existing.requesterId, {
+        title: "Artık arkadaşsınız 🎉",
+        body: `${await displayName(me)} arkadaşlık isteğini kabul etti.`,
+        data: { type: "friend_accept" },
+      });
       res.json(toSnake(accepted));
       return;
     }
@@ -210,6 +227,11 @@ export function createSocialRouter(deps: SocialDeps): express.Router {
       .insert(connections)
       .values({ requesterId: me, addresseeId: toUserId })
       .returning();
+    await sendPushToUser(toUserId, {
+      title: "Yeni arkadaşlık isteği 🌿",
+      body: `${await displayName(me)} seni arkadaş olarak eklemek istiyor.`,
+      data: { type: "friend_request" },
+    });
     res.status(201).json(toSnake(created));
   });
 
@@ -260,6 +282,11 @@ export function createSocialRouter(deps: SocialDeps): express.Router {
       res.status(404).json({ error: "İstek bulunamadı" });
       return;
     }
+    await sendPushToUser(updated.requesterId, {
+      title: "Artık arkadaşsınız 🎉",
+      body: `${await displayName(me)} arkadaşlık isteğini kabul etti.`,
+      data: { type: "friend_accept" },
+    });
     res.json(toSnake(updated));
   });
 
@@ -391,7 +418,7 @@ export function createSocialRouter(deps: SocialDeps): express.Router {
     }
 
     const [recipe] = await db
-      .select({ id: recipes.id })
+      .select({ id: recipes.id, title: recipes.title })
       .from(recipes)
       .where(eq(recipes.id, recipeId))
       .limit(1);
@@ -429,6 +456,12 @@ export function createSocialRouter(deps: SocialDeps): express.Router {
       .insert(recipeShares)
       .values({ senderId: me, recipientId: toUserId, recipeId, message })
       .returning();
+
+    await sendPushToUser(toUserId, {
+      title: "Yeni tarif! 🍲",
+      body: `${await displayName(me)} sana bir tarif gönderdi: ${recipe.title}`,
+      data: { type: "share", share_id: created.id },
+    });
 
     res.status(201).json({ ...toSnake(created), recipient_has_recipe: recipientHasRecipe });
   });

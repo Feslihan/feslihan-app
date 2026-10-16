@@ -23,6 +23,10 @@ targets:
         product: ClerkKitUI
       - package: RevenueCat
         product: RevenueCat
+    entitlements:
+      path: Feslihan/Feslihan.entitlements
+      properties:
+        aps-environment: development
     info:
       path: Feslihan/Info.plist
       properties:

@@ -26,6 +26,11 @@ struct RootView: View {
                     // notifications (no-op when the feature is off).
                     await NotificationService.shared.refreshIfEnabled(context: modelContext)
                 }
+                .task {
+                    // Social pushes: one-time permission ask, then (re)register
+                    // the APNs device token on every signed-in launch.
+                    await NotificationService.shared.askPushPermissionOnce()
+                }
         } else {
             ZStack {
                 DS.cream.ignoresSafeArea()

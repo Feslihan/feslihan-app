@@ -381,8 +381,23 @@ struct ModeSelectionView: View {
         .onReceive(NotificationCenter.default.publisher(for: .feslihanOpenRecipe)) { _ in
             openPendingNotificationRecipe()
         }
+        // Recipe-share push tap → open the inbox.
+        .task { openInboxIfPending() }
+        .onReceive(NotificationCenter.default.publisher(for: .feslihanOpenInbox)) { _ in
+            openInboxIfPending()
+        }
         .sheet(item: $notificationRecipe) { recipe in
             NavigationStack { RecipeDetailView(recipe: recipe) }
+        }
+    }
+
+    /// Opens the share inbox if a push tap flagged it.
+    private func openInboxIfPending() {
+        guard NotificationService.shared.consumePendingInbox() else { return }
+        showAccountSheet = false
+        withAnimation(.spring(response: 0.2)) { selectedMode = nil }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            showInboxSheet = true
         }
     }
 

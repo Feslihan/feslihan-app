@@ -95,6 +95,7 @@
 		1D3CFA3F8D15C8C043FA7380 /* Recipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recipe.swift; sourceTree = "<group>"; };
 		25E84BE2C8FB9A9C66E594FA /* FriendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsView.swift; sourceTree = "<group>"; };
 		280E29ED73235144D1D41621 /* CookingModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CookingModeView.swift; sourceTree = "<group>"; };
+		284838D5346EE3B4B8871896 /* Feslihan.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Feslihan.entitlements; sourceTree = "<group>"; };
 		29A4647E13A9C9E63C818AF4 /* A15_NotificationSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A15_NotificationSettingsTests.swift; sourceTree = "<group>"; };
 		2AD07D41EA74F693F51CB4BF /* A11_FoldersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = A11_FoldersTests.swift; sourceTree = "<group>"; };
 		2C106C18CA48DECC3172126F /* RecipeDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeDetailView.swift; sourceTree = "<group>"; };
@@ -183,6 +184,7 @@
 			children = (
 				9CA009784BB90E49A89A1526 /* Assets.xcassets */,
 				D9EE80C777D363E51DF793EF /* Config.swift */,
+				284838D5346EE3B4B8871896 /* Feslihan.entitlements */,
 				05A43D2288E882550ECF0B51 /* FeslihanApp.swift */,
 				1CB25DF3D77ECB2C7BBCC1A7 /* FeslihanError.swift */,
 				61A77A661A1D0EFE85F7EB23 /* Info.plist */,
@@ -497,6 +499,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Feslihan/Feslihan.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Feslihan/Info.plist;
@@ -686,6 +689,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Feslihan/Feslihan.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Feslihan/Info.plist;

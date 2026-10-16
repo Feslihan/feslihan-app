@@ -537,6 +537,18 @@ enum APIService {
         return true
     }
 
+    /// Register this device's APNs token so the backend can push to it.
+    static func registerDevice(token: String, environment: String) async -> Bool {
+        guard let url = URL(string: "\(baseURL)/devices") else { return false }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["token": token, "environment": environment])
+        guard let (_, response) = try? await URLSession.shared.data(for: await authed(request)),
+              let http = response as? HTTPURLResponse, http.statusCode == 200 else { return false }
+        return true
+    }
+
     /// All reviews on a recipe (the public board), with author name/avatar.
     static func fetchRecipeReviews(recipeId: String) async -> [UserReviewDTO] {
         guard let url = URL(string: "\(baseURL)/recipes/\(recipeId)/reviews") else { return [] }

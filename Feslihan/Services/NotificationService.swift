@@ -2,11 +2,14 @@ import Foundation
 import UserNotifications
 import SwiftData
 import ClerkKit
+import UIKit
 
 extension Notification.Name {
     /// Posted when the user taps a daily-suggestion notification while the
     /// app is running; ModeSelectionView listens and opens the recipe.
     static let feslihanOpenRecipe = Notification.Name("feslihanOpenRecipe")
+    /// Posted when the user taps a recipe-share push; opens the inbox.
+    static let feslihanOpenInbox = Notification.Name("feslihanOpenInbox")
 }
 
 /// Schedules the daily "Yarın ne pişirsem?" local notifications: the next 7
@@ -23,6 +26,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
     static let defaultMinutes = 20 * 60
     private static let historyKey = "dailySuggestionHistory"
     static let pendingRecipeKey = "pendingNotificationRecipeId"
+    static let pendingInboxKey = "pendingOpenInbox"
+    private static let askedPushPermissionKey = "didAskPushPermission"
     private static let idPrefix = "feslihan.dailySuggestion."
     private static let historyDays = 14
 
@@ -45,6 +50,31 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
 
     func authorizationStatus() async -> UNAuthorizationStatus {
         await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+    }
+
+    // MARK: - Remote push (APNs)
+
+    /// Registers with APNs when notifications are authorized. The resulting
+    /// device token lands in AppDelegate and is forwarded to the backend.
+    func registerForRemoteIfAuthorized() async {
+        guard await authorizationStatus() == .authorized else { return }
+        await MainActor.run {
+            UIApplication.shared.registerForRemoteNotifications()
+        }
+    }
+
+    /// One-time permission ask on first signed-in launch, so social pushes
+    /// ("sana tarif gönderdi") work without hunting for a settings toggle.
+    /// Later changes stay in the user's hands (Ayarlar / iOS Ayarları).
+    func askPushPermissionOnce() async {
+        guard !defaults.bool(forKey: Self.askedPushPermissionKey) else {
+            await registerForRemoteIfAuthorized()
+            return
+        }
+        defaults.set(true, forKey: Self.askedPushPermissionKey)
+        if await requestAuthorization() {
+            await registerForRemoteIfAuthorized()
+        }
     }
 
     // MARK: - Scheduling
@@ -153,14 +183,26 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        guard let recipeId = response.notification.request.content.userInfo["recipeId"] as? String else { return }
-        defaults.set(recipeId, forKey: Self.pendingRecipeKey)
-        // Delay the in-app signal until the background→foreground transition
-        // settles: mutating UI state mid-transition trips UIKit's snapshot
-        // assertion (SIGABRT in _updateStateRestorationArchiveForBackgroundEvent).
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            NotificationCenter.default.post(name: .feslihanOpenRecipe, object: nil)
+        let userInfo = response.notification.request.content.userInfo
+
+        // Note: the in-app signals below are delayed until the background→
+        // foreground transition settles — mutating UI state mid-transition
+        // trips UIKit's snapshot assertion (SIGABRT in
+        // _updateStateRestorationArchiveForBackgroundEvent).
+        if let recipeId = userInfo["recipeId"] as? String {
+            // Daily suggestion → open the recipe.
+            defaults.set(recipeId, forKey: Self.pendingRecipeKey)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                NotificationCenter.default.post(name: .feslihanOpenRecipe, object: nil)
+            }
+        } else if (userInfo["type"] as? String) == "share" {
+            // Recipe-share push → open the inbox.
+            defaults.set(true, forKey: Self.pendingInboxKey)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                NotificationCenter.default.post(name: .feslihanOpenInbox, object: nil)
+            }
         }
+        // friend_request / friend_accept pushes just open the app (v1).
     }
 
     /// Reads and clears the recipe id stashed by a notification tap.
@@ -168,6 +210,13 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         guard let stored = defaults.string(forKey: Self.pendingRecipeKey) else { return nil }
         defaults.removeObject(forKey: Self.pendingRecipeKey)
         return UUID(uuidString: stored)
+    }
+
+    /// Reads and clears the "open the share inbox" flag set by a push tap.
+    func consumePendingInbox() -> Bool {
+        guard defaults.bool(forKey: Self.pendingInboxKey) else { return false }
+        defaults.removeObject(forKey: Self.pendingInboxKey)
+        return true
     }
 
     // MARK: - Helpers

@@ -3,8 +3,35 @@ import SwiftData
 import ClerkKit
 import UserNotifications
 
+/// Receives the APNs device-token callbacks (UIApplicationDelegate-only API)
+/// and forwards the token to the backend for server→device push.
+final class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        let token = deviceToken.map { String(format: "%02x", $0) }.joined()
+        #if DEBUG
+        let environment = "sandbox"
+        #else
+        let environment = "production"
+        #endif
+        Task {
+            _ = await APIService.registerDevice(token: token, environment: environment)
+        }
+    }
+
+    func application(
+        _ application: UIApplication,
+        didFailToRegisterForRemoteNotificationsWithError error: Error
+    ) {
+        print("[Push] remote registration failed: \(error.localizedDescription)")
+    }
+}
+
 @main
 struct FeslihanApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var clerk: Clerk
 
     init() {
