@@ -5,6 +5,7 @@ import { db } from "./db.js";
 import { recipes, ingredients, tags, platformCreators, userRecipes, userFolders, users, mealPlans, userPantry, userShoppingList, recipeReviews, connections, recipeShares, deviceTokens } from "./schema.js";
 import { createSocialRouter } from "./routes/social.js";
 import { createLegalRouter } from "./routes/legal.js";
+import { createWebhooksRouter } from "./routes/webhooks.js";
 import { uploadImage, s3KeyFromUrl, getImage } from "./s3.js";
 import { analyzeRecipe, analyzeNutrition, generateMealPlan, classifyIngredients, classifyFreezerFriendly, findAlternativeIngredients } from "./ai.js";
 import { eq, desc, inArray, and, or, sql, isNull, lt } from "drizzle-orm";
@@ -92,7 +93,9 @@ app.use((req, _res, next) => {
 // Public routes that do not require authentication:
 // - image serving (fetched by AsyncImage / plain GETs that cannot carry a token)
 // - legal pages (linked from the sign-up screen and App Store listing)
+// - RevenueCat webhook (authenticated by its own shared secret in the handler)
 function isPublicRoute(req: express.Request): boolean {
+  if (req.method === "POST" && req.path === "/webhooks/revenuecat") return true;
   if (req.method !== "GET") return false;
   if (/^\/images\/[^/]+\/[^/]+$/.test(req.path)) return true;
   return ["/kosullar", "/gizlilik", "/kvkk"].includes(req.path);
@@ -142,6 +145,9 @@ app.use(createSocialRouter({ toSnake, enrichRecipes, rewriteThumbnail }));
 
 // Public legal pages (Kullanım Koşulları, Gizlilik, KVKK).
 app.use(createLegalRouter());
+
+// RevenueCat webhook (shared-secret auth; keeps subscription_plan in sync).
+app.use(createWebhooksRouter());
 
 function toSnake(obj: any): any {
   if (Array.isArray(obj)) return obj.map(toSnake);
