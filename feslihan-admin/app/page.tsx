@@ -24,6 +24,9 @@ interface UserQuota {
   meal_plans_used: number;
   meal_plan_limit: number | null;
   meal_plans_remaining: number | null;
+  recipe_count: number;
+  last_active_at: string | null;
+  last_sign_in_at: string | null;
   created_at: string;
 }
 
@@ -33,6 +36,18 @@ function formatDate(iso: string): string {
     month: "short",
     year: "numeric",
   });
+}
+
+/** "bugün" / "3 gün önce" / "5 Eki" — compact last-activity label. */
+function formatRelative(iso: string | null): string {
+  if (!iso) return "—";
+  const then = new Date(iso).getTime();
+  const days = Math.floor((Date.now() - then) / 86_400_000);
+  if (days <= 0) return "bugün";
+  if (days === 1) return "dün";
+  if (days < 7) return `${days} gün önce`;
+  if (days < 30) return `${Math.floor(days / 7)} hafta önce`;
+  return formatDate(iso);
 }
 
 function QuotaCell({ used, limit }: { used: number; limit: number | null }) {
@@ -145,8 +160,10 @@ function Dashboard() {
               <tr>
                 <th>Kullanıcı</th>
                 <th>Plan</th>
+                <th>Tarif</th>
                 <th>Tarama</th>
                 <th>Haftalık Plan</th>
+                <th>Son Aktiflik</th>
                 <th>Kayıt</th>
                 <th></th>
               </tr>
@@ -168,6 +185,7 @@ function Dashboard() {
                       </span>
                     )}
                   </td>
+                  <td className="recipe-count">{u.recipe_count}</td>
                   <td>
                     <QuotaCell used={u.scans_used} limit={u.scan_limit} />
                   </td>
@@ -176,6 +194,9 @@ function Dashboard() {
                       used={u.meal_plans_used}
                       limit={u.meal_plan_limit}
                     />
+                  </td>
+                  <td className="muted" title={u.last_active_at ?? ""}>
+                    {formatRelative(u.last_active_at)}
                   </td>
                   <td className="muted">{formatDate(u.created_at)}</td>
                   <td>

@@ -11,6 +11,7 @@ import { analyzeRecipe, analyzeNutrition, generateMealPlan, classifyIngredients,
 import { eq, desc, inArray, and, or, sql, isNull, lt } from "drizzle-orm";
 import { seedPlatformRecipes, mapPlatformRecipesToUser } from "./seed-recipes.js";
 import { requireAuth, requireAdmin } from "./middleware/auth.js";
+import { createClerkClient } from "@clerk/backend";
 import { safeFetchText, UrlNotAllowedError } from "./security/ssrf.js";
 import { rateLimit } from "./middleware/rate-limit.js";
 import { reserveRecipeQuota, refundRecipeQuota, reserveMealPlanQuota, refundMealPlanQuota, getQuotaStatus, newUserTrialEnd, PLAN_LIMITS, MEAL_PLAN_LIMITS, QuotaError } from "./quota.js";
@@ -2855,8 +2856,32 @@ app.get("/admin/users/quota", requireAdmin, async (_req, res) => {
   const month = new Date().toISOString().slice(0, 7);
   const now = Date.now();
 
+  // Saved-recipe count per user (one grouped query, not N queries).
+  const recipeCountRows = await db
+    .select({ userId: userRecipes.userId, count: sql<number>`count(*)::int` })
+    .from(userRecipes)
+    .groupBy(userRecipes.userId);
+  const recipeCountByUser = new Map(recipeCountRows.map((r) => [r.userId, r.count]));
+
+  // Activity from Clerk (last active / last sign-in / member-since) — best
+  // effort: if Clerk is unreachable the panel still renders the DB columns.
+  const activityByUser = new Map<string, { lastActiveAt: number | null; lastSignInAt: number | null }>();
+  try {
+    const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+    const list = await clerk.users.getUserList({ limit: 500 });
+    for (const u of list.data) {
+      activityByUser.set(u.id, {
+        lastActiveAt: u.lastActiveAt ?? null,
+        lastSignInAt: u.lastSignInAt ?? null,
+      });
+    }
+  } catch (err) {
+    console.error("[admin/quota] Clerk activity fetch failed:", err);
+  }
+
   res.json(
     rows.map((u) => {
+      const activity = activityByUser.get(u.clerkId);
       const unlimitedActive = u.unlimitedUntil != null && u.unlimitedUntil.getTime() > now;
       const plan = unlimitedActive ? "pro" : u.subscriptionPlan;
       const scanLimit = plan in PLAN_LIMITS ? PLAN_LIMITS[plan] : PLAN_LIMITS.free;
@@ -2879,6 +2904,9 @@ app.get("/admin/users/quota", requireAdmin, async (_req, res) => {
         meal_plan_limit: mealPlanLimit,
         meal_plans_remaining:
           mealPlanLimit === null ? null : Math.max(0, mealPlanLimit - mealPlansUsed),
+        recipe_count: recipeCountByUser.get(u.clerkId) ?? 0,
+        last_active_at: activity?.lastActiveAt ? new Date(activity.lastActiveAt).toISOString() : null,
+        last_sign_in_at: activity?.lastSignInAt ? new Date(activity.lastSignInAt).toISOString() : null,
         created_at: u.createdAt.toISOString(),
       };
     })

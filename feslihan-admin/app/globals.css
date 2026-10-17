@@ -199,3 +199,5 @@ code {
   padding: 2px 6px;
   font-size: 12px;
 }
+
+.recipe-count { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); }
