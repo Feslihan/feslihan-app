@@ -69,7 +69,12 @@ jobs:
           cp -r content-drafts/* /tmp/drafts/content-drafts/
           cp content-studio/state.json /tmp/drafts/state.json
           cd /tmp/drafts
-          git add -A
+          # -f: main'in .gitignore'u content-drafts/ dizinini dışlıyor
+          git add -f content-drafts state.json
+          if git diff --cached --quiet -- content-drafts; then
+            echo "::error::Taslak dosyaları stage edilemedi — commit iptal."
+            exit 1
+          fi
           git commit -m "content: $(date +%Y-%m-%d) taslakları"
           git push origin content-drafts
 
