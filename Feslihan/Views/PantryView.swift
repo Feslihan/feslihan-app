@@ -177,7 +177,10 @@ struct PantryView: View {
     }
 
     private func loadPantry() async {
-        guard let userId = Clerk.shared.user?.id else { return }
+        guard let userId = Clerk.shared.user?.id else {
+            isLoading = false
+            return
+        }
         items = await APIService.fetchPantry(userId: userId)
         isLoading = false
     }

@@ -103,7 +103,10 @@ struct SavedMealPlansView: View {
     }
 
     private func loadPlans() async {
-        guard let userId = Clerk.shared.user?.id else { return }
+        guard let userId = Clerk.shared.user?.id else {
+            isLoading = false
+            return
+        }
         plans = await APIService.fetchMealPlans(userId: userId)
         isLoading = false
     }
