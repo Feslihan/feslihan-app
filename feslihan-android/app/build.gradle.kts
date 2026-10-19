@@ -9,12 +9,14 @@ plugins {
 
 android {
     namespace = "com.feslihan.app"
-    compileSdk = 35
+    // 34 to match the locally-installed SDK platform + emulator image (no extra
+    // downloads). Bump to 35 before Play release once SDK 35 is installed.
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.feslihan.app"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

@@ -2,6 +2,8 @@ package com.feslihan.app.data.local
 
 import androidx.room.TypeConverter
 import com.feslihan.app.data.model.IngredientMeasure
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 /** Room type converters — store list/object fields as JSON strings. */
