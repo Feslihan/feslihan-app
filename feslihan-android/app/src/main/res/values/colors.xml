@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mirrors DS tokens from the iOS Theme.swift (Modern Kitchen Editorial). -->
+<resources>
+    <color name="basil">#23834A</color>
+    <color name="basil_tint">#E6F3EA</color>
+    <color name="paper_white">#FFFFFF</color>
+    <color name="ink">#111111</color>
+    <color name="ic_launcher_background">#E6F3EA</color>
+</resources>

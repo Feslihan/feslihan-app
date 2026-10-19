@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme. The real UI is themed in Compose (ui/theme/Theme.kt);
+         this XML theme only styles the system window before Compose takes over. -->
+    <style name="Theme.Feslihan" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/paper_white</item>
+        <item name="android:navigationBarColor">@color/paper_white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/paper_white</item>
+    </style>
+</resources>

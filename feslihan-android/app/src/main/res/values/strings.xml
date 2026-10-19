@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- UI language is Turkish (see CLAUDE.md "Keep UI text in Turkish"). -->
+<resources>
+    <string name="app_name">Feslihan</string>
+    <string name="tagline">Annenin yemek defteri, her zaman cebinde.</string>
+
+    <!-- App modes (home hub) -->
+    <string name="mode_meal_prep">Haftalık Plan</string>
+    <string name="mode_what_to_eat">Ne Yesem?</string>
+    <string name="mode_my_recipes">Tariflerim</string>
+    <string name="mode_pantry">Kilerim</string>
+    <string name="mode_shopping_list">Alışveriş Listesi</string>
+
+    <!-- Common actions -->
+    <string name="action_add_recipe">Tarif Ekle</string>
+    <string name="action_save">Kaydet</string>
+    <string name="action_cancel">Vazgeç</string>
+    <string name="action_back">Geri</string>
+    <string name="action_cook">Pişir</string>
+</resources>

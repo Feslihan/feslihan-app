@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Basil leaf motif (matches the web/iOS leaf brand mark). Drawn inside the
+     adaptive-icon safe zone (center ~44dp of the 108dp canvas). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#23834A"
+        android:pathData="M34,74 C34,49 49,34 74,34 C74,59 59,74 34,74 Z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M34,74 C39,61.5 46.5,54 59,49" />
+</vector>
