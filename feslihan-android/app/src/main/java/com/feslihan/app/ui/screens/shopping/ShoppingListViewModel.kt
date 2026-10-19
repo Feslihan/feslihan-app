@@ -56,4 +56,14 @@ class ShoppingListViewModel @Inject constructor(
         if (name.isBlank()) return
         viewModelScope.launch { repository.addToShopping(listOf(name.trim())); load() }
     }
+
+    fun clearChecked() {
+        val checked = _state.value.items.filter { it.isChecked }
+        if (checked.isEmpty()) return
+        _state.value = _state.value.copy(items = _state.value.items.filterNot { it.isChecked })
+        viewModelScope.launch {
+            checked.forEach { repository.removeFromShopping(it.id) }
+            load()
+        }
+    }
 }

@@ -10,6 +10,8 @@ import androidx.navigation.NavType
 import com.feslihan.app.ui.screens.home.HomeScreen
 import com.feslihan.app.ui.screens.pantry.PantryScreen
 import com.feslihan.app.ui.screens.placeholder.ComingSoonScreen
+import com.feslihan.app.ui.screens.recipes.CookingModeScreen
+import com.feslihan.app.ui.screens.recipes.RecipeDetailScreen
 import com.feslihan.app.ui.screens.recipes.RecipeListScreen
 import com.feslihan.app.ui.screens.shopping.ShoppingListScreen
 
@@ -43,16 +45,17 @@ fun FeslihanNavGraph(navController: NavHostController = rememberNavController())
         composable(
             route = "${Routes.RECIPE_DETAIL}/{recipeId}",
             arguments = listOf(navArgument("recipeId") { type = NavType.StringType }),
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("recipeId").orEmpty()
-            ComingSoonScreen(title = "Tarif Detayı", onBack = { navController.popBackStack() })
-            // TODO(task 6): RecipeDetailScreen(recipeId = id, ...)
+        ) {
+            RecipeDetailScreen(
+                onBack = { navController.popBackStack() },
+                onStartCooking = { id -> navController.navigate(Routes.cookingMode(id)) },
+            )
         }
         composable(
             route = "${Routes.COOKING_MODE}/{recipeId}",
             arguments = listOf(navArgument("recipeId") { type = NavType.StringType }),
         ) {
-            ComingSoonScreen(title = "Pişirme Modu", onBack = { navController.popBackStack() })
+            CookingModeScreen(onClose = { navController.popBackStack() })
         }
 
         // Mode 4 — Kilerim (real screen)

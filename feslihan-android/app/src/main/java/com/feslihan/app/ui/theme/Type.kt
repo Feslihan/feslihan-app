@@ -53,3 +53,21 @@ val EyebrowTextStyle = TextStyle(
     lineHeight = 14.sp,
     letterSpacing = 1.3.sp,
 )
+
+/** Oversized editorial serif screen title (design uses ~40px "Tariflerim"). */
+val DisplayXLTextStyle = TextStyle(
+    fontFamily = Serif,
+    fontWeight = FontWeight.SemiBold,
+    fontSize = 38.sp,
+    lineHeight = 42.sp,
+    letterSpacing = (-1).sp,
+)
+
+/** Hero title over photos (design ~42px). */
+val DisplayHeroTextStyle = TextStyle(
+    fontFamily = Serif,
+    fontWeight = FontWeight.SemiBold,
+    fontSize = 40.sp,
+    lineHeight = 44.sp,
+    letterSpacing = (-1).sp,
+)
