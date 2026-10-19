@@ -1,114 +1,326 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Feslihan — Annenin yemek defteri, her zaman cebinde</title>
-<meta name="description" content="Feslihan; tarif kaydetme, yapay zekâ destekli tarif analizi, haftalık yemek planlama, kiler ve alışveriş listesi yönetimi sunan bir iOS uygulamasıdır.">
-<link rel="stylesheet" href="/style.css">
+<title>Feslihan — Annenin yemek defteri, her zaman cebinde.</title>
+<meta name="description" content="Instagram ve TikTok'taki tarifleri kaybetme. Linkini yapıştır, Feslihan tarifi malzeme, yapılış ve besin değerleriyle defterine yazsın.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+<style>
+:root{--g:#23834A;--gl:#E6F3EA;--tom:#D93A2B;--saf:#F2A516;--saf-ink:#9A5C00;--egg:#6B2D6B;--ink:#111;--g1:#555;--g2:#767676;--line:#E5E5E5;--wash:#F7F7F7;--r:8px;--serif:ui-serif,"New York",Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"SF Pro Text","Segoe UI",Helvetica,Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{font-family:var(--sans);color:var(--ink);background:#fff;font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--ink);text-decoration:none}a:hover{color:var(--g)}
+:focus-visible{outline:2px solid var(--g);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.serif{font-family:var(--serif);font-weight:600;letter-spacing:-0.02em;line-height:1.08}
+.note{font-family:var(--serif);font-style:italic;color:var(--g1)}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--g2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 22px;border-radius:var(--r);border:1px solid var(--ink);background:#fff;color:var(--ink);font:600 16px var(--sans);cursor:pointer;transition:background .2s,color .2s,border-color .2s;white-space:nowrap}
+.btn:hover{background:var(--ink);color:#fff}
+.btn-g{background:var(--g);border-color:var(--g);color:#fff}.btn-g:hover{background:#1A6B3B;border-color:#1A6B3B;color:#fff}
+.badge-as{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--ink);border-radius:var(--r);font-size:13px;font-weight:600;white-space:nowrap}
+.leaf{display:block;flex-shrink:0}
+/* nav */
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.96);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:64px;gap:20px}
+.logo{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-weight:600;font-size:22px;letter-spacing:-0.02em}
+.nav ul{display:flex;align-items:center;gap:28px;list-style:none;font-size:15px}
+.nav ul a{color:var(--g1)}.nav ul a:hover{color:var(--ink)}
+@media(max-width:720px){.nav ul li.hide-m{display:none}.nav ul{gap:16px}}
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:64px;align-items:center;padding-top:88px;padding-bottom:96px}
+.hero h1{font-size:clamp(44px,6.4vw,80px)}
+.hero h1 em{font-style:italic;font-weight:500;color:var(--g)}
+.hero .lead{font-size:19px;color:var(--g1);max-width:500px;margin-top:22px;text-wrap:pretty}
+.hero .slogan{font-size:20px;margin-top:18px}
+.wl{display:flex;gap:8px;margin-top:32px;max-width:460px}
+.wl input{flex:1;min-width:0;height:48px;border:1px solid #CFCFCF;border-radius:var(--r);padding:0 14px;font:16px var(--sans);color:var(--ink);background:#fff}
+.wl input:focus{outline:none;border-color:var(--ink)}
+.wl-msg{margin-top:12px;font-size:15px;color:var(--g);min-height:24px}
+.hero-meta{display:flex;align-items:center;gap:14px;margin-top:22px;flex-wrap:wrap;color:var(--g2);font-size:14px}
+@media(max-width:900px){.hero{grid-template-columns:1fr;gap:48px;padding-top:56px;padding-bottom:72px}}
+@media(max-width:480px){.wl{flex-direction:column}.wl .btn{width:100%}}
+/* demo */
+.demo{border:1px solid var(--line);border-radius:var(--r);background:#fff;overflow:hidden}
+.demo-top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);font-size:13px;color:var(--g2)}
+.demo-body{padding:20px 18px 22px}
+.url{display:flex;align-items:center;gap:10px;height:46px;border:1px solid #CFCFCF;border-radius:var(--r);padding:0 12px;font-size:14px;overflow:hidden;white-space:nowrap}
+.url .t{flex:1;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.url .ph{color:var(--g2)}
+.caret{display:inline-block;width:1px;height:17px;background:var(--ink);vertical-align:-3px;margin-left:1px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.url .paste{font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:4px 8px;color:var(--g1)}
+.steps{list-style:none;margin-top:16px;display:grid;gap:2px}
+.steps li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--g2);height:30px;transition:color .3s}
+.steps li .ck{width:18px;height:18px;border-radius:50%;border:1px solid #CFCFCF;display:flex;align-items:center;justify-content:center;transition:all .3s}
+.steps li.on{color:var(--ink)}
+.steps li.on .ck{background:var(--g);border-color:var(--g)}
+.steps li.cur .ck{border-color:var(--g)}
+.steps li.cur .ck::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--g);animation:pl 1s infinite}
+@keyframes pl{50%{opacity:.3}}
+.rc{margin-top:16px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
+.rc.show{opacity:1;transform:none}
+.rc-img{height:120px;background:linear-gradient(160deg,#E8503C,#C5301F);position:relative;display:flex;align-items:flex-end;padding:14px}
+.rc-img h3{color:#fff;font-size:30px}
+.rc-img .cap{position:absolute;right:10px;top:10px;font:10px ui-monospace,Menlo,monospace;color:#fff;background:rgba(0,0,0,.35);padding:2px 6px;border-radius:4px}
+.rc-meta{display:flex;gap:18px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--g1)}
+.rc-meta b{color:var(--ink);font-weight:600}
+.rc-ing{list-style:none;padding:4px 14px 8px}
+.rc-ing li{display:flex;align-items:center;gap:10px;font-size:14px;height:34px;border-bottom:1px solid var(--line)}
+.rc-ing li:last-child{border:none}
+.rc-ing .d{width:7px;height:7px;border-radius:50%;background:var(--g)}
+.rc-ing .a{margin-left:auto;color:var(--g1)}
+.rc-src{font-size:12px;color:var(--g2);padding:10px 14px;border-top:1px solid var(--line)}
+/* sections */
+section.blk{padding:104px 0;border-top:1px solid var(--line)}
+.sec-h{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:end;margin-bottom:56px}
+.sec-h h2{font-size:clamp(36px,4.6vw,56px);margin-top:12px}
+.sec-h p{color:var(--g1);max-width:440px;text-wrap:pretty}
+@media(max-width:800px){.sec-h{grid-template-columns:1fr;gap:16px;margin-bottom:40px}section.blk{padding:72px 0}}
+/* features */
+.feat{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
+.fc{border:1px solid var(--line);border-radius:var(--r);padding:28px;display:flex;flex-direction:column;gap:12px;transition:border-color .25s,background .25s;grid-column:span 2}
+.fc:hover{border-color:var(--ink)}
+.fc.big{grid-column:span 3}
+.fc .top{display:flex;align-items:center;justify-content:space-between}
+.fc .num{font-size:13px;color:var(--g2);font-variant-numeric:tabular-nums}
+.fc h3{font-size:30px}
+.fc p{color:var(--g1);font-size:16px;text-wrap:pretty}
+.fc .mark{width:28px;height:3px;border-radius:2px}
+.prem{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border:1px solid var(--g);color:var(--g);border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.08em}
+@media(max-width:900px){.fc,.fc.big{grid-column:span 3}}
+@media(max-width:600px){.feat{grid-template-columns:1fr}.fc,.fc.big{grid-column:auto}}
+/* how */
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--ink)}
+.hw{padding:28px 28px 0 0}
+.hw+.hw{padding-left:28px;border-left:1px solid var(--line)}
+.hw .n{font-family:var(--serif);font-size:64px;font-weight:500;line-height:1;color:var(--g)}
+.hw h3{font-size:26px;margin-top:20px}
+.hw p{color:var(--g1);margin-top:10px;font-size:16px;text-wrap:pretty}
+.hw .note{margin-top:14px;font-size:16px}
+@media(max-width:800px){.how{grid-template-columns:1fr}.hw,.hw+.hw{padding:28px 0;border-left:none;border-bottom:1px solid var(--line)}}
+/* pricing */
+.price{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+.pc{border:1px solid var(--line);border-radius:var(--r);padding:32px 28px;display:flex;flex-direction:column;transition:border-color .25s}
+.pc:hover{border-color:var(--ink)}
+.pc.pro{border:2px solid var(--g);background:var(--gl);padding:31px 27px}
+.pc.pro:hover{border-color:var(--g)}
+.pc .tier{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:600;font-size:17px}
+.pop{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--g);color:#fff;padding:4px 9px;border-radius:4px}
+.pc .amt{display:flex;align-items:baseline;gap:6px;margin-top:22px}
+.pc .amt b{font-family:var(--serif);font-size:56px;font-weight:600;letter-spacing:-0.03em;line-height:1}
+.pc .amt span{color:var(--g1);font-size:16px}
+.pc .desc{color:var(--g1);font-size:15px;margin-top:10px;min-height:46px}
+.pc ul{list-style:none;margin:24px 0 28px;border-top:1px solid var(--line);flex:1}
+.pc.pro ul{border-color:#C7DDCD}
+.pc li{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
+.pc.pro li{border-color:#C7DDCD}
+.pc li svg{margin-top:3px}
+.pc li.no{color:var(--g2)}
+.pc .btn{width:100%}
+.pnote{margin-top:24px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;padding:22px 24px;border:1px solid var(--line);border-radius:var(--r);background:var(--wash)}
+.pnote b{font-weight:600}
+.pnote p{color:var(--g1);font-size:15px}
+@media(max-width:900px){.price{grid-template-columns:1fr}}
+/* story */
+.story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:start}
+.eq{font-family:var(--serif);font-size:clamp(34px,4.4vw,54px);line-height:1.2;letter-spacing:-0.02em}
+.eq .op{color:var(--g2);font-weight:400}
+.eq .res{color:var(--g);font-weight:600;font-style:italic}
+.eq small{display:block;font:15px var(--sans);color:var(--g2);letter-spacing:0;margin:2px 0 10px}
+.story-t p{color:var(--g1);font-size:18px;text-wrap:pretty}
+.story-t p+p{margin-top:18px}
+.story-t blockquote{font-family:var(--serif);font-style:italic;font-size:26px;line-height:1.35;color:var(--ink);border-top:1px solid var(--line);padding-top:24px;margin-top:32px}
+.story-t blockquote cite{display:block;font:normal 14px var(--sans);color:var(--g2);margin-top:12px}
+@media(max-width:860px){.story{grid-template-columns:1fr;gap:40px}}
+/* footer */
+footer{border-top:1px solid var(--ink);padding:56px 0 40px}
+.ft{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(2,minmax(0,1fr));gap:40px}
+.ft h4{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--g2);margin-bottom:14px}
+.ft ul{list-style:none;display:grid;gap:8px;font-size:15px}
+.ft .note{margin-top:12px;font-size:16px}
+.fb{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:56px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--g2)}
+@media(max-width:700px){.ft{grid-template-columns:1fr}}
+/* reveal */
+.js .rv{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+.js .rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.js .rv{opacity:1;transform:none;transition:none}.caret,.steps li.cur .ck::after{animation:none}.rc{transition:none}}
+</style>
 </head>
 <body>
-
+<script>document.documentElement.classList.add('js')</script>
 <header>
-  <div class="wrap nav">
-    <a class="brand" href="/"><span class="leaf">❧</span> Feslihan</a>
-    <a class="link" href="mailto:destek@feslihan.app">İletişim</a>
-  </div>
+<nav class="wrap nav" aria-label="Ana menü">
+<a href="#" class="logo" aria-label="Feslihan ana sayfa"><svg class="leaf" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19C5 9 11 4 20 4c0 9-5 15-15 15z" fill="#23834A"></path><path d="M5 19c2-5 5-8 10-10" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"></path></svg>Feslihan</a>
+<ul>
+<li class="hide-m"><a href="#ozellikler">Özellikler</a></li>
+<li class="hide-m"><a href="#fiyatlandirma">Fiyatlandırma</a></li>
+<li class="hide-m"><a href="#iletisim">İletişim</a></li>
+<li><span class="badge-as"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.8-1.6 0-3.1 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8-.1 0-2.5-1-2.5-3.9zM14.1 5.5c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.1-.6 2.8-1.4z" fill="#111"></path></svg>Yakında App Store'da</span></li>
+</ul>
+</nav>
 </header>
+<main>
+<section class="wrap hero">
+<div>
+<p class="eyebrow">iOS için yemek defteri</p>
+<h1 class="serif" style="margin-top:18px">Bu akşam ne pişirsem? <em>Defterinde.</em></h1>
+<p class="slogan note">Annenin yemek defteri, her zaman cebinde.</p>
+<p class="lead">Instagram'daki tarifi kaybetme. Linkini yapıştır, Feslihan tarifi malzeme, yapılış ve besin değerleriyle defterine yazsın.</p>
+<form class="wl" id="wl" novalidate>
+<label for="em" style="position:absolute;left:-9999px">E-posta adresiniz</label>
+<input id="em" type="email" placeholder="E-posta adresin" autocomplete="email" required>
+<button class="btn btn-g" type="submit">Bekleme listesine katıl</button>
+</form>
+<p class="wl-msg" id="wl-msg" role="status" aria-live="polite"></p>
+<div class="hero-meta"><span class="badge-as" style="color:var(--ink)">Yakında App Store'da</span><span>Ücretsiz başla · Ayda 3 yeni tarif</span></div>
+</div>
+<div class="demo" aria-label="Tarif ekleme demosu" role="img">
+<div class="demo-top"><span>Tarif Ekle</span><span id="d-state">Bekliyor</span></div>
+<div class="demo-body">
+<div class="url"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1" stroke="#767676" stroke-width="1.8" fill="none" stroke-linecap="round"></path></svg><span class="t" id="d-url"><span class="ph">Tarif linkini yapıştır…</span></span><span class="paste">Yapıştır</span></div>
+<ol class="steps" id="d-steps">
+<li><span class="ck"><svg width="10" height="10" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"></path></svg></span>Video bilgileri</li>
+<li><span class="ck"><svg width="10" height="10" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"></path></svg></span>Ses çıkartma</li>
+<li><span class="ck"><svg width="10" height="10" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"></path></svg></span>Yazı çevirme</li>
+<li><span class="ck"><svg width="10" height="10" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"></path></svg></span>Tarif analizi</li>
+</ol>
+<div class="rc" id="d-card">
+<div class="rc-img"><span class="cap">menemen fotoğrafı</span><h3 class="serif">Menemen</h3></div>
+<div class="rc-meta"><span><b>15 dk</b> süre</span><span><b>2</b> porsiyon</span><span><b>310</b> kcal</span></div>
+<ul class="rc-ing">
+<li><span class="d"></span>Yumurta<span class="a">4 adet</span></li>
+<li><span class="d"></span>Domates<span class="a">3 orta boy</span></li>
+<li><span class="d" style="background:var(--tom)"></span>Yeşil biber<span class="a">2 adet</span></li>
+</ul>
+<div class="rc-src">Kaynak: @aysenin.mutfagi · Instagram</div>
+</div>
+</div>
+</div>
+</section>
 
-<main class="wrap">
+<section class="blk" id="ozellikler">
+<div class="wrap">
+<div class="sec-h rv"><div><p class="eyebrow">Özellikler</p><h2 class="serif">Beş defter, tek mutfak</h2></div><p>Tarif kaydetmekten alışverişe kadar mutfağın bütün işleri tek bir uygulamada.</p></div>
+<div class="feat">
+<article class="fc big rv"><div class="top"><span class="mark" style="background:var(--g)"></span><span class="num">01</span></div><h3 class="serif">Tariflerim</h3><p>Link yapıştır → yapay zekâ tarifi çıkarsın (malzeme, yapılış, süre, porsiyon, besin değeri). Kaynağına atıf her zaman korunur.</p></article>
+<article class="fc big rv"><div class="top"><span class="mark" style="background:var(--g)"></span><span class="prem"><svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 17.5L3.5 8.5l4.5 3.8L12 6l4 6.3 4.5-3.8-1 9z" stroke="#23834A" stroke-width="2" fill="none" stroke-linejoin="round"></path></svg>PREMIUM</span></div><h3 class="serif">Haftalık Plan</h3><p>Kişi sayısı, damak tadı ve bütçeye göre haftalık yemek planı + alışveriş listesi.</p></article>
+<article class="fc rv"><div class="top"><span class="mark" style="background:var(--tom)"></span><span class="num">03</span></div><h3 class="serif">Ne Yesem?</h3><p>Kilerindeki malzemelere göre bu akşam ne pişirebileceğini önerir.</p></article>
+<article class="fc rv"><div class="top"><span class="mark" style="background:var(--egg)"></span><span class="num">04</span></div><h3 class="serif">Kilerim</h3><p>Evde ne var ne yok takibi; öneriler kilerine göre şekillenir.</p></article>
+<article class="fc rv"><div class="top"><span class="mark" style="background:var(--saf)"></span><span class="num">05</span></div><h3 class="serif">Alışveriş Listesi</h3><p>Plan ve tariflerden eksik malzemeler tek listede.</p></article>
+</div>
+</div>
+</section>
 
-  <div class="hero">
-    <div class="leaf-big">❧</div>
-    <h1>Feslihan</h1>
-    <p class="tagline">Annenin yemek defteri, her zaman cebinde.</p>
-    <p class="lede">
-      Instagram'da gördüğün tarifi kaybetme; linkini yapıştır, Feslihan tarifi
-      malzemeleriyle, yapılışıyla ve besin değerleriyle defterine yazsın.
-      Akşam yemeği sorusunu da haftalık planına bırak.
-    </p>
-    <span class="badge-soon">Yakında App Store'da</span>
-  </div>
+<section class="blk" id="nasil">
+<div class="wrap">
+<div class="sec-h rv"><div><p class="eyebrow">Nasıl çalışır?</p><h2 class="serif">Üç adımda defterinde</h2></div><p>Videoyu durdurup not almana gerek yok.</p></div>
+<div class="how">
+<div class="hw rv"><div class="n">1</div><h3 class="serif">Linki yapıştır</h3><p>Instagram, TikTok ya da bir web sitesindeki tarifin linkini kopyala, Feslihan'a yapıştır.</p></div>
+<div class="hw rv"><div class="n">2</div><h3 class="serif">Yapay zekâ defterine yazsın</h3><p>Malzemeler, yapılış ve besin değerleri ayrıştırılıp defterine kaydedilir.</p><p class="note">Daha önce eklenmiş bir tarifse anında ve hiçbir hak harcamadan eklenir.</p></div>
+<div class="hw rv"><div class="n">3</div><h3 class="serif">Pişir, paylaş</h3><p>Adım adım pişirme modu ekranı sade tutar, zamanlayıcıyı senin yerine kurar.</p></div>
+</div>
+</div>
+</section>
 
-  <section>
-    <h2>Neler yapar?</h2>
-    <p class="sub">Beş defter, tek mutfak:</p>
-    <div class="features">
-      <div class="feature">
-        <div class="glyph">📒</div>
-        <div>
-          <h3>Tariflerim</h3>
-          <p>Instagram, TikTok veya tarif sitesinden linki yapıştır; yapay zekâ
-          tarifi çıkarsın: malzemeler, yapılış, süre, porsiyon ve besin değerleri.
-          Kaynağına atıf her zaman korunur.</p>
-        </div>
-      </div>
-      <div class="feature">
-        <div class="glyph">🗓️</div>
-        <div>
-          <h3>Haftalık Plan<span class="premium">PREMIUM</span></h3>
-          <p>"Bugün ne pişirsem?" sorusunu haftada bir kez cevapla. Kişi sayına,
-          damak tadına ve bütçene göre haftalık yemek planı ve alışveriş listesi
-          hazırlanır.</p>
-        </div>
-      </div>
-      <div class="feature">
-        <div class="glyph">🥘</div>
-        <div>
-          <h3>Ne Yesem?</h3>
-          <p>Kilerindeki malzemelere göre bu akşam ne pişirebileceğini önerir.</p>
-        </div>
-      </div>
-      <div class="feature">
-        <div class="glyph">🧺</div>
-        <div>
-          <h3>Kilerim</h3>
-          <p>Evde ne var ne yok takip et; öneriler kilerine göre şekillensin.</p>
-        </div>
-      </div>
-      <div class="feature">
-        <div class="glyph">🛒</div>
-        <div>
-          <h3>Alışveriş Listesi</h3>
-          <p>Planından ve tariflerinden eksik malzemeler tek listede toplanır,
-          markette tek tek işaretlersin.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+<section class="blk" id="fiyatlandirma">
+<div class="wrap">
+<div class="sec-h rv"><div><p class="eyebrow">Fiyatlandırma</p><h2 class="serif">Mutfağına göre seç</h2></div><p>Ücretsiz başla, ihtiyacın büyüdükçe geç.</p></div>
+<div class="price">
+<article class="pc rv">
+<div class="tier">Ücretsiz</div>
+<div class="amt"><b>₺0</b></div>
+<p class="desc">Feslihan'ı tanımak için.</p>
+<ul>
+<li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#23834A" stroke-width="2.4" fill="none" stroke-linecap="round"></path></svg>Ayda 3 yeni tarif tarama</li>
+<li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#23834A" stroke-width="2.4" fill="none" stroke-linecap="round"></path></svg>Önbellekteki (daha önce eklenmiş) tarifler sınırsız ve bedava</li>
+<li class="no"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" stroke="#767676" stroke-width="2.4" stroke-linecap="round"></path></svg>Haftalık plan yok</li>
+</ul>
+<a href="#" class="btn" data-wl>Ücretsiz başla</a>
+</article>
+<article class="pc rv">
+<div class="tier">Feslihan+</div>
+<div class="amt"><b>₺79</b><span>/ay</span></div>
+<p class="desc">Her hafta birkaç yeni tarif deneyenler için.</p>
+<ul>
+<li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#23834A" stroke-width="2.4" fill="none" stroke-linecap="round"></path></svg>Ayda 20 yeni tarif tarama</li>
+<li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#23834A" stroke-width="2.4" fill="none" stroke-linecap="round"></path></svg>Ayda 2 haftalık plan</li>
+<li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#23834A" stroke-width="2.4" fill="none" stroke-linecap="round"></path></svg>"Ne Yesem?" önerisi</li>
+</ul>
+<a href="#" class="btn" data-wl>Feslihan+ seç</a>
+</article>
+<article class="pc pro rv">
+<div class="tier">Feslihan Pro<span class="pop">En popüler</span></div>
+<div class="amt"><b>₺250</b><span>/ay</span></div>
+<p class="desc">Her gün mutfakta olanlar için.</p>
+<ul>
+<li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#23834A" stroke-width="2.4" fill="none" stroke-linecap="round"></path></svg>Sınırsız yeni tarif tarama</li>
+<li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#23834A" stroke-width="2.4" fill="none" stroke-linecap="round"></path></svg>Sınırsız haftalık plan</li>
+<li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#23834A" stroke-width="2.4" fill="none" stroke-linecap="round"></path></svg>"Ne Yesem?" önerisi</li>
+<li><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#23834A" stroke-width="2.4" fill="none" stroke-linecap="round"></path></svg>Öncelikli destek</li>
+</ul>
+<a href="#" class="btn btn-g" data-wl>Pro'ya geç</a>
+</article>
+</div>
+<div class="pnote rv"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19C5 9 11 4 20 4c0 9-5 15-15 15z" fill="#23834A"></path></svg><p><b style="color:var(--ink)">Önemli not:</b> Sadece katalogda olmayan yeni tarif taramaları sayılır; zaten eklenmiş bir tarifi kaydetmek (önbellek) her zaman bedavadır ve hakkından düşmez.</p></div>
+</div>
+</section>
 
-  <section>
-    <h2>Nasıl çalışır?</h2>
-    <div class="steps">
-      <div class="step"><p><strong>Linki yapıştır.</strong> Beğendiğin tarif videosunun veya sayfasının bağlantısını Feslihan'a ver.</p></div>
-      <div class="step"><p><strong>Yapay zekâ defterine yazsın.</strong> Malzemeler, yapılış adımları, pişirme süresi ve besin değerleri saniyeler içinde çıkarılır. Daha önce eklenmiş bir tarifse anında, hiçbir hak harcamadan defterine eklenir.</p></div>
-      <div class="step"><p><strong>Pişir, paylaş.</strong> Adım adım pişirme modunu aç; beğendiğin tarifleri arkadaşlarına gönder.</p></div>
-    </div>
-  </section>
-
-  <section class="story">
-    <h2>Neden Feslihan?</h2>
-    <p>Feslihan, her gün <em>"bu akşam ne pişirsem?"</em> diye soran bir anne
-    için yapıldı. Adı da oradan geliyor: <em>Neslihan</em> + <em>fesleğen</em>.</p>
-    <p>Amacı gösterişli bir yemek uygulaması olmak değil; annenin köşesinde
-    tarif biriktirdiği o defterin yerini tutmak — kaybolmayan, aranınca bulunan,
-    alışveriş listesini kendi yazan bir defter.</p>
-  </section>
-
+<section class="blk" id="hikaye">
+<div class="wrap story">
+<div class="rv">
+<p class="eyebrow">Neden Feslihan?</p>
+<div class="eq" style="margin-top:28px">Neslihan<small>bir anne adı</small><span class="op">+</span> fesleğen<small>mutfağın kokusu</small><span class="op">=</span> <span class="res">Feslihan</span></div>
+</div>
+<div class="story-t rv">
+<p>Feslihan, her gün "bu akşam ne pişirsem?" diye soran bir anne için yapıldı.</p>
+<p>Gösterişli bir yemek uygulaması değil; kaybolmayan, aranınca bulunan, alışveriş listesini kendi yazan bir defterin dijital hali. Instagram'da kaydedilip unutulan tarifler, buzdolabına yapıştırılan notlar, markette hatırlanmayan o tek malzeme, hepsi aynı deftere giriyor.</p>
+<blockquote>"Annenin yemek defteri, her zaman cebinde."<cite>Feslihan</cite></blockquote>
+</div>
+</div>
+</section>
 </main>
 
-<footer>
-  <div class="wrap">
-    <div class="links">
-      <a href="/kosullar">Kullanım Koşulları</a>
-      <a href="/gizlilik">Gizlilik Politikası</a>
-      <a href="/kvkk">KVKK Aydınlatma Metni</a>
-      <a href="mailto:destek@feslihan.app">destek@feslihan.app</a>
-    </div>
-    Feslihan — Annenin yemek defteri, her zaman cebinde.
-  </div>
+<footer id="iletisim">
+<div class="wrap">
+<div class="ft">
+<div><a href="#" class="logo"><svg class="leaf" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19C5 9 11 4 20 4c0 9-5 15-15 15z" fill="#23834A"></path><path d="M5 19c2-5 5-8 10-10" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"></path></svg>Feslihan</a><p class="note">Annenin yemek defteri, her zaman cebinde.</p></div>
+<div><h4>Yasal</h4><ul><li><a href="/kosullar">Kullanım Koşulları</a></li><li><a href="/gizlilik">Gizlilik Politikası</a></li><li><a href="/kvkk">KVKK Aydınlatma Metni</a></li></ul></div>
+<div><h4>İletişim</h4><ul><li><a href="mailto:destek@feslihan.app">destek@feslihan.app</a></li><li><span class="badge-as" style="margin-top:6px">Yakında App Store'da</span></li></ul></div>
+</div>
+<div class="fb"><span>© 2026 Feslihan</span><span>www.feslihan.com.tr</span></div>
+</div>
 </footer>
 
+<script>
+(function(){
+var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// reveal
+var els=document.querySelectorAll('.rv');
+if(reduce||!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')})}
+else{var io=new IntersectionObserver(function(en){en.forEach(function(x){if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}})},{threshold:.12,rootMargin:'0px 0px -40px 0px'});els.forEach(function(e){io.observe(e)})}
+// waitlist
+var f=document.getElementById('wl'),m=document.getElementById('wl-msg'),em=document.getElementById('em');
+f.addEventListener('submit',function(ev){ev.preventDefault();var v=em.value.trim();
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){m.style.color='var(--tom)';m.textContent='Geçerli bir e-posta adresi yaz.';em.focus();return}
+m.style.color='var(--g)';m.textContent='Teşekkürler! Feslihan App Store\'a çıktığında '+v+' adresine haber vereceğiz.';f.reset()});
+document.querySelectorAll('[data-wl]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});setTimeout(function(){em.focus()},reduce?0:500)})});
+// demo
+var url='instagram.com/reel/menemen-tarifi',U=document.getElementById('d-url'),S=document.querySelectorAll('#d-steps li'),C=document.getElementById('d-card'),st=document.getElementById('d-state');
+function final(){U.textContent=url;S.forEach(function(l){l.className='on'});C.classList.add('show');st.textContent='Kaydedildi'}
+if(reduce){final();return}
+var timers=[];function at(ms,fn){timers.push(setTimeout(fn,ms))}
+function run(){timers.forEach(clearTimeout);timers=[];
+U.innerHTML='<span class="ph">Tarif linkini yapıştır…</span>';S.forEach(function(l){l.className=''});C.classList.remove('show');st.textContent='Bekliyor';
+var t=900;for(var i=1;i<=url.length;i++){(function(n){at(t+n*45,function(){U.innerHTML='';U.appendChild(document.createTextNode(url.slice(0,n)));var c=document.createElement('span');c.className='caret';U.appendChild(c)})})(i)}
+t+=url.length*45+500;at(t,function(){U.textContent=url;st.textContent='İşleniyor…'});
+S.forEach(function(l,i){at(t+i*700,function(){if(i>0)S[i-1].className='on';l.className='cur'})});
+t+=S.length*700;at(t,function(){S[S.length-1].className='on';C.classList.add('show');st.textContent='Kaydedildi'});
+at(t+5000,run)}
+run();
+})();
+</script>
 </body>
 </html>
