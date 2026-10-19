@@ -44,7 +44,7 @@ private fun FeslihanRoot(authViewModel: AuthViewModel = hiltViewModel()) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.ds.cream) {
             when (authState) {
                 AuthState.Loading -> SplashGate()
-                AuthState.SignedOut -> AuthView() // Clerk's prebuilt sign-in / sign-up UI
+                AuthState.SignedOut -> AuthView(modifier = Modifier.fillMaxSize()) // Clerk's prebuilt sign-in / sign-up UI
                 AuthState.SignedIn -> FeslihanNavGraph()
             }
         }

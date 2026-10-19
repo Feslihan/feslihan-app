@@ -1,20 +1,21 @@
 [versions]
-agp = "8.7.3"
-kotlin = "2.1.0"
-ksp = "2.1.0-1.0.29"
+agp = "8.13.0"
+kotlin = "2.4.21"
+# KSP removed — no release supports Kotlin 2.4.21 yet (latest 2.3.12 targets Kotlin 2.3);
+# Hilt and Room run through KAPT instead. See the [plugins] note.
 # Versions pinned to the compileSdk-34 line (local SDK platform is android-34).
 coreKtx = "1.13.1"
 lifecycle = "2.8.7"
 activityCompose = "1.9.3"
 composeBom = "2024.09.03"
 navigationCompose = "2.8.0"
-hilt = "2.53.1"
+hilt = "2.57.2"
 hiltNavigationCompose = "1.2.0"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
 kotlinxSerialization = "1.7.3"
 retrofitSerialization = "1.0.0"
-room = "2.6.1"
+room = "2.8.5"
 coil = "2.7.0"
 coroutines = "1.9.0"
 datastore = "1.1.1"
@@ -67,5 +68,8 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+# KSP has no release for Kotlin 2.4.21 yet (latest 2.3.12 targets the Kotlin 2.3 line),
+# and Clerk 1.2.1's AARs require Kotlin >= 2.4.0 — the two don't overlap. So Hilt and
+# Room run through KAPT instead, which ships with the Kotlin compiler and always matches.
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
