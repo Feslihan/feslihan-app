@@ -8,8 +8,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.feslihan.app.ui.screens.home.HomeScreen
+import com.feslihan.app.ui.screens.pantry.PantryScreen
 import com.feslihan.app.ui.screens.placeholder.ComingSoonScreen
 import com.feslihan.app.ui.screens.recipes.RecipeListScreen
+import com.feslihan.app.ui.screens.shopping.ShoppingListScreen
 
 /**
  * Top-level navigation graph. The home hub (ModeSelectionView parity) routes to
@@ -53,13 +55,21 @@ fun FeslihanNavGraph(navController: NavHostController = rememberNavController())
             ComingSoonScreen(title = "Pişirme Modu", onBack = { navController.popBackStack() })
         }
 
+        // Mode 4 — Kilerim (real screen)
+        composable(Routes.PANTRY) {
+            PantryScreen(onBack = { navController.popBackStack() })
+        }
+
+        // Mode 5 — Alışveriş Listesi (real screen)
+        composable(Routes.SHOPPING_LIST) {
+            ShoppingListScreen(onBack = { navController.popBackStack() })
+        }
+
         // Placeholders — replaced as each task lands.
         placeholder(Routes.MEAL_PREP, "Haftalık Plan", navController)
         placeholder(Routes.SAVED_MEAL_PLANS, "Kayıtlı Planlar", navController)
         placeholder(Routes.WHAT_TO_EAT, "Ne Yesem?", navController)
         placeholder(Routes.ADD_RECIPE, "Tarif Ekle", navController)
-        placeholder(Routes.PANTRY, "Kilerim", navController)
-        placeholder(Routes.SHOPPING_LIST, "Alışveriş Listesi", navController)
         placeholder(Routes.FRIENDS, "Arkadaşlar", navController)
         placeholder(Routes.SHARED_INBOX, "Gelen Tarifler", navController)
         placeholder(Routes.SETTINGS, "Ayarlar", navController)
