@@ -1,6 +1,7 @@
 package com.feslihan.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.feslihan.app.ui.theme.FeslihanDimens
 import com.feslihan.app.ui.theme.ds
 
@@ -109,6 +111,26 @@ fun FeslihanTopBar(
             titleContentColor = MaterialTheme.ds.ink,
         ),
     )
+}
+
+/**
+ * Circular user avatar with an initial-letter fallback (iOS AvatarView). The app
+ * doesn't load remote avatar images yet, so this always renders the initial on an
+ * ink disc; [name] null/blank falls back to a leaf glyph.
+ */
+@Composable
+fun UserAvatar(name: String?, modifier: Modifier = Modifier, size: Int = 40) {
+    val initial = name?.trim()?.firstOrNull()?.uppercaseChar()?.toString()
+    Box(
+        modifier = modifier.size(size.dp).background(MaterialTheme.ds.ink, CircleShape),
+        contentAlignment = androidx.compose.ui.Alignment.Center,
+    ) {
+        Text(
+            text = initial ?: "🌿",
+            color = Color.White,
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = (size * 0.42f).sp),
+        )
+    }
 }
 
 /** Tiny uppercase tracker label above section titles (iOS eyebrow). */

@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -59,6 +60,8 @@ fun RecipeDetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     var tab by remember { mutableIntStateOf(0) }
     var portion by remember { mutableIntStateOf(1) }
+    var showShare by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     val recipe = state.recipe
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.ds.cream)) {
@@ -77,7 +80,7 @@ fun RecipeDetailScreen(
                             CircleIcon(Icons.AutoMirrored.Filled.ArrowBack, "Geri",
                                 Modifier.align(Alignment.TopStart).padding(start = 20.dp, top = 52.dp), onBack)
                             Row(Modifier.align(Alignment.TopEnd).padding(end = 20.dp, top = 52.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                CircleIcon(Icons.Default.Share, "Paylaş", Modifier) {}
+                                if (recipe.id != null) CircleIcon(Icons.Default.Share, "Tarif Gönder", Modifier) { showShare = true }
                                 CircleIcon(Icons.Default.Favorite, "Favori", Modifier) {}
                             }
                             Column(Modifier.align(Alignment.BottomStart).padding(22.dp)) {
@@ -165,6 +168,17 @@ fun RecipeDetailScreen(
                             Text("Video", color = MaterialTheme.ds.ink, style = MaterialTheme.typography.labelMedium)
                         }
                     }
+                }
+
+                if (showShare && recipe.id != null) {
+                    com.feslihan.app.ui.screens.social.FriendPickerSheet(
+                        recipeId = recipe.id,
+                        onDismiss = { showShare = false },
+                        onResult = { msg ->
+                            android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_SHORT).show()
+                            showShare = false
+                        },
+                    )
                 }
             }
         }

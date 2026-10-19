@@ -18,6 +18,9 @@ import com.feslihan.app.ui.screens.recipes.CookingModeScreen
 import com.feslihan.app.ui.screens.recipes.RecipeDetailScreen
 import com.feslihan.app.ui.screens.recipes.RecipeListScreen
 import com.feslihan.app.ui.screens.shopping.ShoppingListScreen
+import com.feslihan.app.ui.screens.social.FriendRecipesScreen
+import com.feslihan.app.ui.screens.social.FriendsScreen
+import com.feslihan.app.ui.screens.social.SharedInboxScreen
 
 /**
  * Top-level navigation graph. The home hub (ModeSelectionView parity) routes to
@@ -95,8 +98,32 @@ fun FeslihanNavGraph(navController: NavHostController = rememberNavController())
         composable(Routes.ADD_RECIPE) {
             AddRecipeScreen(onClose = { navController.popBackStack() })
         }
-        placeholder(Routes.FRIENDS, "Arkadaşlar", navController)
-        placeholder(Routes.SHARED_INBOX, "Gelen Tarifler", navController)
+        // Social — Arkadaşlar hub, friend recipe browsing, shared-recipe inbox
+        composable(Routes.FRIENDS) {
+            FriendsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenFriend = { userId, name -> navController.navigate(Routes.friendRecipes(userId, name)) },
+                onOpenInbox = { navController.navigate(Routes.SHARED_INBOX) },
+            )
+        }
+        composable(
+            route = "${Routes.FRIEND_RECIPES}/{userId}?name={name}",
+            arguments = listOf(
+                navArgument("userId") { type = NavType.StringType },
+                navArgument("name") { type = NavType.StringType; defaultValue = "Arkadaş" },
+            ),
+        ) {
+            FriendRecipesScreen(
+                onBack = { navController.popBackStack() },
+                onOpenRecipe = { id -> navController.navigate(Routes.recipeDetail(id)) },
+            )
+        }
+        composable(Routes.SHARED_INBOX) {
+            SharedInboxScreen(
+                onBack = { navController.popBackStack() },
+                onOpenRecipe = { id -> navController.navigate(Routes.recipeDetail(id)) },
+            )
+        }
         placeholder(Routes.SETTINGS, "Ayarlar", navController)
         placeholder(Routes.PAYWALL, "Feslihan'ı Yükselt", navController)
         placeholder(Routes.ONBOARDING, "Hoş Geldin", navController)

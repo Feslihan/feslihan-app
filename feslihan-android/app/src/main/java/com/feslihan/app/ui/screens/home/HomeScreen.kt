@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.ShoppingBasket
@@ -69,6 +70,10 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Wordmark(modifier = Modifier.weight(1f))
+                    androidx.compose.material3.IconButton(onClick = { onOpenMode(Routes.FRIENDS) }) {
+                        Icon(Icons.Default.Group, contentDescription = "Arkadaşlar", tint = MaterialTheme.ds.ink)
+                    }
+                    Spacer(Modifier.size(2.dp))
                     Avatar(initial = "N", onClick = onOpenSettings)
                 }
                 Spacer(Modifier.height(30.dp))

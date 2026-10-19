@@ -36,5 +36,6 @@ object Routes {
 
     fun recipeDetail(recipeId: String) = "$RECIPE_DETAIL/$recipeId"
     fun cookingMode(recipeId: String) = "$COOKING_MODE/$recipeId"
-    fun friendRecipes(userId: String) = "$FRIEND_RECIPES/$userId"
+    fun friendRecipes(userId: String, name: String) =
+        "$FRIEND_RECIPES/$userId?name=${android.net.Uri.encode(name)}"
 }
