@@ -36,6 +36,9 @@ class RecipeRepository @Inject constructor(
 
     suspend fun getRecipe(id: String): Result<Recipe> = runCatching { api.getRecipe(id) }
 
+    /** Catalog recipes for discovery (Ne Yesem? deck). */
+    suspend fun catalog(): Result<List<Recipe>> = runCatching { api.getRecipes() }
+
     /** Checks whether a URL is already in the catalog (free, no quota). */
     suspend fun lookup(url: String): Recipe? = runCatching { api.lookupRecipe(url) }.getOrNull()
 

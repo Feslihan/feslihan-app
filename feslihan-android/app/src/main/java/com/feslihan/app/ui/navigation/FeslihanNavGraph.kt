@@ -7,7 +7,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
+import com.feslihan.app.ui.screens.addrecipe.AddRecipeScreen
 import com.feslihan.app.ui.screens.home.HomeScreen
+import com.feslihan.app.ui.screens.mealprep.MealPrepScreen
+import com.feslihan.app.ui.screens.mealprep.SavedPlansScreen
+import com.feslihan.app.ui.screens.neyesem.NeYesemScreen
 import com.feslihan.app.ui.screens.pantry.PantryScreen
 import com.feslihan.app.ui.screens.placeholder.ComingSoonScreen
 import com.feslihan.app.ui.screens.recipes.CookingModeScreen
@@ -68,11 +72,29 @@ fun FeslihanNavGraph(navController: NavHostController = rememberNavController())
             ShoppingListScreen(onBack = { navController.popBackStack() })
         }
 
-        // Placeholders — replaced as each task lands.
-        placeholder(Routes.MEAL_PREP, "Haftalık Plan", navController)
-        placeholder(Routes.SAVED_MEAL_PLANS, "Kayıtlı Planlar", navController)
-        placeholder(Routes.WHAT_TO_EAT, "Ne Yesem?", navController)
-        placeholder(Routes.ADD_RECIPE, "Tarif Ekle", navController)
+        // Mode 1 — Haftalık Plan (wizard → result)
+        composable(Routes.MEAL_PREP) {
+            MealPrepScreen(
+                onClose = { navController.popBackStack() },
+                onOpenPaywall = { navController.navigate(Routes.PAYWALL) },
+            )
+        }
+        composable(Routes.SAVED_MEAL_PLANS) {
+            SavedPlansScreen(
+                onBack = { navController.popBackStack() },
+                onNewPlan = { navController.navigate(Routes.MEAL_PREP) },
+            )
+        }
+
+        // Mode 2 — Ne Yesem? (wizard → swipe deck)
+        composable(Routes.WHAT_TO_EAT) {
+            NeYesemScreen(onClose = { navController.popBackStack() })
+        }
+
+        // Tarif Ekle
+        composable(Routes.ADD_RECIPE) {
+            AddRecipeScreen(onClose = { navController.popBackStack() })
+        }
         placeholder(Routes.FRIENDS, "Arkadaşlar", navController)
         placeholder(Routes.SHARED_INBOX, "Gelen Tarifler", navController)
         placeholder(Routes.SETTINGS, "Ayarlar", navController)
