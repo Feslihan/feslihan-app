@@ -5,6 +5,7 @@ import com.feslihan.app.data.remote.AuthInterceptor
 import com.feslihan.app.data.remote.FeslihanApi
 import com.feslihan.app.data.remote.TokenProvider
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -63,15 +64,11 @@ object NetworkModule {
     fun provideApi(retrofit: Retrofit): FeslihanApi = retrofit.create(FeslihanApi::class.java)
 }
 
-/**
- * Binds a [TokenProvider]. Until Clerk is wired, this returns null (signed-out),
- * so read-only/public calls work and authed calls get a clean 401. Replace with
- * the Clerk-backed provider in the auth module.
- */
+/** Binds the Clerk-backed [TokenProvider] so every API call carries the session JWT. */
 @Module
 @InstallIn(SingletonComponent::class)
-object AuthModule {
-    @Provides
+abstract class AuthModule {
+    @Binds
     @Singleton
-    fun provideTokenProvider(): TokenProvider = TokenProvider { null }
+    abstract fun bindTokenProvider(impl: com.feslihan.app.auth.ClerkTokenProvider): TokenProvider
 }

@@ -21,9 +21,7 @@ datastore = "1.1.1"
 workManager = "2.9.1"
 # Third-party SDKs — mirror the iOS stack (ClerkKit, RevenueCat)
 revenuecat = "8.10.5"
-# NOTE: Clerk's Android SDK coordinates/version are a placeholder until the
-# dependency is wired against their published artifact (see README).
-clerk = "0.0.1"
+clerk = "1.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -60,6 +58,9 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 revenuecat = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
+
+clerk-android-api = { group = "com.clerk", name = "clerk-android-api", version.ref = "clerk" }
+clerk-android-ui = { group = "com.clerk", name = "clerk-android-ui", version.ref = "clerk" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

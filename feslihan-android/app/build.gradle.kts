@@ -9,14 +9,14 @@ plugins {
 
 android {
     namespace = "com.feslihan.app"
-    // 34 to match the locally-installed SDK platform + emulator image (no extra
-    // downloads). Bump to 35 before Play release once SDK 35 is installed.
-    compileSdk = 34
+    // 35 — required by the Clerk AARs. The emulator stays API 34; compileSdk and
+    // the device API level are independent.
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.feslihan.app"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -26,6 +26,12 @@ android {
 
         // Backend base URL (mirrors APIService.baseURL on iOS). Overridable per build type.
         buildConfigField("String", "API_BASE_URL", "\"https://api.feslihan.com.tr\"")
+
+        // Clerk publishable key — client-safe (the iOS app hardcodes the same test
+        // key in FeslihanApp.swift). Override with -PCLERK_PUBLISHABLE_KEY=... for prod.
+        val clerkKey = (project.findProperty("CLERK_PUBLISHABLE_KEY") as String?)
+            ?: "pk_test_d2FudGVkLWxpZ2VyLTQ3LmNsZXJrLmFjY291bnRzLmRldiQ"
+        buildConfigField("String", "CLERK_PUBLISHABLE_KEY", "\"$clerkKey\"")
     }
 
     buildTypes {
@@ -92,5 +98,7 @@ dependencies {
     implementation(libs.coil.compose)
 
     implementation(libs.revenuecat)
-    // Clerk Android SDK — add the real coordinate once pinned (see README "Auth").
+
+    implementation(libs.clerk.android.api)
+    implementation(libs.clerk.android.ui)
 }
