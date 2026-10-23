@@ -224,7 +224,10 @@ struct ShoppingListView: View {
     }
 
     private func loadList() async {
-        guard let userId = Clerk.shared.user?.id else { return }
+        guard let userId = Clerk.shared.user?.id else {
+            isLoading = false
+            return
+        }
         items = await APIService.fetchShoppingList(userId: userId)
         isLoading = false
     }
