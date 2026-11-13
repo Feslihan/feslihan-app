@@ -1,6 +1,5 @@
 {
   "recentRecipeSlugs": [
-    "pirinc-pilavi",
     "domates-corbasi",
     "mercimek-koftesi",
     "sutlac",
@@ -11,7 +10,8 @@
     "kuzu-tandir",
     "izmir-kofte",
     "taze-fasulye",
-    "sulu-patates"
+    "sulu-patates",
+    "su-boregi"
   ],
   "recentTipTopics": [
     "limonu daha verimli sıkmak",
@@ -19,5 +19,5 @@
     "baklagilleri gaz yapmadan pişirmek",
     "balığın kokusunu azaltmak"
   ],
-  "suggestionSeriesNo": 7
+  "suggestionSeriesNo": 8
 }
