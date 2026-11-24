@@ -1,6 +1,5 @@
 {
   "recentRecipeSlugs": [
-    "kuzu-tandir",
     "izmir-kofte",
     "taze-fasulye",
     "sulu-patates",
@@ -11,7 +10,8 @@
     "kisir",
     "sutlac",
     "etli-nohut",
-    "pirinc-pilavi"
+    "pirinc-pilavi",
+    "patlican-musakka"
   ],
   "recentTipTopics": [
     "limonu daha verimli sıkmak",
@@ -20,5 +20,5 @@
     "balığın kokusunu azaltmak",
     "menemenin sulu olmaması"
   ],
-  "suggestionSeriesNo": 10
+  "suggestionSeriesNo": 11
 }
